@@ -38,7 +38,7 @@ void ICPSystem::SetSource(geo::PointCloud3D source)
 	m_source = std::move(source);
 }
 
-void ICPSystem::Solve(int max_iterations)
+geo::ICPResult ICPSystem::Solve(int max_iterations)
 {
 	geo::ICPResult r;
 
@@ -50,11 +50,13 @@ void ICPSystem::Solve(int max_iterations)
 	}
 
 	m_RMS = r.rms;
+
+	return r;
 }
 
-void ICPSystem::Step()
+geo::ICPResult ICPSystem::Step()
 {
-	Solve(1);
+	return Solve(1);
 }
 
 float ICPSystem::GetRMS() const

@@ -1,6 +1,5 @@
 #pragma once
-#include <geo/PointCloud3D.h>
-#include <geo/RigidTransform.h>
+#include <geo/GeometricRegistration.h>
 #include "LeoRand.h"
 
 enum class ICPMethod : leo::u8
@@ -19,8 +18,8 @@ public:
     void SetTarget(geo::PointCloud3D target);
     void SetSource(geo::PointCloud3D source);
 public:
-    void Solve(int max_iterations = 100);
-    void Step();
+    geo::ICPResult Solve(int max_iterations = 100);
+    geo::ICPResult Step();
     float GetRMS() const;
 public:
     void SetSolveMethod(ICPMethod method);

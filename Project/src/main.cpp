@@ -15,7 +15,7 @@ static leo::Random rng{ 2026 };
 
 static void RunProjectWithWindow(ICPSystem& system)
 {
-    float currentRMS = -1.0f;
+    geo::ICPResult result;
 
     // ---------------- Create the Renderer ----------------
     RaylibRenderer renderer;
@@ -26,11 +26,11 @@ static void RunProjectWithWindow(ICPSystem& system)
     {
         //UpdateCamera(&camera, CAMERA_FREE);
 
+
         // Run one ICP iteration on SPACE
         if (IsKeyPressed(KEY_SPACE))
         {
-            system.Step();
-            currentRMS = system.GetRMS();
+            result = system.Step();
         }
 
         // ---------------- Rendering ----------------
@@ -45,9 +45,12 @@ static void RunProjectWithWindow(ICPSystem& system)
         std::stringstream ss;
         ss << "FPS:" << GetFPS() << "\n";
         ss << "Press SPACE to run 1 ICP iteration\n";
-        ss << "Current RMS: " << std::fixed << std::setprecision(6) << currentRMS;
+        ss << "Current RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
+        ss << "Total Time: " << std::fixed << std::setprecision(2) << result.totalElapsed_ms << "ms\n";
+        ss << "Correspondence Time: " << std::fixed << std::setprecision(2) << result.avgCorrespondenceTime_ms << "ms\n";
+        ss << "Solver Time: " << std::fixed << std::setprecision(2) << result.avgSolverTime_ms << "ms\n";
 
-        renderer.RenderText(ss.str(), 20, 20, 20, DARKGRAY);
+        renderer.RenderText(ss.str(), 20, 20, 25, DARKGRAY);
 
         renderer.EndFrame();
     }
@@ -61,7 +64,7 @@ static void RunProjectInConsole(ICPSystem& system)
 int main()
 {
     // ---------------- Generate Test Clouds ----------------
-    geo::PointCloud3D target = ICPSystem::GenerateRandomCloud(rng, 1000, -10.0f, 10.0f);
+    geo::PointCloud3D target = ICPSystem::GenerateRandomCloud(rng, 2000, -10.0f, 10.0f);
     geo::PointCloud3D source = target;
 
     // Apply known transform to source

@@ -35,7 +35,7 @@ void RaylibRenderer::SetClearColor(Color color)
 void RaylibRenderer::Init()
 {
 	// ---------------- Create the Window ----------------
-	InitWindow(1280, 800, "ICP Visualization");
+	InitWindow(1600, 900, "ICP Visualization");
 	SetTargetFPS(60);
 
 	// ---------------- Camera ----------------
