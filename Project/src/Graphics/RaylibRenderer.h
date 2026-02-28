@@ -19,7 +19,7 @@ public:
 	void EndFrame() const;
 public:
 	void RenderGrid() const;
-	void RenderPointCloud(const geo::PointCloud3D&, Color color) const;
+	void RenderPointCloud(const geo::PointCloud3D& cloud, Color color) const;
 	void RenderText(const std::string& str, int posX, int posY, int fontSize, Color color) const;
 private:
 	Camera3D m_camera = {};

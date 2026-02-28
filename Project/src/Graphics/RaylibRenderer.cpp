@@ -102,11 +102,11 @@ void RaylibRenderer::RenderPointCloud(const geo::PointCloud3D& cloud, Color colo
 	// Instances Transforms
 	static std::vector<Matrix> transforms;
 	transforms.resize(cloud.Count());
-	BuildInstanceTransforms(cloud, transforms, 0.1);
+	BuildInstanceTransforms(cloud, transforms, 0.1f);
 
 	// Draw Cloud
 	m_material.maps[MATERIAL_MAP_DIFFUSE].color = color;
-	DrawMeshInstanced(m_mesh, m_material, transforms.data(), transforms.size());
+	DrawMeshInstanced(m_mesh, m_material, transforms.data(), (int)transforms.size());
 
 	EndMode3D();
 }

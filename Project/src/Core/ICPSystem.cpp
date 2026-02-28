@@ -1,6 +1,7 @@
 #include <iostream>
 #include <sstream>
 #include <iomanip>
+#include <geo/GeometricRegistration.h>
 #include "ICPSystem.h"
 
 ICPSystem::ICPSystem(ICPMethod method)
@@ -9,7 +10,7 @@ ICPSystem::ICPSystem(ICPMethod method)
 {
 }
 
-ICPSystem::ICPSystem(ICPMethod method, geo::PointCloud3D&& target, geo::PointCloud3D&& source)
+ICPSystem::ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud3D source)
 	:
 	m_method(method),
 	m_target(std::move(target)),
@@ -27,30 +28,29 @@ const geo::PointCloud3D& ICPSystem::GetSource() const
 	return m_source;
 }
 
-void ICPSystem::SetTarget(geo::PointCloud3D&& target)
+void ICPSystem::SetTarget(geo::PointCloud3D target)
 {
 	m_target = std::move(target);
 }
 
-void ICPSystem::SetSource(geo::PointCloud3D&& source)
+void ICPSystem::SetSource(geo::PointCloud3D source)
 {
 	m_source = std::move(source);
 }
 
-void ICPSystem::Step()
+void ICPSystem::Solve(int max_iterations)
 {
-	if (m_method == ICPMethod::NAIVE)
+	switch (m_method)
 	{
-		m_RMS = geo::NaiveICP(m_target, m_source, 1);
+	case ICPMethod::NAIVE:
+		m_RMS = geo::NaiveICP(m_target, m_source, max_iterations);
+		break;
 	}
 }
 
-void ICPSystem::Solve()
+void ICPSystem::Step()
 {
-	if (m_method == ICPMethod::NAIVE)
-	{
-		m_RMS = geo::NaiveICP(m_target, m_source, 100);
-	}
+	Solve(1);
 }
 
 float ICPSystem::GetRMS() const
@@ -68,7 +68,7 @@ geo::PointCloud3D ICPSystem::GenerateRandomCloud(leo::Random& rng, leo::u32 coun
 	std::vector<glm::vec3> points;
 	points.reserve(count);
 
-	for (unsigned int i = 0; i < count; i++)
+	for (leo::u32 i = 0; i < count; i++)
 	{
 		points.emplace_back(rng.Float3(min, max));
 	}

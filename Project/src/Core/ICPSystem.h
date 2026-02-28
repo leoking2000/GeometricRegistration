@@ -1,5 +1,6 @@
 #pragma once
-#include <geo/GeometricRegistration.h>
+#include <geo/PointCloud3D.h>
+#include <geo/RigidTransform.h>
 #include "LeoRand.h"
 
 enum class ICPMethod : leo::u8
@@ -11,15 +12,15 @@ class ICPSystem
 {
 public:
     ICPSystem(ICPMethod method = ICPMethod::NAIVE);
-    ICPSystem(ICPMethod method, geo::PointCloud3D&& target, geo::PointCloud3D&& source);
+    ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud3D source);
 public:
     const geo::PointCloud3D& GetTarget() const;
     const geo::PointCloud3D& GetSource() const;
-    void SetTarget(geo::PointCloud3D&& target);
-    void SetSource(geo::PointCloud3D&& source);
+    void SetTarget(geo::PointCloud3D target);
+    void SetSource(geo::PointCloud3D source);
 public:
+    void Solve(int max_iterations = 100);
     void Step();
-    void Solve();
     float GetRMS() const;
 public:
     void SetSolveMethod(ICPMethod method);
