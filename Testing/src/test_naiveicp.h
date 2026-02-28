@@ -1,0 +1,147 @@
+#pragma once
+#include <gtest/gtest.h>
+#include <geo/GeometricRegistration.h>
+#include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtc/epsilon.hpp>
+
+static inline void ExpectMat3Near(
+    const glm::mat3& A,
+    const glm::mat3& B,
+    float tolerance)
+{
+    for (int c = 0; c < 3; ++c)
+    {
+        for (int r = 0; r < 3; ++r)
+        {
+            EXPECT_NEAR(A[c][r], B[c][r], tolerance)
+                << "Mismatch at (" << r << ", " << c << ")";
+        }
+    }
+}
+
+static inline void ExpectVec3Near(
+    const glm::vec3& a,
+    const glm::vec3& b,
+    float tolerance)
+{
+    EXPECT_NEAR(a.x, b.x, tolerance);
+    EXPECT_NEAR(a.y, b.y, tolerance);
+    EXPECT_NEAR(a.z, b.z, tolerance);
+}
+
+TEST(NaiveICP, IdentityAlignment)
+{
+    float data[12] = {
+        0.0f,0.0f,0.0f,
+        1.0f,0.0f,0.0f,
+        0.0f,1.0f,0.0f,
+        0.0f,0.0f,1.0f
+    };
+
+    geo::PointCloud3D cloud(data, 4);
+
+    geo::PointCloud3D source = cloud; // identical
+
+    auto result = geo::NaiveICP(cloud, source, 20);
+
+    EXPECT_TRUE(result.converged);
+    EXPECT_NEAR(result.rms, 0.0f, 1e-6f);
+
+    ExpectMat3Near(result.transform.rotation, glm::mat3(1.0f), 1e-6f);
+    ExpectVec3Near(result.transform.translation, glm::vec3(0.0f), 1e-6f);
+}
+
+TEST(NaiveICP, RecoversKnownTransform)
+{
+    float data[12] = {
+        0.0f,0.0f,0.0f,
+        1.0f,0.0f,0.0f,
+        0.0f,1.0f,0.0f,
+        0.0f,0.0f,1.0f
+    };
+
+    geo::PointCloud3D target(data, 4);
+
+    geo::PointCloud3D source = target;
+
+    float angle = glm::radians(10.0f);
+    glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
+    glm::mat3 R = glm::mat3(rot4);
+
+    glm::vec3 t(1.0f, 1.0f, 1.0f);
+
+    source.Transform(R, t);
+
+    auto result = geo::NaiveICP(target, source, 20);
+
+    EXPECT_TRUE(result.converged);
+    EXPECT_NEAR(result.rms, 0.0f, 1e-5f);
+
+    glm::mat3 R_expected = glm::transpose(R);
+    glm::vec3 t_expected = -R_expected * t;
+
+    ExpectMat3Near(result.transform.rotation, R_expected, 1e-4f);
+    ExpectVec3Near(result.transform.translation, t_expected, 1e-4f);
+}
+
+TEST(NaiveICP, RotationIsOrthogonal)
+{
+    float data[12] = {
+        0.0f,0.0f,0.0f,
+        1.0f,0.0f,0.0f,
+        0.0f,1.0f,0.0f,
+        0.0f,0.0f,1.0f
+    };
+
+    geo::PointCloud3D target(data, 4);
+
+    geo::PointCloud3D source = target;
+    source.Transform(glm::mat3(1.0f), { 1.0f, 0.0f, 0.0f });
+
+    auto result = geo::NaiveICP(target, source, 20);
+
+    glm::mat3 RtR = glm::transpose(result.transform.rotation) * result.transform.rotation;
+
+    ExpectMat3Near(RtR, glm::mat3(1.0f), 1e-4f);
+}
+
+
+TEST(NaiveICP, RotationHasUnitDeterminant)
+{
+    float data[12] = {
+        0.0f,0.0f,0.0f,
+        1.0f,0.0f,0.0f,
+        0.0f,1.0f,0.0f,
+        0.0f,0.0f,1.0f
+    };
+
+    geo::PointCloud3D target(data, 4);
+
+    geo::PointCloud3D source = target;
+    source.Transform(glm::mat3(1.0f), { 1.0f, 0.0f, 0.0f });
+
+    auto result = geo::NaiveICP(target, source, 20);
+
+    float det = glm::determinant(result.transform.rotation);
+    EXPECT_NEAR(det, 1.0f, 1e-4f);
+}
+
+TEST(NaiveICP, RMSIsReduced)
+{
+    float data[12] = {
+        0.0f,0.0f,0.0f,
+        1.0f,0.0f,0.0f,
+        0.0f,1.0f,0.0f,
+        0.0f,0.0f,1.0f
+    };
+
+    geo::PointCloud3D target(data, 4);
+
+    geo::PointCloud3D source = target;
+    source.Transform(glm::mat3(1.0f), { 2.0f, 0.0f, 0.0f });
+
+    auto result = geo::NaiveICP(target, source, 50);
+
+    EXPECT_LT(result.rms, 2.0f);
+}
+

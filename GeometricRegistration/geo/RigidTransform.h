@@ -5,7 +5,7 @@ namespace geo
 {
 	struct RigidTransform
 	{
-		glm::mat3 rot;
-		glm::vec3 t;
+		glm::mat3 rotation;
+		glm::vec3 translation;
 	};
 }

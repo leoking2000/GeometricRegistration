@@ -40,12 +40,16 @@ void ICPSystem::SetSource(geo::PointCloud3D source)
 
 void ICPSystem::Solve(int max_iterations)
 {
+	geo::ICPResult r;
+
 	switch (m_method)
 	{
 	case ICPMethod::NAIVE:
-		m_RMS = geo::NaiveICP(m_target, m_source, max_iterations);
+		r = geo::NaiveICP(m_target, m_source, max_iterations);
 		break;
 	}
+
+	m_RMS = r.rms;
 }
 
 void ICPSystem::Step()
@@ -103,18 +107,18 @@ void ICPSystem::PrintRigidTransform(const geo::RigidTransform& tf)
 		std::cout << "  [ ";
 		for (int c = 0; c < 3; ++c)
 		{
-			std::cout << std::setw(10) << tf.rot[c][r] << " ";
+			std::cout << std::setw(10) << tf.rotation[c][r] << " ";
 		}
 		std::cout << "]\n";
 	}
 
 	std::cout << "\nTranslation (t):\n";
 	std::cout << "  [ "
-		<< tf.t.x << ", "
-		<< tf.t.y << ", "
-		<< tf.t.z << " ]\n";
+		<< tf.translation.x << ", "
+		<< tf.translation.y << ", "
+		<< tf.translation.z << " ]\n";
 
 	std::cout << "\nDeterminant(R): "
-		<< glm::determinant(tf.rot)
+		<< glm::determinant(tf.rotation)
 		<< "\n\n";
 }

@@ -84,8 +84,8 @@ int main()
 
     ICPSystem system(ICPMethod::NAIVE, std::move(target), std::move(source));
 
-    //RunProjectWithWindow(system);
-    RunProjectInConsole(system);
+    RunProjectWithWindow(system);
+    //RunProjectInConsole(system);
 
 
     return 0;

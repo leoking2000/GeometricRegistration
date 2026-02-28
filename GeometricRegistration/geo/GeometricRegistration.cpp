@@ -1,5 +1,6 @@
 #include <iostream>
 #include <limits>
+#include <chrono>
 #include <assert.h>
 #include <array>
 #include <Eigen/Dense>
@@ -7,103 +8,151 @@
 
 namespace geo
 {
-	// point-to-point ICP using Euclidial distace
-	float NaiveICP(const PointCloud3D& target, PointCloud3D& source, int max_interrations)
+	namespace detail
 	{
+		static inline glm::mat3 EigenToGlm(const Eigen::Matrix3f& m)
+		{
+			glm::mat3 result(0.0f);
+			for (int r = 0; r < 3; ++r)
+				for (int c = 0; c < 3; ++c)
+					result[c][r] = m(r, c); // column-major
 
-		std::vector<glm::vec3> correspondences_points;
-		correspondences_points.reserve(source.Count());
+			return result;
+		}
 
-		glm::mat3 final_rot(1.0f);
-		glm::vec3 final_t(0.0f);
+		static inline Eigen::Matrix3f GlmToEigen(const glm::mat3& m)
+		{
+			Eigen::Matrix3f result;
+			for (int r = 0; r < 3; ++r)
+				for (int c = 0; c < 3; ++c)
+					result(r, c) = m[c][r];
+
+			return result;
+		}
+	}
+	
+	using Clock = std::chrono::steady_clock;
+	using TimePoint = Clock::time_point;
+
+	// Compute a - b in milliseconds
+	static double TimeDifference_ms(TimePoint a, TimePoint b)
+	{
+		return std::chrono::duration<double, std::milli>(a - b).count();
+	}
+
+	ICPResult NaiveICP(const PointCloud3D& target, PointCloud3D& source, int maxIterations, float tolerance)
+	{
+		assert(target.Count() > 1);
+		assert(source.Count() > 1);
+		assert(maxIterations >= 1);
+		assert(tolerance > 0.0f);
+
+		ICPResult result;
+		result.transform = { glm::mat3(1.0f), glm::vec3(0.0f) };
+
 		float prevError = std::numeric_limits<float>::max();
 
-		for (int i = 0; i < max_interrations; i++)
+		std::vector<glm::vec3> correspondences;
+		correspondences.reserve(source.Count());
+
+		TimePoint startTime = Clock::now();
+
+		for (int iter = 0; iter < maxIterations; iter++)
 		{
-			// Find Closest Points
-			correspondences_points.clear();
-			for (auto& p : source)
+			correspondences.clear();
+
+			// Find correspondences
+			TimePoint startCorrTime = Clock::now();
+			for (const auto& p : source)
 			{
-                correspondences_points.emplace_back(target.FindClosestPoint(p));
+				correspondences.emplace_back(target.FindClosestPoint(p));
 			}
-			// make the correspondences into a point cloud
-            geo::PointCloud3D correspondences(std::move(correspondences_points));
 
-			// Compute Best Rigid Transform
-			glm::vec3 centroidSource = source.Centroid();
-			glm::vec3 centroidTarget = correspondences.Centroid();
+			TimePoint endCorrTime = Clock::now();
+			result.avgCorrespondenceTime_ms += TimeDifference_ms(endCorrTime, startCorrTime);
 
-			glm::mat3 H(0.0f);
-			for (int j = 0; j < source.Count(); j++)
+			// Compute centroids
+			glm::vec3 centroidSrc = source.Centroid();
+			glm::vec3 centroidCor(0.0f);
+			for (const auto& p : correspondences)
 			{
-				glm::vec3 p = source[j] - centroidSource;
-				glm::vec3 q = correspondences[j] - centroidTarget;
+				centroidCor += p;
+			}
+			centroidCor = centroidCor / (float)correspondences.size();
 
+			TimePoint startSolveTime = Clock::now();
+
+			// Compute covariance matrix
+			glm::mat3 H(0.0f);
+			for (size_t i = 0; i < source.Count(); ++i)
+			{
+				glm::vec3 p = source[i] - centroidSrc;
+				glm::vec3 q = correspondences[i] - centroidCor;
 				H += glm::outerProduct(p, q);
 			}
 
-			Eigen::Matrix3f H_eigen;
-			for (int r = 0; r < 3; r++)
-				for (int c = 0; c < 3; c++)
-					H_eigen(r, c) = H[c][r]; // GLM is column-major
+			// SVD
+			Eigen::Matrix3f H_e = detail::GlmToEigen(H);
 
 			Eigen::JacobiSVD<Eigen::Matrix3f> svd(
-				H_eigen,
-				Eigen::ComputeFullU | Eigen::ComputeFullV
-			);
+				H_e,
+				Eigen::ComputeFullU | Eigen::ComputeFullV);
 
-			Eigen::Matrix3f R_eigen =
+			Eigen::Matrix3f R_e =
 				svd.matrixV() * svd.matrixU().transpose();
 
-			// Handle reflection case
-			if (R_eigen.determinant() < 0.0f)
+			// Reflection fix
+			if (R_e.determinant() < 0.0f)
 			{
 				Eigen::Matrix3f V = svd.matrixV();
 				V.col(2) *= -1.0f;
-				R_eigen = V * svd.matrixU().transpose();
+				R_e = V * svd.matrixU().transpose();
 			}
 
-			// Compute translation
-			Eigen::Vector3f centroidSource_e(centroidSource.x, centroidSource.y, centroidSource.z);
-			Eigen::Vector3f centroidTarget_e(centroidTarget.x, centroidTarget.y, centroidTarget.z);
+			glm::mat3 R = detail::EigenToGlm(R_e);
 
-			Eigen::Vector3f t_e = centroidTarget_e - R_eigen * centroidSource_e;
+			Eigen::Vector3f cSrc(centroidSrc.x, centroidSrc.y, centroidSrc.z);
+			Eigen::Vector3f cDst(centroidCor.x, centroidCor.y, centroidCor.z);
 
-			glm::mat3 R_glm(0.0f);
-			for (int r = 0; r < 3; r++)
-				for (int c = 0; c < 3; c++)
-					R_glm[c][r] = R_eigen(r, c); // back to GLM column-major
+			Eigen::Vector3f t_e = cDst - R_e * cSrc;
+			glm::vec3 t(t_e.x(), t_e.y(), t_e.z());
 
-			glm::vec3 t_glm(t_e.x(), t_e.y(), t_e.z());
+			TimePoint endSolveTime = Clock::now();
+			result.avgSolverTime_ms += TimeDifference_ms(endSolveTime, startSolveTime);
 
-			source.Transform(R_glm, t_glm);
-			final_rot *= R_glm;
-			final_t += t_glm;
+			// Apply transform
+			source.Transform(R, t);
 
-			// Compute Error
+			result.transform.translation = R * result.transform.translation + t;
+			result.transform.rotation = R * result.transform.rotation;
+
+			// Compute RMS
 			float error = 0.0f;
-			for (int j = 0; j < source.Count(); j++)
+			for (size_t i = 0; i < source.Count(); ++i)
 			{
-				float dist = glm::distance(source[j], correspondences[j]);
-				error += dist * dist;
+				glm::vec3 diff = source[i] - correspondences[i];
+				error += glm::dot(diff, diff);
 			}
 
 			error = std::sqrt(error / source.Count());
+			result.rms = error;
+			result.iterations = iter + 1;
 
-			std::cout << "Iteration " << i << " | RMS Error: " << error << std::endl;
-
-			if (std::abs(prevError - error) < 1e-5f)
+			if (std::abs(prevError - error) < tolerance)
 			{
-				std::cout << "Converged.\n";
+				result.converged = true;
 				break;
 			}
 
 			prevError = error;
 		}
 
-		//return { final_rot, final_t };
-		return prevError;
-	}
+		TimePoint endTime = Clock::now();
+		result.totalElapsed_ms = TimeDifference_ms(endTime, startTime);
+		result.avgCorrespondenceTime_ms /= result.iterations;
+		result.avgSolverTime_ms /= result.iterations;
 
+		return result;
+	}
 }
 
