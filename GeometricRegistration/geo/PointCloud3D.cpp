@@ -73,6 +73,16 @@ namespace geo
 		return closestPoint;
 	}
 
+	std::vector<glm::vec3>& PointCloud3D::GetStorage()
+	{
+		return m_points;
+	}
+
+	const std::vector<glm::vec3>& PointCloud3D::GetStorage() const
+	{
+		return m_points;
+	}
+
 	void PointCloud3D::recalculateCentroid()
 	{
 		glm::vec3 c(0.0f);

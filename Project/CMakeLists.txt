@@ -1,6 +1,5 @@
 cmake_minimum_required(VERSION 3.14)
 project(Project)
-set(CMAKE_CXX_STANDARD 23)
 
 # MultiThreaded compilation
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>")
@@ -10,7 +9,7 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
 # Define MY_SOURCES to be a list of all the source files for my game 
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/src/*.cpp")
 add_executable("${PROJECT_NAME}")
-set_property(TARGET "${PROJECT_NAME}" PROPERTY CXX_STANDARD 23)
+set_property(TARGET "${PROJECT_NAME}" PROPERTY CXX_STANDARD 17)
 
 if(NOT PRODUCTION_BUILD)
 	# This is useful to get an ASSETS_PATH in your IDE during development

@@ -1,11 +1,11 @@
 #pragma once
-#include <glm/glm.hpp>
+#include "INearestNeighbor.h"
 #include <vector>
 
 namespace geo
 {
 	// A Point cloud of 3D points, uses glm::vec3 
-	class PointCloud3D
+	class PointCloud3D : public INearestNeighbor
 	{
 	public:
 		PointCloud3D() = default;
@@ -20,12 +20,14 @@ namespace geo
 		const glm::vec3& operator[](size_t i) const;
 	public:
 		void Transform(const glm::mat3& rot, const glm::vec3& t);
-		glm::vec3 FindClosestPoint(const glm::vec3& sourcePoint) const;
+		virtual glm::vec3 FindClosestPoint(const glm::vec3& sourcePoint) const override;
 	public:
 		auto begin() { return m_points.begin(); }
 		auto end() { return m_points.end(); }
 		auto begin() const { return m_points.cbegin(); }
 		auto end() const { return m_points.cend(); }
+		std::vector<glm::vec3>& GetStorage();
+		const std::vector<glm::vec3>& GetStorage() const;
 	private:
 		void recalculateCentroid();
 	private:

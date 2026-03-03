@@ -1,8 +1,6 @@
-#include <iostream>
 #include <limits>
 #include <chrono>
 #include <assert.h>
-#include <array>
 #include <Eigen/Dense>
 #include "GeometricRegistration.h"
 
@@ -40,9 +38,8 @@ namespace geo
 		return std::chrono::duration<double, std::milli>(a - b).count();
 	}
 
-	ICPResult NaiveICP(const PointCloud3D& target, PointCloud3D& source, int maxIterations, float tolerance)
+	ICPResult NaiveICP(const INearestNeighbor& targetSurface, PointCloud3D& source, int maxIterations, float tolerance)
 	{
-		assert(target.Count() > 1);
 		assert(source.Count() > 1);
 		assert(maxIterations >= 1);
 		assert(tolerance > 0.0f);
@@ -65,7 +62,7 @@ namespace geo
 			TimePoint startCorrTime = Clock::now();
 			for (const auto& p : source)
 			{
-				correspondences.emplace_back(target.FindClosestPoint(p));
+				correspondences.emplace_back(targetSurface.FindClosestPoint(p));
 			}
 
 			TimePoint endCorrTime = Clock::now();

@@ -1,12 +1,13 @@
 cmake_minimum_required(VERSION 3.14)
-project(Εigen)
+project(eigen)
 
-include(FetchContent)
+# MultiThreaded compilation
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>")
+set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
+set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
 
-FetchContent_Declare(
-  eigen
-  GIT_REPOSITORY https://gitlab.com/libeigen/eigen.git
-  GIT_TAG 3.4.0
-)
+add_library(eigen INTERFACE)
 
-FetchContent_MakeAvailable(eigen)
+
+target_include_directories(eigen INTERFACE include "${CMAKE_CURRENT_SOURCE_DIR}/")
+

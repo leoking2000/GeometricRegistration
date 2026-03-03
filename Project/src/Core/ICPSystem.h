@@ -1,5 +1,6 @@
 #pragma once
 #include <geo/GeometricRegistration.h>
+#include <geo/KDTree.h>
 #include "LeoRand.h"
 
 enum class ICPMethod : leo::u8
@@ -10,7 +11,6 @@ enum class ICPMethod : leo::u8
 class ICPSystem
 {
 public:
-    ICPSystem(ICPMethod method = ICPMethod::NAIVE);
     ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud3D source);
 public:
     const geo::PointCloud3D& GetTarget() const;
@@ -29,6 +29,7 @@ public:
     static void PrintRigidTransform(const geo::RigidTransform& tf);
 private:
     geo::PointCloud3D m_target;
+    geo::KDTree m_tree;
     geo::PointCloud3D m_source;
     ICPMethod m_method = ICPMethod::NAIVE;
     float m_RMS = -1.0f;

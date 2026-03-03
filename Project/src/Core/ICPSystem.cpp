@@ -4,16 +4,11 @@
 #include <geo/GeometricRegistration.h>
 #include "ICPSystem.h"
 
-ICPSystem::ICPSystem(ICPMethod method)
-	:
-	m_method(method)
-{
-}
-
 ICPSystem::ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud3D source)
 	:
 	m_method(method),
 	m_target(std::move(target)),
+	m_tree(m_target),
 	m_source(std::move(source))
 {
 }
@@ -31,6 +26,7 @@ const geo::PointCloud3D& ICPSystem::GetSource() const
 void ICPSystem::SetTarget(geo::PointCloud3D target)
 {
 	m_target = std::move(target);
+	m_tree = geo::KDTree(m_target);
 }
 
 void ICPSystem::SetSource(geo::PointCloud3D source)
@@ -45,7 +41,7 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 	switch (m_method)
 	{
 	case ICPMethod::NAIVE:
-		r = geo::NaiveICP(m_target, m_source, max_iterations);
+		r = geo::NaiveICP(m_tree, m_source, max_iterations);
 		break;
 	}
 

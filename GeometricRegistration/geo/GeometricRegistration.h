@@ -1,4 +1,5 @@
 #pragma once
+#include "INearestNeighbor.h"
 #include "PointCloud3D.h"
 #include "RigidTransform.h"
 
@@ -30,7 +31,7 @@ namespace geo
      *   - Solver computation (solverTime_ms)
      *   - Total elapsed time (totalElapsed_ms)
      *
-     * @param target The fixed target point cloud.
+     * @param targetSurface The fixed target surface.
      * @param source The source point cloud that will be transformed in-place.
      * @param maxIterations Maximum number of ICP iterations.
      * @param tolerance Convergence tolerance on RMS change between iterations.
@@ -38,5 +39,5 @@ namespace geo
      *
      * @note This implementation is O(n^2) in number of points due to brute-force nearest neighbor search.
      */
-    ICPResult NaiveICP(const PointCloud3D& target, PointCloud3D& source, int maxIterations, float tolerance = 1e-5f);
+    ICPResult NaiveICP(const INearestNeighbor& targetSurface, PointCloud3D& source, int maxIterations, float tolerance = 1e-5f);
 }

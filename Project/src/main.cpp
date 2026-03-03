@@ -64,7 +64,7 @@ static void RunProjectInConsole(ICPSystem& system)
 int main()
 {
     // ---------------- Generate Test Clouds ----------------
-    geo::PointCloud3D target = ICPSystem::GenerateRandomCloud(rng, 2000, -10.0f, 10.0f);
+    geo::PointCloud3D target = ICPSystem::GenerateRandomCloud(rng, 10000, -10.0f, 10.0f);
     geo::PointCloud3D source = target;
 
     // Apply known transform to source
