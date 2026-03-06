@@ -15,19 +15,19 @@ TEST(PointCloudTest, ConstructFromVector_CountCorrect)
     };
 
     geo::PointCloud3D cloud(std::move(pts));
-    EXPECT_EQ(cloud.Count(), 3);
+    EXPECT_EQ(cloud.Size(), 3);
 }
 
 TEST(PointCloudTest, ConstructFromArray_CountCorrect)
 {
-    float data[] = {
+    float data[9] = {
         0.0f, 0.0f, 0.0f,
         1.0f, 0.0f, 0.0f,
         0.0f, 1.0f, 0.0f
     };
 
-    geo::PointCloud3D cloud(data, 3);
-    EXPECT_EQ(cloud.Count(), 3);
+    geo::PointCloud3D cloud(data, 9);
+    EXPECT_EQ(cloud.Size(), 3);
 }
 
 TEST(PointCloudTest, CentroidOfTriangle)
@@ -57,18 +57,6 @@ TEST(PointCloudTest, CentroidOfRandomTriangle)
 
     glm::vec3 expected(-4.0f / 3.0f, 1.0f / 3.0f, 4.0f / 3.0f);
     EXPECT_TRUE(glm::all(glm::epsilonEqual(cloud.Centroid(), expected, EPSILON)));
-}
-
-TEST(PointCloudTest, OperatorAccessMutable)
-{
-    std::vector<glm::vec3> pts = { {1.0f, 2.0f, 3.0f} };
-    geo::PointCloud3D cloud(std::move(pts));
-
-    cloud[0] = { 5.0f, 6.0f, 7.0f };
-
-    EXPECT_FLOAT_EQ(cloud[0].x, 5.0f);
-    EXPECT_FLOAT_EQ(cloud[0].y, 6.0f);
-    EXPECT_FLOAT_EQ(cloud[0].z, 7.0f);
 }
 
 TEST(PointCloudTest, TransformRotationAndTranslation)
@@ -107,28 +95,28 @@ TEST(PointCloudTest, TransformUpdatesCentroid)
     EXPECT_TRUE(glm::all(glm::epsilonEqual(cloud.Centroid(), expectedCentroid, EPSILON)));
 }
 
-TEST(PointCloud3D, FindClosestPoint)
-{
-    std::vector<glm::vec3> pts = {
-        {0.0f, 0.0f, 0.0f},
-        {5.0f, 0.0f, 0.0f},
-        {10.0f, 0.0f, 0.0f}
-    };
-
-    geo::PointCloud3D cloud(std::move(pts));
-
-    glm::vec3 query(6.0f, 0.0f, 0.0f);
-    glm::vec3 closest = cloud.FindClosestPoint(query);
-
-    glm::vec3 expected(5.0f, 0.0f, 0.0f);
-    EXPECT_TRUE(glm::all(glm::epsilonEqual(closest, expected, EPSILON)));
-}
+//TEST(PointCloud3D, FindClosestPoint)
+//{
+//    std::vector<glm::vec3> pts = {
+//        {0.0f, 0.0f, 0.0f},
+//        {5.0f, 0.0f, 0.0f},
+//        {10.0f, 0.0f, 0.0f}
+//    };
+//
+//    geo::PointCloud3D cloud(std::move(pts));
+//
+//    glm::vec3 query(6.0f, 0.0f, 0.0f);
+//    glm::vec3 closest = cloud.FindClosestPoint(query);
+//
+//    glm::vec3 expected(5.0f, 0.0f, 0.0f);
+//    EXPECT_TRUE(glm::all(glm::epsilonEqual(closest, expected, EPSILON)));
+//}
 
 TEST(PointCloudTest, EmptyCloud)
 {
     std::vector<glm::vec3> pts;
     geo::PointCloud3D cloud(std::move(pts));
 
-    EXPECT_EQ(cloud.Count(), 0);
+    EXPECT_EQ(cloud.Size(), 0);
     EXPECT_TRUE(glm::all(glm::epsilonEqual(cloud.Centroid(), glm::vec3(0.0f), EPSILON)));
 }

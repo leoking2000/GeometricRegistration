@@ -1,44 +1,19 @@
-#include <limits>
-#include <chrono>
-#include <assert.h>
-#include <Eigen/Dense>
-#include "GeometricRegistration.h"
+#include "math/SVD.h"
+#include "NaiveICP.h"
 
 namespace geo
 {
-	namespace detail
-	{
-		static inline glm::mat3 EigenToGlm(const Eigen::Matrix3f& m)
-		{
-			glm::mat3 result(0.0f);
-			for (int r = 0; r < 3; ++r)
-				for (int c = 0; c < 3; ++c)
-					result[c][r] = m(r, c); // column-major
-
-			return result;
-		}
-
-		static inline Eigen::Matrix3f GlmToEigen(const glm::mat3& m)
-		{
-			Eigen::Matrix3f result;
-			for (int r = 0; r < 3; ++r)
-				for (int c = 0; c < 3; ++c)
-					result(r, c) = m[c][r];
-
-			return result;
-		}
-	}
-	
 	using Clock = std::chrono::steady_clock;
 	using TimePoint = Clock::time_point;
 
 	// Compute a - b in milliseconds
-	static double TimeDifference_ms(TimePoint a, TimePoint b)
+	static double TimeDifference_ms(TimePoint end, TimePoint start)
 	{
-		return std::chrono::duration<double, std::milli>(a - b).count();
+		return std::chrono::duration<double, std::milli>(end - start).count();
 	}
 
-	ICPResult NaiveICPggg(const INearestNeighbor& targetSurface, PointCloud3D& source, int maxIterations, float tolerance)
+
+	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, int maxIterations, float tolerance)
 	{
 		assert(source.Size() > 1);
 		assert(maxIterations >= 1);
@@ -58,11 +33,11 @@ namespace geo
 		{
 			correspondences.clear();
 
-			// Find correspondences
+			// Find correspondences 
 			TimePoint startCorrTime = Clock::now();
 			for (const auto& p : source)
 			{
-				correspondences.emplace_back(targetSurface.FindClosestPoint(p));
+				correspondences.emplace_back(target.FindClosestPoint(p)); // TODO: batch queries
 			}
 
 			TimePoint endCorrTime = Clock::now();
@@ -89,30 +64,19 @@ namespace geo
 			}
 
 			// SVD
-			Eigen::Matrix3f H_e = detail::GlmToEigen(H);
+			SVDResult svd = SVD(H);
 
-			Eigen::JacobiSVD<Eigen::Matrix3f> svd(
-				H_e,
-				Eigen::ComputeFullU | Eigen::ComputeFullV);
-
-			Eigen::Matrix3f R_e =
-				svd.matrixV() * svd.matrixU().transpose();
+			glm::mat3 Ut = glm::transpose(svd.U);
+			glm::mat3 R = svd.V * Ut;
 
 			// Reflection fix
-			if (R_e.determinant() < 0.0f)
+			if (glm::determinant(R) < 0.0f)
 			{
-				Eigen::Matrix3f V = svd.matrixV();
-				V.col(2) *= -1.0f;
-				R_e = V * svd.matrixU().transpose();
+				svd.V[2] *= -1.0f;
+				R = svd.V * Ut;
 			}
 
-			glm::mat3 R = detail::EigenToGlm(R_e);
-
-			Eigen::Vector3f cSrc(centroidSrc.x, centroidSrc.y, centroidSrc.z);
-			Eigen::Vector3f cDst(centroidCor.x, centroidCor.y, centroidCor.z);
-
-			Eigen::Vector3f t_e = cDst - R_e * cSrc;
-			glm::vec3 t(t_e.x(), t_e.y(), t_e.z());
+			glm::vec3 t = centroidCor - R * centroidSrc;
 
 			TimePoint endSolveTime = Clock::now();
 			result.avgSolverTime_ms += TimeDifference_ms(endSolveTime, startSolveTime);
@@ -151,5 +115,5 @@ namespace geo
 
 		return result;
 	}
-}
 
+}

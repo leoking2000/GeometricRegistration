@@ -58,7 +58,18 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 static void RunProjectInConsole(ICPSystem& system)
 {
-    system.Solve();
+    geo::ICPResult result = system.Solve();
+
+    std::stringstream ss;
+    ss << "Number of Points: " << system.GetTarget().Count() << "\n";
+    ss << "Iterations: " << result.iterations << "\n";
+    ss << "converged: " << result.converged << "\n";
+    ss << "RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
+    ss << "Total Time: " << std::fixed << std::setprecision(2) << result.totalElapsed_ms << "ms\n";
+    ss << "Avg Correspondence Time: " << std::fixed << std::setprecision(2) << result.avgCorrespondenceTime_ms << "ms\n";
+    ss << "Avg Solver Time: " << std::fixed << std::setprecision(2) << result.avgSolverTime_ms << "ms\n";
+
+    std::cout << ss.str();
 }
 
 int main()
@@ -87,8 +98,8 @@ int main()
 
     ICPSystem system(ICPMethod::NAIVE, std::move(target), std::move(source));
 
-    RunProjectWithWindow(system);
-    //RunProjectInConsole(system);
+    //RunProjectWithWindow(system);
+    RunProjectInConsole(system);
 
 
     return 0;

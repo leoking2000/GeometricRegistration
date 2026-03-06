@@ -21,5 +21,5 @@ add_subdirectory(thirdparty/raylib)         # rendering/ui library for Visualiza
 ##################################
 
 add_subdirectory(GeometricRegistration)
-add_subdirectory(Project)
+#add_subdirectory(Project)
 add_subdirectory(Testing)
