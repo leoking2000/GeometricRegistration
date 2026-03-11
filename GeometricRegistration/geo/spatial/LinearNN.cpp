@@ -33,17 +33,22 @@ namespace geo
 
 	void LinearNN::Search(const glm::vec3& query, glm::vec3& best, float& dist) const
 	{
-		dist = std::numeric_limits<float>::max();
+		assert(!m_points.empty());
 
-		for (const auto point : m_points)
+		float bestDistSq = std::numeric_limits<float>::max();
+
+		for (const auto& point : m_points)
 		{
-			float distance = glm::distance(point, query);
-			if (dist > distance)
+			float d = glm::dot(point - query, point - query);
+
+			if (d < bestDistSq)
 			{
-				dist = distance;
+				bestDistSq = d;
 				best = point;
 			}
 		}
+
+		dist = glm::sqrt(bestDistSq);
 	}
 
 }
