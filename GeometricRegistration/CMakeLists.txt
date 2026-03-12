@@ -11,7 +11,7 @@ file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/geo/
 add_library("${PROJECT_NAME}" STATIC ${MY_SOURCES})
 set_property(TARGET "${PROJECT_NAME}" PROPERTY CXX_STANDARD 17)
 
-target_precompile_headers("${PROJECT_NAME}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/geo/pch.h")
+target_precompile_headers("${PROJECT_NAME}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/geo/core/pch.h")
 
 if(NOT PRODUCTION_BUILD)
 	# This is useful to get an ASSETS_PATH in your IDE during development
@@ -41,6 +41,6 @@ target_include_directories("${PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}
 
 ############ link libraries ############
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE glm eigen nanoflann)
+target_link_libraries("${PROJECT_NAME}" PRIVATE glm eigen nanoflann tiny_obj_loader)
 
 ########################################

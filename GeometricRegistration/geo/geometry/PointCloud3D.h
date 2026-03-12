@@ -1,9 +1,9 @@
 #pragma once
-#include "geo/math/RigidTransform.h"
 #include <vector>
+#include "geo/math/RigidTransform.h"
+#include "core/GeoTypes.h"
 
-// TODO: 
-// Build PointCloud from mesh
+// TODO:
 // PointCloud3DBuilder
 
 namespace geo
@@ -12,8 +12,8 @@ namespace geo
 	class PointCloud3D
 	{
 	public:
-		explicit PointCloud3D(std::vector<glm::vec3>&& points);	
-		explicit PointCloud3D(const float* arr, size_t float_count);
+		explicit PointCloud3D(std::vector<glm::vec3> points);
+		explicit PointCloud3D(const f32* arr, size_t float_count);
 	public:
 		size_t Size() const;
 		bool Empty() const;

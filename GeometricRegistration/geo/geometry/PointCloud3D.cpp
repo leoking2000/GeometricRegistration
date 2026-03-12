@@ -3,14 +3,14 @@
 
 namespace geo
 {
-	PointCloud3D::PointCloud3D(std::vector<glm::vec3>&& points)
+	PointCloud3D::PointCloud3D(std::vector<glm::vec3> points)
 		:
 		m_points(std::move(points))
 	{
 		recalculateCentroid();
 	}
 
-	PointCloud3D::PointCloud3D(const float* arr, size_t float_count)
+	PointCloud3D::PointCloud3D(const f32* arr, size_t float_count)
 	{
 		assert(arr != nullptr);
 		assert(float_count % 3 == 0);
