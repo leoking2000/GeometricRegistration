@@ -7,13 +7,12 @@ namespace geo
 	using TimePoint = Clock::time_point;
 
 	// Compute a - b in milliseconds
-	static double TimeDifference_ms(TimePoint end, TimePoint start)
+	static f64 TimeDifference_ms(TimePoint end, TimePoint start)
 	{
-		return std::chrono::duration<double, std::milli>(end - start).count();
+		return std::chrono::duration<f64, std::milli>(end - start).count();
 	}
 
-
-	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, int maxIterations, float tolerance)
+	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, u32 maxIterations, f32 tolerance)
 	{
 		assert(source.Size() > 1);
 		assert(maxIterations >= 1);
@@ -22,14 +21,14 @@ namespace geo
 		ICPResult result;
 		result.transform = { glm::mat3(1.0f), glm::vec3(0.0f) };
 
-		float prevError = std::numeric_limits<float>::max();
+		f32 prevError = F32_MAX;
 
 		std::vector<glm::vec3> correspondences;
 		correspondences.reserve(source.Size());
 
 		TimePoint startTime = Clock::now();
 
-		for (int iter = 0; iter < maxIterations; iter++)
+		for (u32 iter = 0; iter < maxIterations; iter++)
 		{
 			correspondences.clear();
 
@@ -88,7 +87,7 @@ namespace geo
 			result.transform.rotation = R * result.transform.rotation;
 
 			// Compute RMS
-			float error = 0.0f;
+			f32 error = 0.0f;
 			for (size_t i = 0; i < source.Size(); ++i)
 			{
 				glm::vec3 diff = source[i] - correspondences[i];

@@ -1,16 +1,17 @@
 #pragma once
-#include "geo/math/RigidTransform.h"
+#include "core/GeoTypes.h"
+#include "math/RigidTransform.h"
 
 namespace geo
 {
     struct ICPResult
     {
         RigidTransform transform = {};
-        float rms = 0.0f;
-        int iterations = 0;
+        f32 rms = 0.0f;
+        u32 iterations = 0;
         bool converged = false;
-        double totalElapsed_ms = 0.0;
-        double avgCorrespondenceTime_ms = 0.0f;
-        double avgSolverTime_ms = 0.0f;
+        f64 totalElapsed_ms = 0.0;
+        f64 avgCorrespondenceTime_ms = 0.0f;
+        f64 avgSolverTime_ms = 0.0f;
     };
 }

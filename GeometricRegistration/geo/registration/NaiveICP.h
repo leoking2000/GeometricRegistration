@@ -3,9 +3,8 @@
 #include "spatial/INearestNeighbor.h"
 #include "ICPResult.h"
 
-
 namespace geo
 {
 	// Least squares
-	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, int maxIterations, float tolerance = 1e-5f);
+	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, u32 maxIterations, f32 tolerance = 1e-5f);
 }

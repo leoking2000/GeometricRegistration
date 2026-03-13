@@ -9,66 +9,66 @@ namespace geo
     {
     }
 
-    Random::Random(unsigned int seed)
+    Random::Random(u32 seed)
         : m_Rng(seed)
     {
     }
 
-    void Random::SetSeed(unsigned int seed)
+    void Random::SetSeed(u32 seed)
     {
         m_Rng.seed(seed);
     }
 
-    int Random::Int(int min, int max)
+    i32 Random::Int(i32 min, i32 max)
     {
         assert(min <= max);
 
-        std::uniform_int_distribution<int> dist(min, max);
+        std::uniform_int_distribution<i32> dist(min, max);
         return dist(m_Rng);
     }
 
-    unsigned int Random::UInt(unsigned int min, unsigned int max)
+    u32 Random::UInt(u32 min, u32 max)
     {
         assert(min <= max);
 
-        std::uniform_int_distribution<unsigned int> dist(min, max);
+        std::uniform_int_distribution<u32> dist(min, max);
         return dist(m_Rng);
     }
 
-    float Random::Float(float min, float max)
+    f32 Random::Float(f32 min, f32 max)
     {
         assert(min <= max);
 
-        std::uniform_real_distribution<float> dist(min, max);
+        std::uniform_real_distribution<f32> dist(min, max);
         return dist(m_Rng);
     }
 
-    glm::vec2 Random::Float2(float min, float max)
+    glm::vec2 Random::Float2(f32 min, f32 max)
     {
         return { Float(min, max), Float(min, max) };
     }
 
-    glm::vec3 Random::Float3(float min, float max)
+    glm::vec3 Random::Float3(f32 min, f32 max)
     {
         return { Float(min, max), Float(min, max), Float(min, max) };
     }
 
-    glm::vec2 Random::Dir2D(float length)
+    glm::vec2 Random::Dir2D(f32 length)
     {
-        float angle = Float(0.0f, glm::two_pi<float>());
+        f32 angle = Float(0.0f, glm::two_pi<f32>());
         return {
             glm::cos(angle) * length,
             glm::sin(angle) * length
         };
     }
 
-    glm::vec3 Random::Dir3D(float length)
+    glm::vec3 Random::Dir3D(f32 length)
     {
         // Uniform spherical distribution
-        float z = Float(-1.0f, 1.0f);
-        float theta = Float(0.0f, glm::two_pi<float>());
+        f32 z = Float(-1.0f, 1.0f);
+        f32 theta = Float(0.0f, glm::two_pi<f32>());
 
-        float r = glm::sqrt(1.0f - z * z);
+        f32 r = glm::sqrt(1.0f - z * z);
 
         return {
             r * glm::cos(theta) * length,
