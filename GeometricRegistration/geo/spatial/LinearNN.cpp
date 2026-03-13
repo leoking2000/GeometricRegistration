@@ -1,4 +1,4 @@
-#include <limits>
+#include <cassert>
 #include "LinearNN.h"
 
 
@@ -11,44 +11,75 @@ namespace geo
 	{
 	}
 
-	glm::vec3 LinearNN::FindClosestPoint(const glm::vec3& query) const
+	void LinearNN::Build()
 	{
-		glm::vec3 best;
-		float dist;
+	}
 
-		Search(query, best, dist);
+	index_t LinearNN::Query(const glm::vec3& point, f32* distSq) const
+	{
+		f32 distSqBest;
+		index_t best = Search(point, distSqBest);
+
+		if (distSq != nullptr) {
+			*distSq = distSqBest;
+		}
 
 		return best;
 	}
 
-	float LinearNN::DistanceFromClosest(const glm::vec3& query) const
+	void LinearNN::QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const
 	{
-		glm::vec3 best;
-		float dist;
+		if (results.size() != points.size())
+		{
+			results.resize(points.size());
+		}
 
-		Search(query, best, dist);
-
-		return dist;
+		// This is slow but is only for testing, no point to have multithreding here
+		for (size_t i = 0; i < points.size(); i++)
+		{
+			results[i] = Query(points[i]);
+		}
 	}
 
-	void LinearNN::Search(const glm::vec3& query, glm::vec3& best, float& dist) const
+	bool LinearNN::Empty() const
+	{
+		return m_points.empty();
+	}
+
+	size_t LinearNN::Size() const
+	{
+		return m_points.size();
+	}
+
+	glm::vec3 LinearNN::FindClosestPoint(const glm::vec3& point) const
+	{
+		f32 distSqBest;
+		index_t best = Search(point, distSqBest);
+
+		return m_points[best];
+	}
+
+	index_t LinearNN::Search(const glm::vec3& query, f32& distSq) const
 	{
 		assert(!m_points.empty());
 
-		float bestDistSq = std::numeric_limits<float>::max();
+		f32 bestDistSq = F32_MAX;
+		index_t best = 0;
 
-		for (const auto& point : m_points)
+		// do linear search
+		for (index_t i = 0; i < (index_t)m_points.size(); i++)
 		{
-			float d = glm::dot(point - query, point - query);
+			f32 d2 = glm::dot(m_points[i] - query, m_points[i] - query);
 
-			if (d < bestDistSq)
+			if (d2 < bestDistSq)
 			{
-				bestDistSq = d;
-				best = point;
+				bestDistSq = d2;
+				best = i;
 			}
 		}
 
-		dist = glm::sqrt(bestDistSq);
+		distSq = bestDistSq;
+		return best;
 	}
 
 }

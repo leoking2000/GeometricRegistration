@@ -4,7 +4,6 @@
 #include "INearestNeighbor.h"
 
 // TODO:
-// batch queries
 // parallel nearest neighbor
 
 namespace geo
@@ -25,15 +24,14 @@ namespace geo
 
         ~KDTree();
     public:
-        size_t Size() const;
-        // Rebuild the KDTree after the underlying point vector changes.
-        // Must be called if points are inserted/removed/moved.
-        void Rebuild();
-    public:
-        virtual glm::vec3 FindClosestPoint(const glm::vec3& p) const override;
-        virtual float DistanceFromClosest(const glm::vec3& p) const override;
+        virtual void      Build() override;
+        virtual index_t   Query(const glm::vec3& point, f32* distSq = nullptr) const override;
+        virtual void      QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const override;
+        virtual bool      Empty() const override;
+        virtual size_t    Size()  const override;
+        virtual glm::vec3 FindClosestPoint(const glm::vec3& point) const override;
     private:
-        size_t NearestIndex(const glm::vec3& query, float* outDistSq) const;
+        index_t Search(const glm::vec3& query, f32& outDistSq) const;
     private:
         struct KDTreeData;
         std::unique_ptr<KDTreeData> m_data;

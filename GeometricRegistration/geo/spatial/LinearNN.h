@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include "core/GeoTypes.h"
 #include "INearestNeighbor.h"
 
 namespace geo
@@ -10,10 +11,14 @@ namespace geo
 	public:
 		LinearNN(const std::vector<glm::vec3>& points);
 	public:
-		virtual glm::vec3 FindClosestPoint(const glm::vec3& query) const override;
-		virtual float DistanceFromClosest(const glm::vec3& query) const override;
+		virtual void      Build() override;
+		virtual index_t   Query(const glm::vec3& point, f32* distSq = nullptr) const override;
+		virtual void      QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const override;
+		virtual bool      Empty() const override;
+		virtual size_t    Size()  const override;
+		virtual glm::vec3 FindClosestPoint(const glm::vec3& point) const override;
 	private:
-		void Search(const glm::vec3& query, glm::vec3& best, float& dist) const;
+		index_t Search(const glm::vec3& query, f32& distSq) const;
 	private:
 		const std::vector<glm::vec3>& m_points;
 	};

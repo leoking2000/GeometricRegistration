@@ -54,21 +54,58 @@ namespace geo
     KDTree& KDTree::operator=(KDTree&&) noexcept = default;
     KDTree::~KDTree() = default;
 
-    size_t KDTree::Size() const
-    {
-        return m_data->adaptor.pts.size();
-    }
-
-    void KDTree::Rebuild()
+    void KDTree::Build()
     {
         assert(!m_data->adaptor.pts.empty());
         m_data->index.buildIndex();
     }
 
-    size_t KDTree::NearestIndex(const glm::vec3& query, float* outDistSq) const
+    index_t KDTree::Query(const glm::vec3& point, f32* distSq) const
+    {
+        f32 distSqBest;
+        index_t best = Search(point, distSqBest);
+
+        if (distSq != nullptr) {
+            *distSq = distSqBest;
+        }
+
+        return best;
+    }
+
+    void KDTree::QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const
+    {
+        if (results.size() != points.size())
+        {
+            results.resize(points.size());
+        }
+
+        // TODO: multithreding here
+        for (size_t i = 0; i < points.size(); i++)
+        {
+            results[i] = Query(points[i]);
+        }
+    }
+
+    bool KDTree::Empty() const
+    {
+        return m_data->adaptor.pts.empty();
+    }
+
+    size_t KDTree::Size() const
+    {
+        return m_data->adaptor.pts.size();
+    }
+
+    glm::vec3 KDTree::FindClosestPoint(const glm::vec3& query) const
+    {
+        f32 d;
+        return m_data->adaptor.pts[Search(query, d)];
+    }
+
+    index_t KDTree::Search(const glm::vec3& query, f32& outDistSq) const
     {
         size_t idx;
-        float distSq;
+        f32 distSq = 0;
 
         KNNResultSet<float> resultSet(1);
         resultSet.init(&idx, &distSq);
@@ -76,20 +113,8 @@ namespace geo
         float q[3] = { query.x, query.y, query.z };
         m_data->index.findNeighbors(resultSet, q);
 
-        if (outDistSq) *outDistSq = distSq;
+        outDistSq = distSq;
 
-        return idx;
-    }
-
-    glm::vec3 KDTree::FindClosestPoint(const glm::vec3& query) const
-    {
-        return m_data->adaptor.pts[NearestIndex(query, nullptr)];
-    }
-
-    float KDTree::DistanceFromClosest(const glm::vec3& query) const
-    {
-        float distSq;
-        NearestIndex(query, &distSq);
-        return glm::sqrt(distSq);
+        return (index_t)idx;
     }
 }
