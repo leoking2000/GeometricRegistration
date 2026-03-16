@@ -1,6 +1,7 @@
 #pragma once
 #include <gtest/gtest.h>
 #include <geo/GeometricRegistration.h>
+#include <geo/utils/LeoRand.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/epsilon.hpp>
 
@@ -13,8 +14,7 @@ static inline void ExpectMat3Near(
     {
         for (int r = 0; r < 3; ++r)
         {
-            EXPECT_NEAR(A[c][r], B[c][r], tolerance)
-                << "Mismatch at (" << r << ", " << c << ")";
+            EXPECT_NEAR(A[c][r], B[c][r], tolerance) << "Mismatch at (" << r << ", " << c << ")";
         }
     }
 }
@@ -156,3 +156,37 @@ TEST(NaiveICP, RMSIsReduced)
     EXPECT_LT(result.rms, 2.0f);
 }
 
+TEST(NaiveICP, PointToPlaneRandomRect)
+{
+    geo::Random rng(8888); // reproducible seed
+
+    // Generate a random "cube like" point cloud (points on the faces of a box)
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(
+        glm::vec3(0.0f), 1.0f, 1.0f, 1.0f, 100, rng, true);
+    
+    // Apply a small known transform
+    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(0.1f), glm::vec3(0,1,0));
+    glm::vec3 trans(0.02f, -0.01f, 0.015f);
+
+    geo::PointCloud3D source = target; // copy
+    source.Transform(rot, trans);
+
+    // Use KDTree for speed
+    geo::KDTree nn(target.GetStorage());
+
+    // Run point-to-plane ICP
+    auto result = geo::NaiveICP(target, source, nn, 100, 1e-2f, true); // useNormals = true
+
+    // Check convergence
+    EXPECT_TRUE(result.converged);
+
+    // RMS should be very small (since we generated the transform)
+    EXPECT_LT(result.rms, 1e-2f);
+
+    // The recovered transform should be approximately the inverse of the applied transform
+    glm::mat3 expectedR = glm::transpose(rot); // inverse rotation
+    glm::vec3 expectedT = -expectedR * trans;  // inverse translation
+
+    ExpectMat3Near(result.transform.rotation, expectedR, 1e-2f);
+    ExpectVec3Near(result.transform.translation, expectedT, 1e-2f);
+}
