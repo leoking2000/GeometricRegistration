@@ -1,11 +1,14 @@
 #pragma once
-#include <glm/glm.hpp>
-#include "core/GeoTypes.h" 
+#include <array>
+#include "core/GeoTypes.h"
 
 
 namespace geo
 {
-    //glm::vec<6, float, glm::packed_highp> SolvePointToPlaneSystem(
-    //    const glm::mat<6, 6, float, glm::packed_highp>& A, const glm::mat<6, 6, float, glm::packed_highp>& b);
+    using Vec6 = std::array<f32, 6>;
+    using Mat6 = std::array<std::array<f32, 6>, 6>;
+
+    // solves A*x=b system that is 6x6
+    Vec6 Solve6x6(Mat6 A_in, Vec6 b_in);
 }
 
