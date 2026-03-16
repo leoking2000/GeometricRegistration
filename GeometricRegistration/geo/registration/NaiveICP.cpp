@@ -92,8 +92,8 @@ namespace geo
 			// Compute b_i = dot(n, q - p)
 			f32 bi = glm::dot(n, q - p);
 
-			// Compute rotation part: cross(p, n)
-			glm::vec3 crossPn = glm::cross(p, n);
+			// Compute rotation part: cross(n, p)
+			glm::vec3 crossPn = glm::cross(n, p);
 
 			// Fill AtA and Atb
 			std::array<f32, 6> row{ crossPn.x, crossPn.y, crossPn.z, n.x, n.y, n.z };
@@ -109,6 +109,9 @@ namespace geo
 
 			error += bi * bi; // point-to-plane error
 		}
+
+		//for (int i = 0; i < 6; i++)
+			//AtA[i][i] += 1e-6f;
 
 		// Solve 6x6 system
 		geo::Vec6 x = geo::Solve6x6(AtA, Atb);

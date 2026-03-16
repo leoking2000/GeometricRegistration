@@ -6,7 +6,7 @@
 // Utility: Convert geo::PointCloud3D -> instance transforms
 static void BuildInstanceTransforms(const geo::PointCloud3D& cloud, std::vector<Matrix>& transforms, float scale = 0.1f)
 {
-	for (size_t i = 0; i < cloud.Count(); i++)
+	for (size_t i = 0; i < cloud.Size(); i++)
 	{
 		glm::vec3 p = cloud[i];
 
@@ -101,7 +101,7 @@ void RaylibRenderer::RenderPointCloud(const geo::PointCloud3D& cloud, Color colo
 
 	// Instances Transforms
 	static std::vector<Matrix> transforms;
-	transforms.resize(cloud.Count());
+	transforms.resize(cloud.Size());
 	BuildInstanceTransforms(cloud, transforms, 0.1f);
 
 	// Draw Cloud

@@ -11,7 +11,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-static leo::Random rng{ 2026 }; 
+static geo::Random rng{ 2026 }; 
 
 static void RunProjectWithWindow(ICPSystem& system)
 {
@@ -61,7 +61,7 @@ static void RunProjectInConsole(ICPSystem& system)
     geo::ICPResult result = system.Solve();
 
     std::stringstream ss;
-    ss << "Number of Points: " << system.GetTarget().Count() << "\n";
+    ss << "Number of Points: " << system.GetTarget().Size() << "\n";
     ss << "Iterations: " << result.iterations << "\n";
     ss << "converged: " << result.converged << "\n";
     ss << "RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
@@ -74,12 +74,18 @@ static void RunProjectInConsole(ICPSystem& system)
 
 int main()
 {
+    //geo::Mesh fox_scule(RESOURCES_PATH"models/fox_skull/obj/fox_skull.obj");
+    //geo::Mesh Tombstone(RESOURCES_PATH"models/Tombstone/Tombstone1/Tombstone1.obj");
+
     // ---------------- Generate Test Clouds ----------------
-    geo::PointCloud3D target = ICPSystem::GenerateRandomCloud(rng, 10000, -10.0f, 10.0f);
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng);
+    //geo::PointCloud3D target(fox_scule.Vertices(), fox_scule.Normals());
+
     geo::PointCloud3D source = target;
 
     // Apply known transform to source
     glm::vec3 eulerRot(20.0f, 40.0f, 10.0f);
+    glm::vec3 translation(5.0f, 3.0f, -4.0f);
 
     glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
         glm::radians(eulerRot.x),
@@ -92,15 +98,20 @@ int main()
         glm::vec3(0, 0, 1));
 
     glm::mat4 rotation = Ry * Rx * Rz;
-    glm::vec3 translation(5.0f, 3.0f, -4.0f);
 
     source.Transform(rotation, translation);
 
-    ICPSystem system(ICPMethod::NAIVE, std::move(target), std::move(source));
+    //std::cout << "Point to Point\n";
+    //ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
+    //RunProjectInConsole(system_ptp);
+    
 
-    //RunProjectWithWindow(system);
-    RunProjectInConsole(system);
+    //std::cout << "Point to Plane\n";
+    ICPSystem system_ptpl(ICPMethod::NAIVE_PTP, target, source);
+    //RunProjectInConsole(system_ptpl);
 
+
+    RunProjectWithWindow(system_ptpl);
 
     return 0;
 }

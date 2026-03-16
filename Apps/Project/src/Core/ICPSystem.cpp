@@ -8,8 +8,8 @@ ICPSystem::ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud
 	:
 	m_method(method),
 	m_target(std::move(target)),
-	m_tree(m_target),
-	m_source(std::move(source))
+	m_source(std::move(source)),
+	m_tree(m_target.GetStorage())
 {
 }
 
@@ -26,7 +26,7 @@ const geo::PointCloud3D& ICPSystem::GetSource() const
 void ICPSystem::SetTarget(geo::PointCloud3D target)
 {
 	m_target = std::move(target);
-	m_tree = geo::KDTree(m_target);
+	m_tree = geo::KDTree(m_target.GetStorage());
 }
 
 void ICPSystem::SetSource(geo::PointCloud3D source)
@@ -41,7 +41,10 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 	switch (m_method)
 	{
 	case ICPMethod::NAIVE:
-		r = geo::NaiveICP(m_tree, m_source, max_iterations);
+		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, false);
+		break;
+	case ICPMethod::NAIVE_PTP:
+		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, true);
 		break;
 	}
 
@@ -65,22 +68,9 @@ void ICPSystem::SetSolveMethod(ICPMethod method)
 	m_method = method;
 }
 
-geo::PointCloud3D ICPSystem::GenerateRandomCloud(leo::Random& rng, leo::u32 count, leo::f32 min, leo::f32 max)
-{
-	std::vector<glm::vec3> points;
-	points.reserve(count);
-
-	for (leo::u32 i = 0; i < count; i++)
-	{
-		points.emplace_back(rng.Float3(min, max));
-	}
-
-	return geo::PointCloud3D(std::move(points));
-}
-
 void ICPSystem::PrintCloudPreview(const geo::PointCloud3D& cloud)
 {
-	std::cout << "Number of points: " << cloud.Count() << std::endl;
+	std::cout << "Number of points: " << cloud.Size() << std::endl;
 	glm::vec3 center = cloud.Centroid();
 	std::cout << "Centroid: " << "(" << center.x << ", " << center.y << ", " << center.z << ")\n";
 

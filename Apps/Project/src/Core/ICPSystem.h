@@ -1,11 +1,10 @@
 #pragma once
 #include <geo/GeometricRegistration.h>
-#include <geo/KDTree.h>
-#include "LeoRand.h"
 
-enum class ICPMethod : leo::u8
+enum class ICPMethod : geo::u8
 {
-    NAIVE = 0
+    NAIVE = 0,
+    NAIVE_PTP = 1
 };
 
 class ICPSystem
@@ -24,13 +23,12 @@ public:
 public:
     void SetSolveMethod(ICPMethod method);
 public:
-    static geo::PointCloud3D GenerateRandomCloud(leo::Random& rng, leo::u32 count, leo::f32 min, leo::f32 max);
     static void PrintCloudPreview(const geo::PointCloud3D& cloud);
     static void PrintRigidTransform(const geo::RigidTransform& tf);
 private:
     geo::PointCloud3D m_target;
-    geo::KDTree m_tree;
     geo::PointCloud3D m_source;
+    geo::KDTree m_tree;
     ICPMethod m_method = ICPMethod::NAIVE;
     float m_RMS = -1.0f;
 };
