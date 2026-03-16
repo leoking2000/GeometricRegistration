@@ -27,5 +27,5 @@ namespace geo
     inline constexpr f64 F64_MAX = std::numeric_limits<f64>::max();
     inline constexpr f64 F64_MIN = std::numeric_limits<f64>::lowest();
 
-    inline constexpr f32 EPSILON = 1e-6f;
+    inline constexpr f32 GEO_EPS = 1e-6f;
 }

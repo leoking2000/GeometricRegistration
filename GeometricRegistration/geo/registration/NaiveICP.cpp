@@ -12,32 +12,34 @@ namespace geo
 		return std::chrono::duration<f64, std::milli>(end - start).count();
 	}
 
-	ICPResult NaiveICP(const INearestNeighbor& target, PointCloud3D& source, u32 maxIterations, f32 tolerance)
+	ICPResult NaiveICP(const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, 
+		u32 maxIterations, f32 tolerance, bool useNormals)
 	{
-		assert(source.Size() > 1);
+		assert(!source.Empty());
+		assert(!target.Empty());
+		assert(target.Size() == nn.Size());
 		assert(maxIterations >= 1);
 		assert(tolerance > 0.0f);
+
+		index_t numberOfPoints = source.Size();
 
 		ICPResult result;
 		result.transform = { glm::mat3(1.0f), glm::vec3(0.0f) };
 
 		f32 prevError = F32_MAX;
 
-		std::vector<glm::vec3> correspondences;
-		correspondences.reserve(source.Size());
+		std::vector<index_t> correspondences;
+		correspondences.resize(numberOfPoints, 0);
 
 		TimePoint startTime = Clock::now();
 
+
 		for (u32 iter = 0; iter < maxIterations; iter++)
 		{
-			correspondences.clear();
-
 			// Find correspondences 
 			TimePoint startCorrTime = Clock::now();
-			for (const auto& p : source)
-			{
-				correspondences.emplace_back(target.FindClosestPoint(p)); // TODO: batch queries
-			}
+
+			nn.QueryBatch(source.GetStorage(), correspondences);
 
 			TimePoint endCorrTime = Clock::now();
 			result.avgCorrespondenceTime_ms += TimeDifference_ms(endCorrTime, startCorrTime);
@@ -45,20 +47,20 @@ namespace geo
 			// Compute centroids
 			glm::vec3 centroidSrc = source.Centroid();
 			glm::vec3 centroidCor(0.0f);
-			for (const auto& p : correspondences)
+			for (index_t i : correspondences)
 			{
-				centroidCor += p;
+				centroidCor += target[i];
 			}
-			centroidCor = centroidCor / (float)correspondences.size();
+			centroidCor = centroidCor / (float)numberOfPoints;
 
 			TimePoint startSolveTime = Clock::now();
 
 			// Compute covariance matrix
 			glm::mat3 H(0.0f);
-			for (size_t i = 0; i < source.Size(); ++i)
+			for (index_t i = 0; i < numberOfPoints; ++i)
 			{
 				glm::vec3 p = source[i] - centroidSrc;
-				glm::vec3 q = correspondences[i] - centroidCor;
+				glm::vec3 q = target[correspondences[i]] - centroidCor;
 				H += glm::outerProduct(p, q);
 			}
 
@@ -88,13 +90,13 @@ namespace geo
 
 			// Compute RMS
 			f32 error = 0.0f;
-			for (size_t i = 0; i < source.Size(); ++i)
+			for (index_t i = 0; i < numberOfPoints; ++i)
 			{
-				glm::vec3 diff = source[i] - correspondences[i];
+				glm::vec3 diff = source[i] - target[correspondences[i]];
 				error += glm::dot(diff, diff);
 			}
 
-			error = std::sqrt(error / source.Size());
+			error = std::sqrt(error / numberOfPoints);
 			result.rms = error;
 			result.iterations = iter + 1;
 

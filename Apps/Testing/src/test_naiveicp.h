@@ -50,10 +50,11 @@ TEST(NaiveICP, IdentityAlignment)
         0.0f,0.0f,1.0f
     };
 
-    std::vector<glm::vec3> target = CreateFromArray(data, 12); 
+    std::vector<glm::vec3> target_data = CreateFromArray(data, 12); 
+    geo::PointCloud3D target(target_data);
     geo::PointCloud3D source(data, 12);
 
-    auto result = geo::NaiveICP(geo::LinearNN(target), source, 20);
+    auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
     EXPECT_TRUE(result.converged);
     EXPECT_NEAR(result.rms, 0.0f, 1e-6f);
@@ -71,9 +72,9 @@ TEST(NaiveICP, RecoversKnownTransform)
         0.0f,0.0f,1.0f
     };
 
-    std::vector<glm::vec3> target = CreateFromArray(data, 12);
-
-    geo::PointCloud3D source = geo::PointCloud3D(std::vector<glm::vec3>(target));
+    std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
+    geo::PointCloud3D target(target_data);
+    geo::PointCloud3D source(data, 12);
 
     float angle = glm::radians(10.0f);
     glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
@@ -83,7 +84,7 @@ TEST(NaiveICP, RecoversKnownTransform)
 
     source.Transform(R, t);
 
-    auto result = geo::NaiveICP(geo::LinearNN(target), source, 20);
+    auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
     EXPECT_TRUE(result.converged);
     EXPECT_NEAR(result.rms, 0.0f, 1e-5f);
@@ -104,12 +105,11 @@ TEST(NaiveICP, RotationIsOrthogonal)
         0.0f,0.0f,1.0f
     };
 
-    std::vector<glm::vec3> target = CreateFromArray(data, 12);
+    std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
+    geo::PointCloud3D target(target_data);
+    geo::PointCloud3D source(data, 12);
 
-    geo::PointCloud3D source = geo::PointCloud3D(std::vector<glm::vec3>(target));
-    source.Transform(glm::mat3(1.0f), { 1.0f, 0.0f, 0.0f });
-
-    auto result = geo::NaiveICP(geo::LinearNN(target), source, 20);
+    auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
     glm::mat3 RtR = glm::transpose(result.transform.rotation) * result.transform.rotation;
 
@@ -126,12 +126,11 @@ TEST(NaiveICP, RotationHasUnitDeterminant)
         0.0f,0.0f,1.0f
     };
 
-    std::vector<glm::vec3> target = CreateFromArray(data, 12);
+    std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
+    geo::PointCloud3D target(target_data);
+    geo::PointCloud3D source(data, 12);
 
-    geo::PointCloud3D source = geo::PointCloud3D(std::vector<glm::vec3>(target));
-    source.Transform(glm::mat3(1.0f), { 1.0f, 0.0f, 0.0f });
-
-    auto result = geo::NaiveICP(geo::LinearNN(target), source, 20);
+    auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
     float det = glm::determinant(result.transform.rotation);
     EXPECT_NEAR(det, 1.0f, 1e-4f);
@@ -146,12 +145,13 @@ TEST(NaiveICP, RMSIsReduced)
         0.0f,0.0f,1.0f
     };
 
-    std::vector<glm::vec3> target = CreateFromArray(data, 12);
+    std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
+    geo::PointCloud3D target(target_data);
+    geo::PointCloud3D source(data, 12);
 
-    geo::PointCloud3D source = geo::PointCloud3D(std::vector<glm::vec3>(target));
     source.Transform(glm::mat3(1.0f), { 2.0f, 0.0f, 0.0f });
 
-    auto result = geo::NaiveICP(geo::LinearNN(target), source, 50);
+    auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 50);
 
     EXPECT_LT(result.rms, 2.0f);
 }

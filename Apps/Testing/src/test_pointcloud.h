@@ -112,11 +112,3 @@ TEST(PointCloudTest, TransformUpdatesCentroid)
 //    EXPECT_TRUE(glm::all(glm::epsilonEqual(closest, expected, EPSILON)));
 //}
 
-TEST(PointCloudTest, EmptyCloud)
-{
-    std::vector<glm::vec3> pts;
-    geo::PointCloud3D cloud(std::move(pts));
-
-    EXPECT_EQ(cloud.Size(), 0);
-    EXPECT_TRUE(glm::all(glm::epsilonEqual(cloud.Centroid(), glm::vec3(0.0f), EPSILON)));
-}

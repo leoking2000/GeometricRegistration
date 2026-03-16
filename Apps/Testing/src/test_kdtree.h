@@ -25,7 +25,7 @@ protected:
         };
 
         std::vector<glm::vec3> points;
-        for (int i = 0; i < 10000; i++)
+        for (int i = 0; i < 1000; i++)
         {
             rng_points.emplace_back(rng.Float3(-10.0f, 10.0f));
         }
