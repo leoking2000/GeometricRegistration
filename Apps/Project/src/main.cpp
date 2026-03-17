@@ -74,12 +74,7 @@ static void RunProjectInConsole(ICPSystem& system)
 
 int main()
 {
-    //geo::Mesh fox_scule(RESOURCES_PATH"models/fox_skull/obj/fox_skull.obj");
-    //geo::Mesh Tombstone(RESOURCES_PATH"models/Tombstone/Tombstone1/Tombstone1.obj");
-
-    // ---------------- Generate Test Clouds ----------------
-    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng);
-    //geo::PointCloud3D target(fox_scule.Vertices(), fox_scule.Normals());
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 50.0f, 50.0f, 50.0f, 100000, rng);
 
     geo::PointCloud3D source = target;
 
@@ -101,17 +96,17 @@ int main()
 
     source.Transform(rotation, translation);
 
-    //std::cout << "Point to Point\n";
-    //ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    //RunProjectInConsole(system_ptp);
+    std::cout << "<<Point to Point>>\n\n";
+    ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
+    RunProjectInConsole(system_ptp);
     
 
-    //std::cout << "Point to Plane\n";
-    ICPSystem system_ptpl(ICPMethod::NAIVE_PTP, target, source);
-    //RunProjectInConsole(system_ptpl);
+    std::cout << "\n<<Point to Plane>>\n\n";
+    ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
+    RunProjectInConsole(system_ptpl);
 
 
-    RunProjectWithWindow(system_ptpl);
+    //RunProjectWithWindow(system_ptpl);
 
     return 0;
 }

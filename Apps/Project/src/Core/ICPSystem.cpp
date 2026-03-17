@@ -43,7 +43,7 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 	case ICPMethod::NAIVE:
 		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, false);
 		break;
-	case ICPMethod::NAIVE_PTP:
+	case ICPMethod::NAIVE_PLANE:
 		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, true);
 		break;
 	}

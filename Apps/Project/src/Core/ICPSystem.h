@@ -4,7 +4,7 @@
 enum class ICPMethod : geo::u8
 {
     NAIVE = 0,
-    NAIVE_PTP = 1
+    NAIVE_PLANE = 1
 };
 
 class ICPSystem
