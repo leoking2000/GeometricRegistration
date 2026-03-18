@@ -12,3 +12,4 @@
 
 #include "utils/LeoRand.h"
 
+#include "logging/Log.h"

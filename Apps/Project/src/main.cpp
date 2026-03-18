@@ -75,6 +75,7 @@ static void RunProjectInConsole(ICPSystem& system)
 int main()
 {
     geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 50.0f, 50.0f, 50.0f, 100000, rng);
+    LEOLOGDEBUG("RandomPointCloud genearated!!!");
 
     geo::PointCloud3D source = target;
 
