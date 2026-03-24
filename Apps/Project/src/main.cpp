@@ -74,10 +74,10 @@ static void RunProjectInConsole(ICPSystem& system)
 
 int main()
 {
-    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 50.0f, 50.0f, 50.0f, 1000, rng);
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng);
+    geo::PointCloud3D source = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng); //target;
     LOGDEBUG("RandomPointCloud genearated!!!");
 
-    geo::PointCloud3D source = target;
 
     // Apply known transform to source
     glm::vec3 eulerRot(20.0f, 40.0f, 10.0f);
