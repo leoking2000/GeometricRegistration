@@ -1,7 +1,7 @@
 #include <gtest/gtest.h>
 #include <glm/glm.hpp>
 #include <vector>
-#include <geo/utils/LeoRand.h>
+#include <geo/utils/Rand.h>
 #include <geo/spatial/INearestNeighbor.h>
 #include <geo/spatial/LinearNN.h>
 #include <geo/spatial/KDTree.h>

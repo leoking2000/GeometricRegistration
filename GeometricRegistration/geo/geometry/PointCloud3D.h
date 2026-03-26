@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
-#include "geo/math/RigidTransform.h"
 #include "core/GeoTypes.h"
-#include "utils/LeoRand.h"
+#include "geo/math/RigidTransform.h"
+#include "utils/Rand.h"
 
 // TODO:
 // PointCloud3DBuilder
@@ -33,6 +33,7 @@ namespace geo
 		auto end() const { return m_points.cend(); }
 	public:
 		const std::vector<glm::vec3>& GetStorage() const;
+		const std::vector<glm::vec3>& GetNormals() const;
 	private:
 		void recalculateCentroid();
 	private:

@@ -58,10 +58,11 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 static void RunProjectInConsole(ICPSystem& system)
 {
-    geo::ICPResult result = system.Solve();
+    geo::ICPResult result = system.Solve(500);
 
     std::stringstream ss;
-    ss << "Number of Points: " << system.GetTarget().Size() << "\n";
+    ss << "Number of Target Points: " << system.GetTarget().Size() << "\n";
+    ss << "Number of Source Points: " << system.GetSource().Size() << "\n";
     ss << "Iterations: " << result.iterations << "\n";
     ss << "converged: " << result.converged << "\n";
     ss << "RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
@@ -75,7 +76,19 @@ static void RunProjectInConsole(ICPSystem& system)
 int main()
 {
     geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng);
-    geo::PointCloud3D source = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng); //target;
+    geo::PointCloud3D source = target;
+
+    std::vector<glm::vec3> points = target.GetStorage();
+    points.erase(
+        std::remove_if(points.begin(), points.end(),
+            [](const glm::vec3& p) {
+                return p.x < 0;   // remove points with negative x
+            }),
+        points.end()
+    );
+
+    target = geo::PointCloud3D(points);
+ 
     LOGDEBUG("RandomPointCloud genearated!!!");
 
 
@@ -101,13 +114,16 @@ int main()
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
     RunProjectInConsole(system_ptp);
     
-
     std::cout << "\n<<Point to Plane>>\n\n";
     ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
     RunProjectInConsole(system_ptpl);
 
+    std::cout << "\n<<Sparse Point to Point>>\n\n";
+    ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
+    RunProjectInConsole(system_sparse);
 
-    //RunProjectWithWindow(system_ptpl);
+
+    //RunProjectWithWindow(system_sparse);
 
     return 0;
 }

@@ -19,6 +19,3 @@
 
 // ===== nanoflann =====
 #include <nanoflann.hpp>
-
-// ===== tiny_obj_loader =====
-#include <tiny_obj_loader.h>

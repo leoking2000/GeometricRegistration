@@ -46,12 +46,16 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 	case ICPMethod::NAIVE_PLANE:
 		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, true);
 		break;
+	case ICPMethod::SPARSE:
+		r = geo::SparseICP(m_target, m_source, m_tree, max_iterations, 1e-5, 0.9f, 1e-3);
+		break;
 	}
 
 	m_RMS = r.rms;
 
 	return r;
 }
+
 
 geo::ICPResult ICPSystem::Step()
 {

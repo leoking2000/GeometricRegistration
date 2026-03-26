@@ -10,6 +10,7 @@ namespace geo
 	{
 		assert(!m_points.empty());
 		assert(m_points.size() == m_normals.size() || m_normals.empty());
+
 		recalculateCentroid();
 	}
 
@@ -80,7 +81,7 @@ namespace geo
 			for (index_t i = 0; i < m_points.size(); i++)
 			{
 				m_points[i] = rot * m_points[i] + t;
-				m_normals[i] = rot * m_normals[i];
+				m_normals[i] = glm::normalize(rot * m_normals[i]);
 			}
 		}
 		else
@@ -97,6 +98,11 @@ namespace geo
 	const std::vector<glm::vec3>& PointCloud3D::GetStorage() const
 	{
 		return m_points;
+	}
+
+	const std::vector<glm::vec3>& PointCloud3D::GetNormals() const
+	{
+		return m_normals;
 	}
 
 	void PointCloud3D::recalculateCentroid()

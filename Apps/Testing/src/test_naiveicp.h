@@ -1,7 +1,7 @@
 #pragma once
 #include <gtest/gtest.h>
 #include <geo/GeometricRegistration.h>
-#include <geo/utils/LeoRand.h>
+#include <geo/utils/Rand.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/epsilon.hpp>
 
@@ -162,11 +162,11 @@ TEST(NaiveICP, PointToPlaneRandomRect)
 
     // Generate a random "cube like" point cloud (points on the faces of a box)
     geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(
-        glm::vec3(0.0f), 1.0f, 1.0f, 1.0f, 100, rng, true);
+        glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 100, rng, true);
     
     // Apply a small known transform
-    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(0.1f), glm::vec3(0,1,0));
-    glm::vec3 trans(0.02f, -0.01f, 0.015f);
+    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(10.0f), glm::vec3(0,1,0));
+    glm::vec3 trans(5.0f, 2.0f, 1.0f);
 
     geo::PointCloud3D source = target; // copy
     source.Transform(rot, trans);
