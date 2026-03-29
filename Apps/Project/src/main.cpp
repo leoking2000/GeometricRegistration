@@ -87,7 +87,12 @@ int main()
         points.end()
     );
 
-    target = geo::PointCloud3D(points);
+    for (geo::u32 i = 0; i < 200; i++)
+    {
+        points.emplace_back(rng.Float3(-20.0f, 0.0f));
+    }
+
+    source = geo::PointCloud3D(points);
  
     LOGDEBUG("RandomPointCloud genearated!!!");
 
@@ -112,18 +117,18 @@ int main()
 
     std::cout << "<<Point to Point>>\n\n";
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    RunProjectInConsole(system_ptp);
+    //RunProjectInConsole(system_ptp);
     
-    std::cout << "\n<<Point to Plane>>\n\n";
-    ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
-    RunProjectInConsole(system_ptpl);
+    //std::cout << "\n<<Point to Plane>>\n\n";
+    //ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
+    //RunProjectInConsole(system_ptpl);
 
     std::cout << "\n<<Sparse Point to Point>>\n\n";
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    RunProjectInConsole(system_sparse);
+    //RunProjectInConsole(system_sparse);
 
 
-    //RunProjectWithWindow(system_sparse);
+    RunProjectWithWindow(system_sparse);
 
     return 0;
 }

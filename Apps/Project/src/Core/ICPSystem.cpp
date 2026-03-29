@@ -47,7 +47,7 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5, true);
 		break;
 	case ICPMethod::SPARSE:
-		r = geo::SparseICP(m_target, m_source, m_tree, max_iterations, 1e-5, 0.9f, 1e-3);
+		r = geo::SparseICP(m_target, m_source, m_tree, max_iterations);
 		break;
 	}
 
