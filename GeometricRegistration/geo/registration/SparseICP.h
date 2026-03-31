@@ -10,7 +10,7 @@ namespace geo
         PointCloud3D& source,
         const INearestNeighbor& nn,
         u32 maxIterations,
-        f32 p = 0.9f,
+        f32 p = 0.4f,
         f32 mu = 10.0f,
         u32 admmIterations = 10,
         f32 tolerance = 1e-5f);

@@ -28,7 +28,8 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 
         // Run one ICP iteration on SPACE
-        if (IsKeyPressed(KEY_SPACE))
+        //if(IsKeyPressed(KEY_SPACE))
+        if (IsKeyDown(KEY_SPACE))
         {
             result = system.Step();
         }
@@ -87,16 +88,17 @@ int main()
         points.end()
     );
 
-    for (geo::u32 i = 0; i < 200; i++)
+    for (geo::u32 i = 0; i < 100; i++)
     {
-        points.emplace_back(rng.Float3(-20.0f, 0.0f));
+        points.emplace_back(rng.Float3(-30.0f, 0.0f));
     }
 
     source = geo::PointCloud3D(points);
- 
-    LOGDEBUG("RandomPointCloud genearated!!!");
 
+    geo::SetLogLevel(geo::VERBOSE);
 
+    GEOLOGDEBUG("Number of points: " << source.Size() + target.Size());
+    
     // Apply known transform to source
     glm::vec3 eulerRot(20.0f, 40.0f, 10.0f);
     glm::vec3 translation(5.0f, 3.0f, -4.0f);
@@ -117,7 +119,7 @@ int main()
 
     std::cout << "<<Point to Point>>\n\n";
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    //RunProjectInConsole(system_ptp);
+    RunProjectInConsole(system_ptp);
     
     //std::cout << "\n<<Point to Plane>>\n\n";
     //ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
@@ -125,10 +127,10 @@ int main()
 
     std::cout << "\n<<Sparse Point to Point>>\n\n";
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    //RunProjectInConsole(system_sparse);
+    RunProjectInConsole(system_sparse);
 
 
-    RunProjectWithWindow(system_sparse);
+    //RunProjectWithWindow(system_sparse);
 
     return 0;
 }

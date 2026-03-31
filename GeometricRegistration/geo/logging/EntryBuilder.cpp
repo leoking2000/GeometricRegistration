@@ -1,77 +1,70 @@
 #include "EntryBuilder.h"
-#include <iostream>
+#include "Log.h"
 
 namespace geo
 {
     EntryBuilder::EntryBuilder(const char* file, int line)
         :
-        Entry{ LogLevel::NONE, "", file, line }
+        entry{ LogLevel::NONE, "", file, line }
     {
     }
 
     EntryBuilder::~EntryBuilder()
     {
-        std::cout << GetLogLevelName(level) << note;
-        std::cout << " (" << sourceFile << " " << sourceLine << ")" << std::endl;
+        LogEntry(entry);
     }
 
     EntryBuilder& EntryBuilder::SetLogLevel(LogLevel l)
     {
-        level = l;
+        entry.level = l;
         return *this;
     }
 
     EntryBuilder& EntryBuilder::SetMessage(std::string n)
     {
-        note = std::move(n);
+        entry.note = std::move(n);
         return *this;
     }
 
-    //EntryBuilder& EntryBuilder::SetChannel(const IChannel* cha)
-    //{
-    //    m_channel = cha;
-    //    return *this;
-    //}
-
     EntryBuilder& EntryBuilder::Verbose(std::string n)
     {
-        level = LogLevel::VERBOSE;
-        note = std::move(n);
+        entry.level = LogLevel::VERBOSE;
+        entry.note = std::move(n);
         return *this;
     }
 
     EntryBuilder& EntryBuilder::Debug(std::string n)
     {
-        level = LogLevel::DEBUG;
-        note = std::move(n);
+        entry.level = LogLevel::DEBUG;
+        entry.note = std::move(n);
         return *this;
     }
 
     EntryBuilder& EntryBuilder::Info(std::string n)
     {
-        level = LogLevel::INFO;
-        note = std::move(n);
+        entry.level = LogLevel::INFO;
+        entry.note = std::move(n);
         return *this;
     }
 
     EntryBuilder& EntryBuilder::Warn(std::string n)
     {
-        level = LogLevel::WARN;
-        note = std::move(n);
+        entry.level = LogLevel::WARN;
+        entry.note = std::move(n);
         return *this;
     }
 
     EntryBuilder& EntryBuilder::Error(std::string n)
     {
-        level = LogLevel::ERROR;
-        note = std::move(n);
+        entry.level = LogLevel::ERROR;
+        entry.note = std::move(n);
         return *this;
     }
 
     EntryBuilder& EntryBuilder::Fatal(std::string n)
     {
-        level = LogLevel::FATAL;
-        note = std::move(n);
+        entry.level = LogLevel::FATAL;
+        entry.note = std::move(n);
         return *this;
     }
 }

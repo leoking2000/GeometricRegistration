@@ -14,4 +14,4 @@
 #include "registration/NaiveICP.h"
 #include "registration/SparseICP.h"
 
-#include "logging/Log.h"
+#include "logging/LogMacros.h"

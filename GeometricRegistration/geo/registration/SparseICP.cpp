@@ -61,7 +61,7 @@ namespace geo
 		f32 beta = std::clamp(alpha_a / h_norm, 0.0f, 1.0f);
 
 		for (u8 t = 0; t < 3; t++) {
-			beta = 1.0 - (p / mu) * std::pow(h_norm, p - 2.0) * std::pow(std::max(beta, 1e-8f), p - 1.0);
+			beta = 1.0f - (p / mu) * std::pow(h_norm, p - 2.0f) * std::pow(std::max(beta, 1e-8f), p - 1.0f);
 			beta = std::clamp(beta, 0.0f, 1.0f);
 		}
 
@@ -125,8 +125,8 @@ namespace geo
 			RigidTransform localTransform = { glm::mat3(1.0f), glm::vec3(0.0f) };
 
 			// Reset ADMM variables per ICP iteration
-			std::fill(z.begin(), z.end(), glm::vec3(0.0f));
-			std::fill(lambda.begin(), lambda.end(), glm::vec3(0.0f));
+			//std::fill(z.begin(), z.end(), glm::vec3(0.0f));
+			//std::fill(lambda.begin(), lambda.end(), glm::vec3(0.0f));
 
 			TimePoint startSolveTime = Clock::now();
 

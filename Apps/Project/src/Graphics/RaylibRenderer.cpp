@@ -40,7 +40,7 @@ void RaylibRenderer::Init()
 
 	// ---------------- Camera ----------------
 	m_camera = { 0 };
-	m_camera.position = { 20.0f, 20.0f, 20.0f };
+	m_camera.position = { 15.0f, 15.0f, 15.0f };
 	m_camera.target = { 0.0f, 0.0f, 0.0f };
 	m_camera.up = { 0.0f, 1.0f, 0.0f };
 	m_camera.fovy = 45.0f;
