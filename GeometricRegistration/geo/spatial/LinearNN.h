@@ -1,6 +1,6 @@
 #pragma once
 #include <vector>
-#include "core/GeoTypes.h"
+#include <utils/GeoTypes.h>
 #include "INearestNeighbor.h"
 
 namespace geo

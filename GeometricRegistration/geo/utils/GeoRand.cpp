@@ -1,6 +1,6 @@
 #include <cassert>
 #include <glm/gtc/constants.hpp>
-#include "Rand.h"
+#include "GeoRand.h"
 
 namespace geo
 {

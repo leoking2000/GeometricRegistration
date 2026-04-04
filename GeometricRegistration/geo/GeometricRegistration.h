@@ -1,6 +1,7 @@
 #pragma once
-#include "core/GeoTypes.h"
-#include "utils/Rand.h"
+#include "utils/GeoTypes.h"
+#include "utils/GeoRand.h"
+#include "utils/logging/LogMacros.h"
 
 #include "geometry/PointCloud3D.h"
 #include "geometry/Mesh.h"
@@ -14,4 +15,3 @@
 #include "registration/NaiveICP.h"
 #include "registration/SparseICP.h"
 
-#include "logging/LogMacros.h"

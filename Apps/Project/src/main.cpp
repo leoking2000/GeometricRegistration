@@ -76,7 +76,7 @@ static void RunProjectInConsole(ICPSystem& system)
 
 int main()
 {
-    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 1000, rng);
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng);
     geo::PointCloud3D source = target;
 
     std::vector<glm::vec3> points = target.GetStorage();
@@ -88,11 +88,11 @@ int main()
         points.end()
     );
 
-    for (geo::u32 i = 0; i < 100; i++)
+    points = target.GetStorage();
+    for (geo::u32 i = 0; i < 1000; i++)
     {
-        points.emplace_back(rng.Float3(-30.0f, 0.0f));
+        points.emplace_back(rng.Float3(-10.0f, 10.0f));
     }
-
     source = geo::PointCloud3D(points);
 
     geo::SetLogLevel(geo::VERBOSE);

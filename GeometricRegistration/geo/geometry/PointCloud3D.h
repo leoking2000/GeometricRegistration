@@ -1,8 +1,8 @@
 #pragma once
 #include <vector>
-#include "core/GeoTypes.h"
+#include "utils//GeoTypes.h"
 #include "geo/math/RigidTransform.h"
-#include "utils/Rand.h"
+#include "utils/GeoRand.h"
 
 // TODO:
 // PointCloud3DBuilder

@@ -1,7 +1,7 @@
 #pragma once
 #include <chrono>
 #include <string>
-#include "core/GeoTypes.h"
+#include "GeoTypes.h"
 #include "logging/LogMacros.h"
 
 namespace geo
@@ -16,8 +16,6 @@ namespace geo
     {
     public:
         f64 totalMs = 0.0;
-        f64 maxMs   = 0.0;
-        f64 minMs   = 0.0;
         u32 count   = 0;
     public:
         void AddSample(f64 sample_ms);

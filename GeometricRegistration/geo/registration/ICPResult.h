@@ -1,5 +1,5 @@
 #pragma once
-#include "core/GeoTypes.h"
+#include "utils//GeoTypes.h"
 #include "math/RigidTransform.h"
 
 namespace geo

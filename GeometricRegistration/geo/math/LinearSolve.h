@@ -1,6 +1,6 @@
 #pragma once
 #include <array>
-#include "core/GeoTypes.h"
+#include "utils/GeoTypes.h"
 
 
 namespace geo

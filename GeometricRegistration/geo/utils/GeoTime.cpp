@@ -12,35 +12,21 @@ namespace geo
 
     void TimingStat::AddSample(f64 sample_ms)
     {
-        if (sample_ms < 0.0)
-        {
+        if (sample_ms < 0.0){
             sample_ms = 0.0;
         }
 
         totalMs += sample_ms;
-
-        if (count == 0)
-        {
-            minMs = sample_ms;
-            maxMs = sample_ms;
-        }
-        else
-        {
-            minMs = std::min(minMs, sample_ms);
-            maxMs = std::max(maxMs, sample_ms);
-        }
-
         count += 1;
     }
 
     f64 TimingStat::AverageMs() const
     {
-        if (count == 0)
-        {
+        if (count == 0){
             return 0.0;
         }
 
-        return totalMs / static_cast<f64>(count);
+        return totalMs / (f64)count;
     }
 
     bool TimingStat::Empty() const
@@ -54,15 +40,13 @@ namespace geo
 
         if (Empty())
         {
-            oss << "count=0 total=0ms avg=0ms min=0ms max=0ms";
+            oss << "count=0 total=0ms avg=0ms";
             return oss.str();
         }
 
         oss << "count=" << count
             << " total=" << totalMs << "ms"
-            << " avg=" << AverageMs() << "ms"
-            << " min=" << minMs << "ms"
-            << " max=" << maxMs << "ms";
+            << " avg=" << AverageMs() << "ms";
 
         return oss.str();
     }

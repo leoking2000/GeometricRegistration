@@ -1,33 +1,10 @@
 #pragma once
 #include <gtest/gtest.h>
 #include <geo/GeometricRegistration.h>
-#include <geo/utils/Rand.h>
+#include <geo/utils/GeoRand.h>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/epsilon.hpp>
-
-static inline void ExpectMat3Near(
-    const glm::mat3& A,
-    const glm::mat3& B,
-    float tolerance)
-{
-    for (int c = 0; c < 3; ++c)
-    {
-        for (int r = 0; r < 3; ++r)
-        {
-            EXPECT_NEAR(A[c][r], B[c][r], tolerance) << "Mismatch at (" << r << ", " << c << ")";
-        }
-    }
-}
-
-static inline void ExpectVec3Near(
-    const glm::vec3& a,
-    const glm::vec3& b,
-    float tolerance)
-{
-    EXPECT_NEAR(a.x, b.x, tolerance);
-    EXPECT_NEAR(a.y, b.y, tolerance);
-    EXPECT_NEAR(a.z, b.z, tolerance);
-}
+#include "ExpectNear.h"
 
 static std::vector<glm::vec3> CreateFromArray(float* arr, size_t size)
 {
