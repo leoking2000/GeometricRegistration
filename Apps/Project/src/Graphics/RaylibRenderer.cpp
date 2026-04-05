@@ -8,7 +8,7 @@ static void BuildInstanceTransforms(const geo::PointCloud3D& cloud, std::vector<
 {
 	for (size_t i = 0; i < cloud.Size(); i++)
 	{
-		glm::vec3 p = cloud[i];
+		glm::vec3 p = cloud.Point(i);
 
 		Matrix scaleMatrix = MatrixScale(scale, scale, scale);
 		Matrix translationMatrix = MatrixTranslate(p.x, p.y, p.z);

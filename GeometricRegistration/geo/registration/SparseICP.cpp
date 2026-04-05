@@ -26,7 +26,7 @@ namespace geo
 
 		for (index_t i = 0; i < N; ++i)
 		{
-			centroidSrc += source[i];
+			centroidSrc += source.Point(i);
 			centroidTgt += targets[i];
 		}
 
@@ -36,7 +36,7 @@ namespace geo
 		glm::mat3 H(0.0f);
 		for (index_t i = 0; i < N; ++i)
 		{
-			glm::vec3 p = source[i] - centroidSrc;
+			glm::vec3 p = source.Point(i) - centroidSrc;
 			glm::vec3 q = targets[i] - centroidTgt;
 			H += glm::outerProduct(p, q);
 		}
@@ -88,8 +88,6 @@ namespace geo
 		const INearestNeighbor& nn, 
 		u32 maxIterations, f32 p, f32 mu, u32 admmIterations, f32 tolerance)
 	{
-		assert(!target.Empty());
-		assert(!source.Empty());
 		assert(target.Size() == nn.Size());
 		assert(maxIterations >= 1);
 		assert(tolerance > 0.0f);
@@ -118,7 +116,7 @@ namespace geo
 		{
 			// Step 1: correspondences
 			TimePoint startCorrTime = Clock::now();
-			nn.QueryBatch(source.GetStorage(), correspondences);
+			nn.QueryBatch(source.GetPoints(), correspondences);
 			TimePoint endCorrTime = Clock::now();
 			result.avgCorrespondenceTime_ms += TimeDifference_ms(endCorrTime, startCorrTime);
 
@@ -137,8 +135,8 @@ namespace geo
 				// Step 2.1: z-update (shrink)
 				for (index_t i = 0; i < N; ++i)
 				{
-					const glm::vec3& x = source[i];
-					const glm::vec3& y = target[correspondences[i]];
+					const glm::vec3& x = source.Point(i);
+					const glm::vec3& y = target.Point(correspondences[i]);
 
 					h[i] = localTransform.rotation * x
 						+ localTransform.translation
@@ -151,7 +149,7 @@ namespace geo
 				// Step 2.2: rigid update
 				for (index_t i = 0; i < N; ++i)
 				{
-					const glm::vec3& y = target[correspondences[i]];
+					const glm::vec3& y = target.Point(correspondences[i]);
 					c[i] = y + z[i] - lambda[i] / mu;
 				}
 
@@ -160,8 +158,8 @@ namespace geo
 				// Step 2.3: lambda update
 				for (index_t i = 0; i < N; ++i)
 				{
-					const glm::vec3& x = source[i];
-					const glm::vec3& y = target[correspondences[i]];
+					const glm::vec3& x = source.Point(i);
+					const glm::vec3& y = target.Point(correspondences[i]);
 
 					glm::vec3 delta =
 						localTransform.rotation * x
@@ -186,7 +184,7 @@ namespace geo
 			f64 error = 0.0;
 			for (index_t i = 0; i < N; ++i)
 			{
-				glm::vec3 d = source[i] - target[correspondences[i]];
+				glm::vec3 d = source.Point(i) - target.Point(correspondences[i]);
 				error += glm::dot(d, d);
 			}
 

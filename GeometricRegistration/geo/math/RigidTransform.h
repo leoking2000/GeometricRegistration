@@ -17,7 +17,7 @@ namespace geo
 
 		inline glm::vec3 TransformNormal(const glm::vec3& n) const
 		{
-			return rotation * n;
+			return glm::normalize(rotation * n);
 		}
 
 		inline RigidTransform ComputeInverse() const

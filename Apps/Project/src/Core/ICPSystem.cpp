@@ -9,7 +9,7 @@ ICPSystem::ICPSystem(ICPMethod method, geo::PointCloud3D target, geo::PointCloud
 	m_method(method),
 	m_target(std::move(target)),
 	m_source(std::move(source)),
-	m_tree(m_target.GetStorage())
+	m_tree(m_target.GetPoints())
 {
 }
 
@@ -26,7 +26,7 @@ const geo::PointCloud3D& ICPSystem::GetSource() const
 void ICPSystem::SetTarget(geo::PointCloud3D target)
 {
 	m_target = std::move(target);
-	m_tree = geo::KDTree(m_target.GetStorage());
+	m_tree = geo::KDTree(m_target.GetPoints());
 }
 
 void ICPSystem::SetSource(geo::PointCloud3D source)

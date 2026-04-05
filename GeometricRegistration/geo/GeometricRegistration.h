@@ -5,6 +5,7 @@
 
 #include "geometry/PointCloud3D.h"
 #include "geometry/Mesh.h"
+#include "geometry/RandomPointCloud.h"
 
 #include "math/RigidTransform.h"
 

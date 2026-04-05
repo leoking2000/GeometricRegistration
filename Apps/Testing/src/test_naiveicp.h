@@ -29,7 +29,7 @@ TEST(NaiveICP, IdentityAlignment)
 
     std::vector<glm::vec3> target_data = CreateFromArray(data, 12); 
     geo::PointCloud3D target(target_data);
-    geo::PointCloud3D source(data, 12);
+    geo::PointCloud3D source(target_data);
 
     auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
@@ -51,7 +51,7 @@ TEST(NaiveICP, RecoversKnownTransform)
 
     std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
     geo::PointCloud3D target(target_data);
-    geo::PointCloud3D source(data, 12);
+    geo::PointCloud3D source(target_data);
 
     float angle = glm::radians(10.0f);
     glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(0, 0, 1));
@@ -59,7 +59,7 @@ TEST(NaiveICP, RecoversKnownTransform)
 
     glm::vec3 t(1.0f, 1.0f, 1.0f);
 
-    source.Transform(R, t);
+    source.Transform({ R, t });
 
     auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
@@ -84,7 +84,7 @@ TEST(NaiveICP, RotationIsOrthogonal)
 
     std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
     geo::PointCloud3D target(target_data);
-    geo::PointCloud3D source(data, 12);
+    geo::PointCloud3D source(target_data);
 
     auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
@@ -105,7 +105,7 @@ TEST(NaiveICP, RotationHasUnitDeterminant)
 
     std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
     geo::PointCloud3D target(target_data);
-    geo::PointCloud3D source(data, 12);
+    geo::PointCloud3D source(target_data);
 
     auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 20);
 
@@ -124,9 +124,9 @@ TEST(NaiveICP, RMSIsReduced)
 
     std::vector<glm::vec3> target_data = CreateFromArray(data, 12);
     geo::PointCloud3D target(target_data);
-    geo::PointCloud3D source(data, 12);
+    geo::PointCloud3D source(target_data);
 
-    source.Transform(glm::mat3(1.0f), { 2.0f, 0.0f, 0.0f });
+    source.Transform({ glm::mat3(1.0f), { 2.0f, 0.0f, 0.0f } });
 
     auto result = geo::NaiveICP(target, source, geo::LinearNN(target_data), 50);
 
@@ -146,10 +146,10 @@ TEST(NaiveICP, PointToPlaneRandomRect)
     glm::vec3 trans(5.0f, 2.0f, 1.0f);
 
     geo::PointCloud3D source = target; // copy
-    source.Transform(rot, trans);
+    source.Transform({ rot, trans });
 
     // Use KDTree for speed
-    geo::KDTree nn(target.GetStorage());
+    geo::KDTree nn(target.GetPoints());
 
     // Run point-to-plane ICP
     auto result = geo::NaiveICP(target, source, nn, 100, 1e-2f, true); // useNormals = true

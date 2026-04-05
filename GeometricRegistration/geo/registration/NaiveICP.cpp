@@ -22,7 +22,7 @@ namespace geo
 		glm::vec3 centroidCor(0.0f);
 		for (index_t i : correspondences)
 		{
-			centroidCor += target[i];
+			centroidCor += target.Point(i);
 		}
 		centroidCor = centroidCor / (float)numberOfPoints;
 
@@ -30,8 +30,8 @@ namespace geo
 		glm::mat3 H(0.0f);
 		for (index_t i = 0; i < numberOfPoints; ++i)
 		{
-			glm::vec3 p = source[i] - centroidSrc;
-			glm::vec3 q = target[correspondences[i]] - centroidCor;
+			glm::vec3 p = source.Point(i) - centroidSrc;
+			glm::vec3 q = target.Point(correspondences[i]) - centroidCor;
 			H += glm::outerProduct(p, q);
 		}
 
@@ -150,7 +150,7 @@ namespace geo
 			// Find correspondences 
 			TimePoint startCorrTime = Clock::now();
 
-			nn.QueryBatch(source.GetStorage(), correspondences);
+			nn.QueryBatch(source.GetPoints(), correspondences);
 
 			TimePoint endCorrTime = Clock::now();
 			result.avgCorrespondenceTime_ms += TimeDifference_ms(endCorrTime, startCorrTime);
@@ -182,9 +182,9 @@ namespace geo
 			for (index_t i = 0; i < numberOfPoints; ++i)
 			{
 				if(useNormals && target.HasNormals())
-					error += std::pow(glm::dot(source[i]-target[correspondences[i]], target.Normal(correspondences[i])), 2);
+					error += std::powf(glm::dot(source.Point(i) -target.Point(correspondences[i]), target.Normal(correspondences[i])), 2);
 				else
-					error += glm::dot(source[i]-target[correspondences[i]], source[i]-target[correspondences[i]]);
+					error += glm::dot(source.Point(i)-target.Point(correspondences[i]), source.Point(i)-target.Point(correspondences[i]));
 			}
 
 			error = std::sqrt(error / numberOfPoints);

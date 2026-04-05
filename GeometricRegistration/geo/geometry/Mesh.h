@@ -4,7 +4,7 @@
 #include <string>
 #include <filesystem>
 #include <glm/glm.hpp>
-#include "utils//GeoTypes.h"
+#include "utils/GeoTypes.h"
 
 namespace geo
 {

@@ -28,8 +28,8 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 
         // Run one ICP iteration on SPACE
-        //if(IsKeyPressed(KEY_SPACE))
-        if (IsKeyDown(KEY_SPACE))
+        //if (IsKeyDown(KEY_SPACE))
+        if(IsKeyPressed(KEY_SPACE))
         {
             result = system.Step();
         }
@@ -76,10 +76,10 @@ static void RunProjectInConsole(ICPSystem& system)
 
 int main()
 {
-    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng);
+    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
     geo::PointCloud3D source = target;
 
-    std::vector<glm::vec3> points = target.GetStorage();
+    std::vector<glm::vec3> points = target.GetPoints();
     points.erase(
         std::remove_if(points.begin(), points.end(),
             [](const glm::vec3& p) {
@@ -88,11 +88,10 @@ int main()
         points.end()
     );
 
-    points = target.GetStorage();
-    for (geo::u32 i = 0; i < 1000; i++)
-    {
-        points.emplace_back(rng.Float3(-10.0f, 10.0f));
-    }
+    //for (geo::u32 i = 0; i < 1000; i++)
+    //{
+    //    points.emplace_back(rng.Float3(-10.0f, 10.0f));
+    //}
     source = geo::PointCloud3D(points);
 
     geo::SetLogLevel(geo::VERBOSE);
@@ -115,11 +114,11 @@ int main()
 
     glm::mat4 rotation = Ry * Rx * Rz;
 
-    source.Transform(rotation, translation);
+    source.Transform({ rotation, translation });
 
     std::cout << "<<Point to Point>>\n\n";
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    RunProjectInConsole(system_ptp);
+    //RunProjectInConsole(system_ptp);
     
     //std::cout << "\n<<Point to Plane>>\n\n";
     //ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
@@ -127,10 +126,10 @@ int main()
 
     std::cout << "\n<<Sparse Point to Point>>\n\n";
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    RunProjectInConsole(system_sparse);
+    //RunProjectInConsole(system_sparse);
 
 
-    //RunProjectWithWindow(system_sparse);
+    RunProjectWithWindow(system_ptp);
 
     return 0;
 }

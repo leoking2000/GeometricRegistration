@@ -1,11 +1,7 @@
 #pragma once
 #include <vector>
-#include "utils//GeoTypes.h"
-#include "geo/math/RigidTransform.h"
-#include "utils/GeoRand.h"
-
-// TODO:
-// PointCloud3DBuilder
+#include "utils/GeoTypes.h"
+#include "math/RigidTransform.h"
 
 namespace geo
 {
@@ -14,26 +10,22 @@ namespace geo
 	{
 	public:
 		explicit PointCloud3D(std::vector<glm::vec3> points, std::vector<glm::vec3> normals = {});
-		explicit PointCloud3D(const f32* arr, index_t float_count);
 	public:
 		index_t Size() const;
-		bool Empty() const;
-		glm::vec3 Centroid() const;
-	public:
-		const glm::vec3& operator[](index_t i) const;
-	public:
 		bool HasNormals() const;
+	public:
 		const glm::vec3& Point(index_t i) const;
 		const glm::vec3& Normal(index_t i) const;
+		glm::vec3 Centroid() const;
 	public:
+		// Note: Transform mutates point positions, and invalidates any spatial index built on this data.
 		void Transform(const RigidTransform& transform);
-		void Transform(const glm::mat3& rot, const glm::vec3& t);
 	public:
 		auto begin() const { return m_points.cbegin(); }
 		auto end() const { return m_points.cend(); }
 	public:
-		const std::vector<glm::vec3>& GetStorage() const;
-		const std::vector<glm::vec3>& GetNormals() const;
+		const std::vector<glm::vec3>& GetPoints() const { return m_points; };
+		const std::vector<glm::vec3>& GetNormals() const { return m_normals; };
 	private:
 		void recalculateCentroid();
 	private:
@@ -41,8 +33,4 @@ namespace geo
 		std::vector<glm::vec3> m_normals;
 		glm::vec3 m_centroid{ 0.0f };
 	};
-
-	PointCloud3D GenerateRandomPointCloudRect(const glm::vec3& center, f32 width, f32 height, f32 depth, u32 pointCount, 
-		Random& rng, bool haveNormals = true);
-
 }
