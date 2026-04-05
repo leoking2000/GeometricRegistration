@@ -1,14 +1,15 @@
 #pragma once
-#include <vector>
 #include <memory>
 #include "INearestNeighbor.h"
 
 // TODO:
-// parallel nearest neighbor
+// parallel nearest neighbor.
 
 namespace geo
 {
-    // Kd-Tree for 3D points using glm::vec3, store reference to a vector!!!
+    // Kd-Tree for 3D points using glm::vec3.
+    // Note: The referenced points must outlive this object.
+    // Note: this class is a nanoflann Adaptor.
     class KDTree : public INearestNeighbor
     {
     public:
@@ -24,18 +25,15 @@ namespace geo
 
         ~KDTree();
     public:
-        virtual void      Build() override;
-        virtual index_t   Query(const glm::vec3& point, f32* distSq = nullptr) const override;
-        virtual void      QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const override;
-        virtual bool      Empty() const override;
-        virtual size_t    Size()  const override;
-        virtual glm::vec3 FindClosestPoint(const glm::vec3& point) const override;
-    private:
-        index_t Search(const glm::vec3& query, f32& outDistSq) const;
+        // Rebuilds the index after modifying the referenced point positions.
+        // Queries are invalid if the referenced points change and Rebuild() is not called.
+        void      Rebuild();
+        index_t   Query(const glm::vec3& point) const override;
+        void      QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const override;
+        index_t   Size()  const override;
     private:
         struct KDTreeData;
         std::unique_ptr<KDTreeData> m_data;
     };
 
 }
-

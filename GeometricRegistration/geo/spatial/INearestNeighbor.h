@@ -5,18 +5,18 @@
 
 namespace geo
 {
+    // Indexes an external point array by reference.
+    // The referenced points must outlive this object.
     class INearestNeighbor
     {
     public:
-        virtual void      Build() = 0;
-    public:
-        virtual index_t   Query(const glm::vec3& point, f32* distSq = nullptr) const = 0;
+        // Returns the the nearest-neighbor index of input point.
+        virtual index_t   Query(const glm::vec3& point) const = 0;
+        // Writes the nearest-neighbor index for each input point.
+        // Resizes results to points.size() if results has the wrong size.
         virtual void      QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const = 0;
-    public:
-        virtual bool      Empty() const = 0;
-        virtual size_t    Size()  const = 0;
-    public:
-        virtual glm::vec3 FindClosestPoint(const glm::vec3& point) const = 0;
+        // The number of points in the external point array.
+        virtual index_t   Size()  const = 0;
     public:
         virtual ~INearestNeighbor() = default;
     };

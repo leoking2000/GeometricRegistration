@@ -11,6 +11,7 @@ class KDTreeTest : public ::testing::Test
 protected:
     std::vector<glm::vec3> points;
     std::vector<glm::vec3> rng_points;
+    std::vector<glm::vec3> rng_points_large;
     geo::Random rng{ 8888 };
 
     void SetUp() override
@@ -24,10 +25,14 @@ protected:
             {-1.f,-1.f,-1.f}
         };
 
-        std::vector<glm::vec3> points;
         for (int i = 0; i < 1000; i++)
         {
-            rng_points.emplace_back(rng.Float3(-10.0f, 10.0f));
+            rng_points.emplace_back(rng.Float3(-20.0f, 20.0f));
+        }
+
+        for (int i = 0; i < 10000; i++)
+        {
+            rng_points_large.emplace_back(rng.Float3(-50.0f, 50.0f));
         }
     }
 };
@@ -36,7 +41,7 @@ TEST_F(KDTreeTest, ConstructionAndSize)
 {
     geo::KDTree tree(points);
 
-    EXPECT_FALSE(tree.Empty());
+    EXPECT_FALSE(tree.Size() == 0);
     EXPECT_EQ(tree.Size(), points.size());
 }
 
@@ -60,38 +65,6 @@ TEST_F(KDTreeTest, QueryMatchesLinearNN)
         EXPECT_EQ(kdIdx, linearIdx);
     }
 }
-
-TEST_F(KDTreeTest, DistanceIsCorrect)
-{
-    geo::KDTree kd(points);
-    geo::LinearNN linear(points);
-
-    glm::vec3 q{ 0.2f, 0.1f, 0.0f };
-
-    float kdDistSq;
-    float linearDistSq;
-
-    kd.Query(q, &kdDistSq);
-    linear.Query(q, &linearDistSq);
-
-    EXPECT_NEAR(kdDistSq, linearDistSq, 1e-6f);
-}
-
-TEST_F(KDTreeTest, FindClosestPoint)
-{
-    geo::KDTree kd(points);
-    geo::LinearNN linear(points);
-
-    glm::vec3 q{ 0.9f,0.0f,0.0f };
-
-    auto kdPoint = kd.FindClosestPoint(q);
-    auto linearPoint = points[linear.Query(q)];
-
-    EXPECT_FLOAT_EQ(kdPoint.x, linearPoint.x);
-    EXPECT_FLOAT_EQ(kdPoint.y, linearPoint.y);
-    EXPECT_FLOAT_EQ(kdPoint.z, linearPoint.z);
-}
-
 
 TEST_F(KDTreeTest, BatchQueryMatchesLinear)
 {
@@ -151,11 +124,17 @@ TEST_F(KDTreeTest, PerformanceTest)
 {
     geo::KDTree kd(rng_points);
 
-    for (int i = 0; i < 5000; i++)
+    for (int i = 0; i < 10000; i++)
     {
         glm::vec3 q(rng.Float3(-10.0f, 10.0f));
         geo::index_t kdIdx = kd.Query(q);
     }
 }
 
+TEST_F(KDTreeTest, PerformanceQueryBatchTest)
+{
+    geo::KDTree kd(rng_points);
+    std::vector<geo::index_t> indexes(rng_points_large.size(), 0);
 
+    kd.QueryBatch(rng_points_large, indexes);
+}
