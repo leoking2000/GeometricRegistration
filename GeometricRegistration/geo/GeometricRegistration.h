@@ -13,6 +13,6 @@
 #include "spatial/LinearNN.h"
 #include "spatial/KDTree.h"
 
-#include "registration/NaiveICP.h"
+#include "registration/LeastSquaresICP.h"
 #include "registration/SparseICP.h"
 

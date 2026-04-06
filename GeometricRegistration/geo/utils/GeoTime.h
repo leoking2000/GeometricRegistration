@@ -34,7 +34,6 @@ namespace geo
         ScopedTimer& operator=(const ScopedTimer&) = delete;
 
         ~ScopedTimer();
-    public:
     private:
         std::string m_name  = "";
         TimePoint m_start   = Clock::now();

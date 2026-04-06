@@ -12,7 +12,7 @@ namespace geo
     using Mat6 = std::array<std::array<f32, 6>, 6>;
 
     // solves A*x=b system that is 6x6
-    Vec6 __Solve6x6(Mat6 A_in, Vec6 b_in);
+    Vec6 Solve6x6(Mat6 A_in, Vec6 b_in);
 
     struct SVDResult
     {
@@ -22,7 +22,7 @@ namespace geo
     };
 
     // Compute SVD of a 3x3 matrix: A = U * diag(S) * V^T
-    SVDResult __SVD(const glm::mat3& A);
+    SVDResult SVD(const glm::mat3& A);
 
     // Solves min_{R,t} sum_i ||R x_i + t - y_i||^2
     RigidTransform SolveRigidPointToPoint(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target);
@@ -35,6 +35,5 @@ namespace geo
     // residual_i = dot(n_i, (R x_i + t - y_i)
     RigidTransform SolveRigidPointToPlane(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target,
         const std::vector<glm::vec3>& normals);
-
 }
 

@@ -2,7 +2,6 @@
 #include <algorithm>
 #include <cassert>
 #include <cmath>
-#include <numeric>
 
 namespace geo
 {
@@ -10,7 +9,7 @@ namespace geo
 	{
 		const size_t N = values.size();
 
-		if (N == 0) return 0.0f;
+		if (N == 0) return F32_MAX;
 
 		f64 sum = 0.0f;
 		for (size_t i = 0; i < N; i++)
@@ -25,7 +24,7 @@ namespace geo
 	{
 		const size_t N = values.size();
 
-		if (N == 0) return 0.0f;
+		if (N == 0) return F32_MAX;
 
 		std::sort(values.begin(), values.end());
 
@@ -34,15 +33,15 @@ namespace geo
 		return ((N % 2) == 1) ? values[mid] : 0.5f * (values[mid - 1] + values[mid]);
 	}
 
-	f32 Percentile(std::vector<f32> values, f32 alpha)
+	f32 Percentile(std::vector<f32> values, f32 p)
 	{
 		const size_t N = values.size();
-		if (N == 0) return 0.0f;
+		if (N == 0) return F32_MAX;
 
-		alpha = std::clamp(alpha, 0.0f, 1.0f);
+		p = std::clamp(p, 0.0f, 1.0f);
 		std::sort(values.begin(), values.end());
 
-		const f32    pos = alpha * (f32)N;
+		const f32    pos = p * (f32)(N - 1);
 		const size_t lo  = (size_t)(std::floor(pos));
 		const size_t hi  = (size_t)(std::ceil(pos));
 
@@ -54,15 +53,14 @@ namespace geo
 		return (1.0f - t) * values[lo] + t * values[hi];
 	}
 
-	f32 RMSE(const std::vector<f32>& residuals)
+	f32 RMSE(index_t N, std::function<f32(index_t)> errorSq)
 	{
-		const size_t N = residuals.size();
-		if (N == 0) return 0.0f;
+		if (N == 0) return F32_MAX;
 
 		f64 sumSq = 0.0f;
-		for (size_t i = 0; i < N; i++)
+		for (index_t i = 0; i < N; i++)
 		{
-			sumSq += (f64)residuals[i] * (f64)residuals[i];
+			sumSq += errorSq(i);
 		}
 
 		return (f32)std::sqrt(sumSq / (f64)N);
@@ -71,7 +69,7 @@ namespace geo
 	f32 TrimmedRMSE(std::vector<f32> residuals, f32 keepRatio)
 	{
 		const size_t N = residuals.size();
-		if (N == 0) return 0.0f;
+		if (N == 0) return F32_MAX;
 
 		keepRatio = std::clamp(keepRatio, 0.0f, 1.0f);
 		std::sort(residuals.begin(), residuals.end());
@@ -82,11 +80,10 @@ namespace geo
 		f64 sumSq = 0.0f;
 		for (size_t i = 0; i < keepCount; i++)
 		{
-			sumSq += (f64)residuals[i] * (f64)residuals[i];
+			sumSq += (f64)residuals[i];
 		}
 
-		return (f32)std::sqrt(sumSq / (f64)N);
+		return (f32)std::sqrt(sumSq / (f64)keepCount);
 	}
-
 }
 

@@ -1,61 +1,9 @@
-#include "math/SVD.h"
+#include "math/Solvers.h"
+#include "math/Stats.h"
 #include "SparseICP.h"
 
 namespace geo
 {
-	using Clock = std::chrono::steady_clock;
-	using TimePoint = Clock::time_point;
-
-	// Compute a - b in milliseconds
-	static f64 TimeDifference_ms(TimePoint end, TimePoint start)
-	{
-		return std::chrono::duration<f64, std::milli>(end - start).count();
-	}
-
-	static inline RigidTransform SolveRigid_PointToPoint_ToTargets(
-		const PointCloud3D& source,
-		const std::vector<glm::vec3>& targets)
-	{
-		assert(source.Size() == targets.size());
-		assert(source.Size() > 0);
-
-		const index_t N = source.Size();
-
-		glm::vec3 centroidSrc(0.0f);
-		glm::vec3 centroidTgt(0.0f);
-
-		for (index_t i = 0; i < N; ++i)
-		{
-			centroidSrc += source.Point(i);
-			centroidTgt += targets[i];
-		}
-
-		centroidSrc /= static_cast<f32>(N);
-		centroidTgt /= static_cast<f32>(N);
-
-		glm::mat3 H(0.0f);
-		for (index_t i = 0; i < N; ++i)
-		{
-			glm::vec3 p = source.Point(i) - centroidSrc;
-			glm::vec3 q = targets[i] - centroidTgt;
-			H += glm::outerProduct(p, q);
-		}
-
-		SVDResult svd = SVD(H);
-
-		glm::mat3 Ut = glm::transpose(svd.U);
-		glm::mat3 R = svd.V * Ut;
-
-		if (glm::determinant(R) < 0.0f)
-		{
-			svd.V[2] *= -1.0f;
-			R = svd.V * Ut;
-		}
-
-		glm::vec3 t = centroidTgt - R * centroidSrc;
-		return { R, t };
-	}
-
 	static inline f32 ComputeBeta(f32 p, f32 mu, f32 h_norm, f32 alpha_a)
 	{
 		f32 beta = std::clamp(alpha_a / h_norm, 0.0f, 1.0f);
@@ -83,17 +31,16 @@ namespace geo
 	}
 
 	ICPResult SparseICP(
-		const PointCloud3D& target, 
-		PointCloud3D& source, 
-		const INearestNeighbor& nn, 
-		u32 maxIterations, f32 p, f32 mu, u32 admmIterations, f32 tolerance)
+		const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, SparseICPParameters params)
 	{
+		assert(source.Size() >= 1);
 		assert(target.Size() == nn.Size());
-		assert(maxIterations >= 1);
-		assert(tolerance > 0.0f);
-		assert(p > 0.0f && p < 1.0f);
-		assert(mu > 0.0f);
-		assert(admmIterations >= 1);
+		assert(params.maxIterations >= 1);
+		assert(params.tolerance > 0.0f);
+		assert((params.useNormals && target.HasNormals()) || !params.useNormals);
+		assert(params.p > 0.0f && params.p < 1.0f);
+		assert(params.mu > 0.0f);
+		assert(params.admmIterations >= 1);
 
 		const index_t N = source.Size();
 
@@ -106,19 +53,20 @@ namespace geo
 
 		// ADMM variables
 		std::vector<glm::vec3> z(N, glm::vec3(0.0f));
-		std::vector<glm::vec3> h(N, glm::vec3(0.0f));
 		std::vector<glm::vec3> c(N, glm::vec3(0.0f));
 		std::vector<glm::vec3> lambda(N, glm::vec3(0.0f));
 
-		TimePoint startTime = Clock::now();
-
-		for (u32 iter = 0; iter < maxIterations; ++iter)
+		for (u32 iter = 0; iter < params.maxIterations; ++iter)
 		{
+			TimePoint startTime = Clock::now();
+
 			// Step 1: correspondences
+
 			TimePoint startCorrTime = Clock::now();
 			nn.QueryBatch(source.GetPoints(), correspondences);
 			TimePoint endCorrTime = Clock::now();
-			result.avgCorrespondenceTime_ms += TimeDifference_ms(endCorrTime, startCorrTime);
+
+			result.correspondenceSearchTime.AddSample(TimeDifferenceMs(endCorrTime, startCorrTime));
 
 			RigidTransform localTransform = { glm::mat3(1.0f), glm::vec3(0.0f) };
 
@@ -130,7 +78,7 @@ namespace geo
 
 			// Step 2: run ADMM to solve for RigidTransform
 
-			for (u32 admmIter = 0; admmIter < admmIterations; ++admmIter)
+			for (u32 admmIter = 0; admmIter < params.admmIterations; ++admmIter)
 			{
 				// Step 2.1: z-update (shrink)
 				for (index_t i = 0; i < N; ++i)
@@ -138,22 +86,22 @@ namespace geo
 					const glm::vec3& x = source.Point(i);
 					const glm::vec3& y = target.Point(correspondences[i]);
 
-					h[i] = localTransform.rotation * x
+					glm::vec3 hi = localTransform.rotation * x
 						+ localTransform.translation
 						- y
-						+ lambda[i] / mu;
+						+ lambda[i] / params.mu;
 
-					z[i] = ShrinkLp(h[i], p, mu);
+					z[i] = ShrinkLp(hi, params.p, params.mu);
 				}
 
 				// Step 2.2: rigid update
 				for (index_t i = 0; i < N; ++i)
 				{
 					const glm::vec3& y = target.Point(correspondences[i]);
-					c[i] = y + z[i] - lambda[i] / mu;
+					c[i] = y + z[i] - lambda[i] / params.mu;
 				}
 
-				localTransform = SolveRigid_PointToPoint_ToTargets(source, c);
+				localTransform = SolveRigidPointToPoint(source.GetPoints(), c);
 
 				// Step 2.3: lambda update
 				for (index_t i = 0; i < N; ++i)
@@ -167,46 +115,51 @@ namespace geo
 						- y
 						- z[i];
 
-					lambda[i] += mu * delta;
+					lambda[i] += params.mu * delta;
 				}
 			}
 
 			TimePoint endSolveTime = Clock::now();
-			result.avgSolverTime_ms += TimeDifference_ms(endSolveTime, startSolveTime);
+
+			result.alignmentSolveTime.AddSample(TimeDifferenceMs(endSolveTime, startSolveTime));
 
 			// Step 3: apply transform
 			source.Transform(localTransform);
 
-			result.transform.translation = localTransform.rotation * result.transform.translation + localTransform.translation;
-			result.transform.rotation = localTransform.rotation * result.transform.rotation;
+			result.transform = RigidTransform::Compose(localTransform, result.transform);
+
 
 			// Step 4: compute sparse-style RMS
-			f64 error = 0.0;
-			for (index_t i = 0; i < N; ++i)
-			{
-				glm::vec3 d = source.Point(i) - target.Point(correspondences[i]);
-				error += glm::dot(d, d);
-			}
+			result.rmse = RMSE(N, [&](index_t i) -> f32 {
+				f32 residual2 = 0.0f;
 
-			result.rms = static_cast<f32>(std::sqrt(error / static_cast<f64>(N)));
+				if (params.useNormals && target.HasNormals())
+				{
+					glm::vec3 diff = source.Point(i) - target.Point(correspondences[i]);
+					residual2 = glm::dot(diff, target.Normal(correspondences[i])) * glm::dot(diff, target.Normal(correspondences[i]));
+				}
+				else
+				{
+					glm::vec3 diff = source.Point(i) - target.Point(correspondences[i]);
+					residual2 = glm::dot(diff, diff);
+				}
+
+				return residual2;
+				});
+
 			result.iterations = iter + 1;
 
-			if (std::abs(prevError - result.rms) < tolerance)
+			if (std::abs(prevError - result.rmse) < params.tolerance)
 			{
 				result.converged = true;
 				break;
 			}
 
-			prevError = result.rms;
-		}
+			prevError = result.rmse;
 
-		TimePoint endTime = Clock::now();
-		result.totalElapsed_ms = TimeDifference_ms(endTime, startTime);
+			TimePoint endTime = Clock::now();
+			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-		if (result.iterations > 0)
-		{
-			result.avgCorrespondenceTime_ms /= result.iterations;
-			result.avgSolverTime_ms /= result.iterations;
 		}
 
 		return result;

@@ -41,17 +41,19 @@ geo::ICPResult ICPSystem::Solve(int max_iterations)
 	switch (m_method)
 	{
 	case ICPMethod::NAIVE:
-		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5f, false);
+		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-5f, false });
 		break;
 	case ICPMethod::NAIVE_PLANE:
-		r = geo::NaiveICP(m_target, m_source, m_tree, max_iterations, 1e-5f, true);
+		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-5f, true });
 		break;
 	case ICPMethod::SPARSE:
-		r = geo::SparseICP(m_target, m_source, m_tree, max_iterations);
+		geo::SparseICPParameters p = {};
+		p.maxIterations = max_iterations;
+		r = geo::SparseICP(m_target, m_source, m_tree, p);
 		break;
 	}
 
-	m_RMS = r.rms;
+	m_RMS = r.rmse;
 
 	return r;
 }

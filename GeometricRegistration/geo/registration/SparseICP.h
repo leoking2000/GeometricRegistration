@@ -5,13 +5,16 @@
 
 namespace geo
 {
+    struct SparseICPParameters
+    {
+        u32 maxIterations = 500;
+        f32 tolerance = 1e-5f;
+        f32 p = 0.4f;
+        f32 mu = 10;
+        u32 admmIterations = 10;
+        bool useNormals = false;
+    };
+
     ICPResult SparseICP(
-        const PointCloud3D& target,
-        PointCloud3D& source,
-        const INearestNeighbor& nn,
-        u32 maxIterations,
-        f32 p = 0.4f,
-        f32 mu = 10.0f,
-        u32 admmIterations = 10,
-        f32 tolerance = 1e-5f);
+        const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, SparseICPParameters params = {});
 }

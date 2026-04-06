@@ -28,7 +28,7 @@ namespace geo
     }
 
     // solves A*x=b system that is 6x6
-    Vec6 __Solve6x6(Mat6 A_in, Vec6 b_in)
+    Vec6 Solve6x6(Mat6 A_in, Vec6 b_in)
     {
         Eigen::Matrix<f32, 6, 6> A;
         Eigen::Matrix<f32, 6, 1> b;
@@ -54,7 +54,7 @@ namespace geo
         return result;
     }
 
-    SVDResult __SVD(const glm::mat3& A)
+    SVDResult SVD(const glm::mat3& A)
     {
         Eigen::Matrix3f A_eigen = detail::GlmToEigen(A);
 
@@ -98,7 +98,7 @@ namespace geo
         }
 
         // SVD
-        SVDResult svd = __SVD(H);
+        SVDResult svd = SVD(H);
 
         glm::mat3 Ut = glm::transpose(svd.U);
         glm::mat3 R = svd.V * Ut;
@@ -155,7 +155,7 @@ namespace geo
             H += w * glm::outerProduct(p, q);
         }
 
-        SVDResult svd = __SVD(H);
+        SVDResult svd = SVD(H);
         glm::mat3 Ut = glm::transpose(svd.U);
         glm::mat3 R = svd.V * Ut;
 
@@ -227,7 +227,7 @@ namespace geo
         }
 
         // Solve 6x6 system
-        geo::Vec6 x = geo::__Solve6x6(AtA, Atb);
+        geo::Vec6 x = Solve6x6(AtA, Atb);
 
         glm::vec3 rotVec(x[0], x[1], x[2]);
         glm::vec3 t(x[3], x[4], x[5]);

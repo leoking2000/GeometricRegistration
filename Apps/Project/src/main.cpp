@@ -28,8 +28,8 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 
         // Run one ICP iteration on SPACE
-        //if (IsKeyDown(KEY_SPACE))
-        if(IsKeyPressed(KEY_SPACE))
+        //if(IsKeyPressed(KEY_SPACE))
+        if (IsKeyDown(KEY_SPACE))
         {
             result = system.Step();
         }
@@ -46,10 +46,10 @@ static void RunProjectWithWindow(ICPSystem& system)
         std::stringstream ss;
         ss << "FPS:" << GetFPS() << "\n";
         ss << "Press SPACE to run 1 ICP iteration\n";
-        ss << "Current RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
-        ss << "Total Time: " << std::fixed << std::setprecision(2) << result.totalElapsed_ms << "ms\n";
-        ss << "Correspondence Time: " << std::fixed << std::setprecision(2) << result.avgCorrespondenceTime_ms << "ms\n";
-        ss << "Solver Time: " << std::fixed << std::setprecision(2) << result.avgSolverTime_ms << "ms\n";
+        ss << "Current RMS: " << std::fixed << std::setprecision(6) << result.rmse << "\n";
+        ss << "Total Time: "          << result.totalIterationTime.totalMs << "ms\n";
+        ss << "Correspondence Time: " << result.correspondenceSearchTime.totalMs << "ms\n";
+        ss << "Solver Time: "         << result.alignmentSolveTime.totalMs << "ms\n";
 
         renderer.RenderText(ss.str(), 20, 20, 25, DARKGRAY);
 
@@ -66,10 +66,10 @@ static void RunProjectInConsole(ICPSystem& system)
     ss << "Number of Source Points: " << system.GetSource().Size() << "\n";
     ss << "Iterations: " << result.iterations << "\n";
     ss << "converged: " << result.converged << "\n";
-    ss << "RMS: " << std::fixed << std::setprecision(6) << result.rms << "\n";
-    ss << "Total Time: " << std::fixed << std::setprecision(2) << result.totalElapsed_ms << "ms\n";
-    ss << "Avg Correspondence Time: " << std::fixed << std::setprecision(2) << result.avgCorrespondenceTime_ms << "ms\n";
-    ss << "Avg Solver Time: " << std::fixed << std::setprecision(2) << result.avgSolverTime_ms << "ms\n";
+    ss << "RMS: " << result.rmse << "\n";
+    ss << "Total Time: " << result.totalIterationTime.totalMs << "ms\n";
+    ss << "Correspondence Time: " << result.correspondenceSearchTime.totalMs << "\n";
+    ss << "Solver Time: " << result.alignmentSolveTime.totalMs << "\n";
 
     std::cout << ss.str();
 }
@@ -88,10 +88,10 @@ int main()
         points.end()
     );
 
-    //for (geo::u32 i = 0; i < 1000; i++)
-    //{
-    //    points.emplace_back(rng.Float3(-10.0f, 10.0f));
-    //}
+    for (geo::u32 i = 0; i < 1000; i++)
+    {
+        points.emplace_back(rng.Float3(-10.0f, 10.0f));
+    }
     source = geo::PointCloud3D(points);
 
     geo::SetLogLevel(geo::VERBOSE);
@@ -129,7 +129,7 @@ int main()
     //RunProjectInConsole(system_sparse);
 
 
-    RunProjectWithWindow(system_ptp);
+    RunProjectWithWindow(system_sparse);
 
     return 0;
 }
