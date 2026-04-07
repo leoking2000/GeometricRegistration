@@ -8,6 +8,8 @@
 #include "geometry/RandomPointCloud.h"
 
 #include "math/RigidTransform.h"
+#include "math/Stats.h"
+#include "math/solvers.h"
 
 #include "spatial/INearestNeighbor.h"
 #include "spatial/LinearNN.h"

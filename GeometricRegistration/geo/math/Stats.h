@@ -31,6 +31,8 @@ namespace geo
     // Expected use: errorSq gets the residual of sample i squared.
     f32 RMSE(index_t N, std::function<f32(index_t)> errorSq);
 
+    f32 RMSE(const std::vector<glm::vec3>& source, const std::vector<glm::vec3> target);
+
     // Returns the RMSE after keeping the smallest keepRatio fraction of the scalar residual magnitudes.
     // Expected use: residuals are squared scalar magnitudes.
     // Empty-input behavior: Returns F32_MAX if residuals is empty.

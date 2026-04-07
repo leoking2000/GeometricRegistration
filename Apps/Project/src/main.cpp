@@ -13,7 +13,7 @@
 
 static geo::Random rng{ 2026 }; 
 
-static void RunProjectWithWindow(ICPSystem& system)
+static void RunProjectWithWindow(ICPSystem& system, const std::vector<glm::vec3>& ground_truth)
 {
     geo::ICPResult result;
 
@@ -28,10 +28,10 @@ static void RunProjectWithWindow(ICPSystem& system)
 
 
         // Run one ICP iteration on SPACE
-        //if(IsKeyPressed(KEY_SPACE))
-        if (IsKeyDown(KEY_SPACE))
+        //if (IsKeyDown(KEY_SPACE))
+        if(IsKeyPressed(KEY_SPACE))
         {
-            result = system.Step();
+            result = system.Solve(500);
         }
 
         // ---------------- Rendering ----------------
@@ -46,7 +46,8 @@ static void RunProjectWithWindow(ICPSystem& system)
         std::stringstream ss;
         ss << "FPS:" << GetFPS() << "\n";
         ss << "Press SPACE to run 1 ICP iteration\n";
-        ss << "Current RMS: " << std::fixed << std::setprecision(6) << result.rmse << "\n";
+        ss << "Current Truth RMSE: " << std::fixed << std::setprecision(6) 
+            << geo::RMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
         ss << "Total Time: "          << result.totalIterationTime.totalMs << "ms\n";
         ss << "Correspondence Time: " << result.correspondenceSearchTime.totalMs << "ms\n";
         ss << "Solver Time: "         << result.alignmentSolveTime.totalMs << "ms\n";
@@ -57,7 +58,7 @@ static void RunProjectWithWindow(ICPSystem& system)
     }
 }
 
-static void RunProjectInConsole(ICPSystem& system)
+static void RunProjectInConsole(ICPSystem& system, const std::vector<glm::vec3>& ground_truth)
 {
     geo::ICPResult result = system.Solve(500);
 
@@ -65,42 +66,52 @@ static void RunProjectInConsole(ICPSystem& system)
     ss << "Number of Target Points: " << system.GetTarget().Size() << "\n";
     ss << "Number of Source Points: " << system.GetSource().Size() << "\n";
     ss << "Iterations: " << result.iterations << "\n";
-    ss << "converged: " << result.converged << "\n";
-    ss << "RMS: " << result.rmse << "\n";
     ss << "Total Time: " << result.totalIterationTime.totalMs << "ms\n";
-    ss << "Correspondence Time: " << result.correspondenceSearchTime.totalMs << "\n";
-    ss << "Solver Time: " << result.alignmentSolveTime.totalMs << "\n";
+    ss << "Avg Correspondence Time: " << result.correspondenceSearchTime.AverageMs() << "ms\n";
+    ss << "Avg Solver Time: " << result.alignmentSolveTime.AverageMs() << "ms\n";
+    ss << "converged: " << result.converged << "\n";
+    ss << "Current Truth RMSE: " << std::fixed << std::setprecision(6)
+        << geo::RMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
 
     std::cout << ss.str();
 }
 
 int main()
 {
-    geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
-    geo::PointCloud3D source = target;
+    // get a mesh
+    geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
+    std::vector<glm::vec3> vertices = mesh.Vertices();
+    for (size_t i = 0; i < vertices.size(); i++)
+    {
+        glm::vec4 scaled =  glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)) * glm::vec4(vertices[i], 1.0f);
+        vertices[i] = glm::vec3(scaled);
+    }
 
-    std::vector<glm::vec3> points = target.GetPoints();
+    //geo::PointCloud3D source = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
+    geo::PointCloud3D source = geo::PointCloud3D(vertices);
+
+    // get some part of the bunny
+    std::vector<glm::vec3> points = source.GetPoints();
     points.erase(
         std::remove_if(points.begin(), points.end(),
             [](const glm::vec3& p) {
-                return p.x < 0;   // remove points with negative x
+                return p.x < -3;
             }),
         points.end()
     );
-
-    for (geo::u32 i = 0; i < 1000; i++)
-    {
-        points.emplace_back(rng.Float3(-10.0f, 10.0f));
-    }
-    source = geo::PointCloud3D(points);
+    
+    // make the target be a part, this way the "outliers are in source cloud"
+    geo::PointCloud3D target = geo::PointCloud3D(points);
 
     geo::SetLogLevel(geo::VERBOSE);
 
     GEOLOGDEBUG("Number of points: " << source.Size() + target.Size());
+    GEOLOGDEBUG("Number of source points: " << source.Size());
+    GEOLOGDEBUG("Number of target points: " << target.Size());
     
     // Apply known transform to source
-    glm::vec3 eulerRot(20.0f, 40.0f, 10.0f);
-    glm::vec3 translation(5.0f, 3.0f, -4.0f);
+    glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
+    glm::vec3 translation(-1.0f, 0.0f, 1.0f);
 
     glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
         glm::radians(eulerRot.x),
@@ -118,7 +129,7 @@ int main()
 
     std::cout << "<<Point to Point>>\n\n";
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    //RunProjectInConsole(system_ptp);
+    RunProjectInConsole(system_ptp, vertices);
     
     //std::cout << "\n<<Point to Plane>>\n\n";
     //ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
@@ -126,10 +137,10 @@ int main()
 
     std::cout << "\n<<Sparse Point to Point>>\n\n";
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    //RunProjectInConsole(system_sparse);
+    RunProjectInConsole(system_sparse, vertices);
 
 
-    RunProjectWithWindow(system_sparse);
+    //RunProjectWithWindow(system_ptp, vertices);
 
     return 0;
 }
