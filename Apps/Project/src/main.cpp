@@ -11,7 +11,44 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
-static geo::Random rng{ 2026 }; 
+static geo::Random rng{ 2026 };
+
+static geo::PointCloud3D CropPointCloud(
+    const geo::PointCloud3D& cloud,
+    const std::function<bool(const glm::vec3&)>& keep)
+{
+    std::vector<glm::vec3> pointsOut;
+    std::vector<glm::vec3> normalsOut;
+
+    pointsOut.reserve(cloud.Size());
+    if (cloud.HasNormals())
+    {
+        normalsOut.reserve(cloud.Size());
+    }
+
+    for (geo::index_t i = 0; i < cloud.Size(); ++i)
+    {
+        const glm::vec3& p = cloud.Point(i);
+        if (!keep(p))
+        {
+            continue;
+        }
+
+        pointsOut.push_back(p);
+
+        if (cloud.HasNormals())
+        {
+            normalsOut.push_back(cloud.Normal(i));
+        }
+    }
+
+    if (cloud.HasNormals())
+    {
+        return geo::PointCloud3D(std::move(pointsOut), std::move(normalsOut));
+    }
+
+    return geo::PointCloud3D(std::move(pointsOut));
+}
 
 static void RunProjectWithWindow(ICPSystem& system, const std::vector<glm::vec3>& ground_truth)
 {
@@ -80,34 +117,30 @@ int main()
 {
     // get a mesh
     geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
-    std::vector<glm::vec3> vertices = mesh.Vertices();
-    for (size_t i = 0; i < vertices.size(); i++)
-    {
-        glm::vec4 scaled =  glm::scale(glm::mat4(1.0f), glm::vec3(5.0f)) * glm::vec4(vertices[i], 1.0f);
-        vertices[i] = glm::vec3(scaled);
-    }
+    //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
+
+    // the ground_truth
+    std::vector<glm::vec3> sourceTruth = mesh.Vertices();
 
     //geo::PointCloud3D source = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
-    geo::PointCloud3D source = geo::PointCloud3D(vertices);
-
-    // get some part of the bunny
-    std::vector<glm::vec3> points = source.GetPoints();
-    points.erase(
-        std::remove_if(points.begin(), points.end(),
-            [](const glm::vec3& p) {
-                return p.x < -3;
-            }),
-        points.end()
-    );
-    
+    geo::PointCloud3D source = mesh.ToPointCloud();
+ 
     // make the target be a part, this way the "outliers are in source cloud"
-    geo::PointCloud3D target = geo::PointCloud3D(points);
+    const float splitX = source.Centroid().x;
+    geo::PointCloud3D target = CropPointCloud(
+        source,
+        [splitX](const glm::vec3& p)
+        {
+            return p.x > splitX * 2.5;
+        });
 
     geo::SetLogLevel(geo::VERBOSE);
 
     GEOLOGDEBUG("Number of points: " << source.Size() + target.Size());
     GEOLOGDEBUG("Number of source points: " << source.Size());
     GEOLOGDEBUG("Number of target points: " << target.Size());
+    GEOLOGDEBUG("Has Normals: " << target.HasNormals());
     
     // Apply known transform to source
     glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
@@ -129,15 +162,15 @@ int main()
 
     std::cout << "<<Point to Point>>\n\n";
     ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    RunProjectInConsole(system_ptp, vertices);
+    RunProjectInConsole(system_ptp, sourceTruth);
     
-    //std::cout << "\n<<Point to Plane>>\n\n";
-    //ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
-    //RunProjectInConsole(system_ptpl);
+    std::cout << "\n<<Point to Plane>>\n\n";
+    ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
+    RunProjectInConsole(system_ptpl, sourceTruth);
 
     std::cout << "\n<<Sparse Point to Point>>\n\n";
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    RunProjectInConsole(system_sparse, vertices);
+    RunProjectInConsole(system_sparse, sourceTruth);
 
 
     //RunProjectWithWindow(system_ptp, vertices);

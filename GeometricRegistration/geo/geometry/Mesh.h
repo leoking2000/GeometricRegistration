@@ -5,6 +5,7 @@
 #include <filesystem>
 #include <glm/glm.hpp>
 #include "utils/GeoTypes.h"
+#include "PointCloud3D.h"
 
 namespace geo
 {
@@ -14,7 +15,7 @@ namespace geo
 		index_t normal[3] = { 0,0,0 };
 		index_t coords[3] = { 0,0,0 };
 		f32 area          = 0.0f;
-		glm::vec3 face_normal{ 0.0f };
+		glm::vec3 face_normal{ 1.0f, 0.0f, 0.0f };
 	};
 
 	struct TriangleGroup
@@ -46,7 +47,7 @@ namespace geo
 	class Mesh
 	{
 	public:
-		Mesh(std::filesystem::path filepath);
+		explicit Mesh(std::filesystem::path filepath);
 	public:
 		const std::string&                     FileName()        const { return m_filename; }
 		const std::vector<glm::vec3>&          Vertices()        const { return m_vertices_buffer; }
@@ -63,6 +64,7 @@ namespace geo
 		const glm::vec3& Center()        const { return m_center; }
 		const glm::vec3& BBoxMin()       const { return m_bboxMin; }
 		const glm::vec3& BBoxMax()       const { return m_bboxMax; }
+		PointCloud3D     ToPointCloud()  const { return PointCloud3D(m_vertices_buffer, m_normals_buffer); }
 	private:
 		void ComputeBounds();
 		void ComputeVertexNormals();
@@ -71,8 +73,8 @@ namespace geo
 		f32  ComputeSurfaceArea();
 		void ComputeAll();
 	private:
-		void LoadOBJ();
-		void LoadPLY();
+		void LoadOBJ(const std::filesystem::path& filepath);
+		//void LoadPLY(std::filesystem::path filepath);
 	private:
 		// metadata
 		std::string m_filename;
@@ -92,7 +94,7 @@ namespace geo
 		f32       m_surface_area = 0.0f;
 		glm::vec3 m_center{ 0.0f };
 		glm::vec3 m_bboxMin = { F32_MAX, F32_MAX, F32_MAX };
-		glm::vec3 m_bboxMax = { F32_MIN, F32_MIN, F32_MIN };
+		glm::vec3 m_bboxMax = { -F32_MAX, -F32_MAX, -F32_MAX };
 	};
 
 }

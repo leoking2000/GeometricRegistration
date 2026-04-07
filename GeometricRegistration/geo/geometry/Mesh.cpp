@@ -16,268 +16,224 @@ namespace geo
 {
 	Mesh::Mesh(std::filesystem::path filepath)
 	{
-		m_filename = filepath.string();
-
-		std::filesystem::path path(filepath);
-		std::string ext = path.extension().string();
+		m_filename = filepath.filename().string();
+		std::string ext = filepath.extension().string();
 
 		if (ext == ".obj" || ext == ".OBJ")
 		{
-			LoadOBJ();
+			LoadOBJ(filepath);
 		}
 		else if (ext == ".ply" || ext == ".PLY")
 		{
-			LoadPLY();
+			//LoadPLY(filepath);
+			throw std::runtime_error("Unsupported mesh format: " + ext);
 		}
 		else
 		{
 			throw std::runtime_error("Unsupported mesh format: " + ext);
 		}
 
+		if (m_vertices_buffer.empty())
+		{
+			throw std::runtime_error("Mesh contains no vertices: " + m_filename);
+		}
+
+		if (m_triangles_buffer.empty())
+		{
+			throw std::runtime_error("Mesh contains no triangles: " + m_filename);
+		}
+
 		ComputeAll();
 	}
 
-	void Mesh::LoadOBJ()
+	void Mesh::LoadOBJ(const std::filesystem::path& filepath)
 	{
-		tinyobj::attrib_t attrib;
-		std::vector<tinyobj::shape_t> shapes;
-		std::vector<tinyobj::material_t> materials;
+        tinyobj::ObjReaderConfig config;
+        config.mtl_search_path = filepath.parent_path().string();
 
-		std::string warn;
-		std::string err;
+        tinyobj::ObjReader reader;
+        if (!reader.ParseFromFile(filepath.string(), config))
+        {
+            std::string err = reader.Error();
+            if (err.empty())
+            {
+                err = "Failed to load OBJ: " + filepath.string();
+            }
+            throw std::runtime_error(err);
+        }
 
-		bool ret = tinyobj::LoadObj(
-			&attrib,
-			&shapes,
-			&materials,
-			&warn,
-			&err,
-			m_filename.c_str(),
-			nullptr,
-			true
-		);
+        if (!reader.Warning().empty())
+        {
+            // Optional: log warnings if you want
+        }
 
-		if (!warn.empty())
-			std::cout << "TinyObj warning: " << warn << std::endl;
+        const tinyobj::attrib_t& attrib = reader.GetAttrib();
+        const std::vector<tinyobj::shape_t>& shapes = reader.GetShapes();
+        const std::vector<tinyobj::material_t>& materials = reader.GetMaterials();
 
-		if (!err.empty())
-			std::cerr << "TinyObj error: " << err << std::endl;
+        // Vertices
+        m_vertices_buffer.reserve(attrib.vertices.size() / 3);
+        for (size_t i = 0; i + 2 < attrib.vertices.size(); i += 3)
+        {
+            m_vertices_buffer.emplace_back(
+                attrib.vertices[i + 0],
+                attrib.vertices[i + 1],
+                attrib.vertices[i + 2]);
+        }
 
-		if (!ret)
-			throw std::runtime_error("Failed to load OBJ file");
+        // Normals
+        if (!attrib.normals.empty())
+        {
+            m_normals_buffer.reserve(attrib.normals.size() / 3);
+            for (size_t i = 0; i + 2 < attrib.normals.size(); i += 3)
+            {
+                m_normals_buffer.emplace_back(
+                    attrib.normals[i + 0],
+                    attrib.normals[i + 1],
+                    attrib.normals[i + 2]);
+            }
+        }
 
-		// -----------------------------
-		// Vertices
-		// -----------------------------
-		m_vertices_buffer.reserve(attrib.vertices.size() / 3);
+        // Colors if present
+        if (!attrib.colors.empty())
+        {
+            m_colors_buffer.reserve(attrib.colors.size() / 3);
+            for (size_t i = 0; i + 2 < attrib.colors.size(); i += 3)
+            {
+                m_colors_buffer.emplace_back(
+                    attrib.colors[i + 0],
+                    attrib.colors[i + 1],
+                    attrib.colors[i + 2]);
+            }
+        }
 
-		for (size_t v = 0; v < attrib.vertices.size() / 3; v++)
-		{
-			glm::vec3 vertex;
-			vertex.x = attrib.vertices[3 * v + 0];
-			vertex.y = attrib.vertices[3 * v + 1];
-			vertex.z = attrib.vertices[3 * v + 2];
+        // Texcoords as vec3, z = 0
+        if (!attrib.texcoords.empty())
+        {
+            m_coords_buffer.reserve(attrib.texcoords.size() / 2);
+            for (size_t i = 0; i + 1 < attrib.texcoords.size(); i += 2)
+            {
+                m_coords_buffer.emplace_back(
+                    attrib.texcoords[i + 0],
+                    attrib.texcoords[i + 1],
+                    0.0f);
+            }
+        }
 
-			m_vertices_buffer.push_back(vertex);
-		}
+        // Materials
+        for (const auto& mtl : materials)
+        {
+            Material m;
+            m.name = mtl.name.empty() ? "default" : mtl.name;
+            m.baseColor = glm::vec3(mtl.diffuse[0], mtl.diffuse[1], mtl.diffuse[2]);
 
-		// -----------------------------
-		// Normals
-		// -----------------------------
-		m_normals_buffer.reserve(attrib.normals.size() / 3);
+            if (!mtl.diffuse_texname.empty())
+                m.textureColor = mtl.diffuse_texname;
 
-		for (size_t n = 0; n < attrib.normals.size() / 3; n++)
-		{
-			glm::vec3 normal;
-			normal.x = attrib.normals[3 * n + 0];
-			normal.y = attrib.normals[3 * n + 1];
-			normal.z = attrib.normals[3 * n + 2];
+            if (!mtl.bump_texname.empty())
+                m.textureNormal = mtl.bump_texname;
 
-			m_normals_buffer.push_back(normal);
-		}
+            if (!mtl.alpha_texname.empty())
+                m.textureMask = mtl.alpha_texname;
 
-		// -----------------------------
-		// Texture Coords
-		// -----------------------------
-		m_coords_buffer.reserve(attrib.texcoords.size() / 2);
+            m_materials_map[m.name] = m;
+        }
 
-		for (size_t t = 0; t < attrib.texcoords.size() / 2; t++)
-		{
-			glm::vec3 coord;
-			coord.x = attrib.texcoords[2 * t + 0];
-			coord.y = attrib.texcoords[2 * t + 1];
-			coord.z = 0.0f;
+        // Triangles + groups
+        for (const auto& shape : shapes)
+        {
+            size_t indexOffset = 0;
+            index_t groupStart = static_cast<index_t>(m_triangles_buffer.size());
 
-			m_coords_buffer.push_back(coord);
-		}
+            // tinyobj material ids are per-face
+            std::string groupMaterialName = "default";
 
-		// -----------------------------
-		// Materials
-		// -----------------------------
-		for (const auto& mat : materials)
-		{
-			Material m;
-			m.name = mat.name;
+            for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); ++f)
+            {
+                const int fv = shape.mesh.num_face_vertices[f];
+                if (fv < 3)
+                {
+                    indexOffset += static_cast<size_t>(fv);
+                    continue;
+                }
 
-			m.baseColor = glm::vec3(
-				mat.diffuse[0],
-				mat.diffuse[1],
-				mat.diffuse[2]
-			);
+                const int materialId =
+                    (f < shape.mesh.material_ids.size()) ? shape.mesh.material_ids[f] : -1;
 
-			m.textureColor = mat.diffuse_texname;
-			m.textureNormal = mat.normal_texname;
+                if (materialId >= 0 && static_cast<size_t>(materialId) < materials.size())
+                {
+                    groupMaterialName = materials[materialId].name.empty()
+                        ? "default"
+                        : materials[materialId].name;
+                }
 
-			m_materials_map[m.name] = m;
-		}
+                // Fan triangulation
+                const tinyobj::index_t i0 = shape.mesh.indices[indexOffset + 0];
 
-		// -----------------------------
-		// Shapes / Triangles
-		// -----------------------------
-		for (const auto& shape : shapes)
-		{
-			TriangleGroup group;
-			group.start = (index_t)m_triangles_buffer.size();
-			group.matname = "";
+                for (int k = 1; k + 1 < fv; ++k)
+                {
+                    const tinyobj::index_t i1 = shape.mesh.indices[indexOffset + k];
+                    const tinyobj::index_t i2 = shape.mesh.indices[indexOffset + k + 1];
 
-			size_t index_offset = 0;
+                    Triangle tri{};
 
-			for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
-			{
-				int fv = shape.mesh.num_face_vertices[f];
+                    tri.vertex[0] = static_cast<index_t>(i0.vertex_index);
+                    tri.vertex[1] = static_cast<index_t>(i1.vertex_index);
+                    tri.vertex[2] = static_cast<index_t>(i2.vertex_index);
 
-				if (fv != 3)
-				{
-					index_offset += fv;
-					continue;
-				}
+                    tri.normal[0] = (i0.normal_index >= 0) ? static_cast<index_t>(i0.normal_index) : 0;
+                    tri.normal[1] = (i1.normal_index >= 0) ? static_cast<index_t>(i1.normal_index) : 0;
+                    tri.normal[2] = (i2.normal_index >= 0) ? static_cast<index_t>(i2.normal_index) : 0;
 
-				Triangle tri;
+                    tri.coords[0] = (i0.texcoord_index >= 0) ? static_cast<index_t>(i0.texcoord_index) : 0;
+                    tri.coords[1] = (i1.texcoord_index >= 0) ? static_cast<index_t>(i1.texcoord_index) : 0;
+                    tri.coords[2] = (i2.texcoord_index >= 0) ? static_cast<index_t>(i2.texcoord_index) : 0;
 
-				for (size_t v = 0; v < 3; v++)
-				{
-					const tinyobj::index_t& idx =
-						shape.mesh.indices[index_offset + v];
+                    m_triangles_buffer.push_back(tri);
+                }
 
-					tri.vertex[v] = idx.vertex_index;
-					tri.normal[v] = idx.normal_index;
-					tri.coords[v] = idx.texcoord_index;
-				}
+                indexOffset += static_cast<size_t>(fv);
+            }
 
-				m_triangles_buffer.push_back(tri);
+            const index_t groupEnd = static_cast<index_t>(m_triangles_buffer.size());
+            if (groupEnd > groupStart)
+            {
+                TriangleGroup group;
+                group.start = groupStart;
+                group.length = groupEnd - groupStart;
+                group.matname = groupMaterialName;
+                m_groups_buffer.push_back(group);
+            }
+        }
 
-				index_offset += fv;
-			}
+        if (m_materials_map.empty())
+        {
+            m_materials_map["default"] = Material{};
+        }
 
-			group.length = (index_t)m_triangles_buffer.size() - group.start;
-
-			m_groups_buffer.push_back(group);
-		}
+        // If OBJ normals exist but are per-corner rather than one-per-vertex,
+        // do not pretend they are vertex normals unless counts match.
+        if (!m_normals_buffer.empty() && m_normals_buffer.size() != m_vertices_buffer.size())
+        {
+            m_normals_buffer.clear();
+        }
 	}
 
-	void Mesh::LoadPLY()
-	{
-		std::ifstream file(m_filename);
-		if (!file)
-			throw std::runtime_error("Failed to open PLY file");
-
-		std::string line;
-
-		size_t vertexCount = 0;
-		size_t faceCount = 0;
-
-		bool header = true;
-
-		while (header && std::getline(file, line))
-		{
-			std::stringstream ss(line);
-			std::string token;
-			ss >> token;
-
-			if (token == "element")
-			{
-				ss >> token;
-
-				if (token == "vertex")
-					ss >> vertexCount;
-
-				if (token == "face")
-					ss >> faceCount;
-			}
-
-			if (token == "end_header")
-				header = false;
-		}
-
-		// Load vertices
-		m_vertices_buffer.reserve(vertexCount);
-
-		for (size_t i = 0; i < vertexCount; i++)
-		{
-			std::getline(file, line);
-			std::stringstream ss(line);
-
-			glm::vec3 v;
-			ss >> v.x >> v.y >> v.z;
-
-			m_vertices_buffer.push_back(v);
-
-			// optional normals
-			if (!ss.eof())
-			{
-				glm::vec3 n;
-				ss >> n.x >> n.y >> n.z;
-
-				m_normals_buffer.push_back(n);
-			}
-		}
-
-		// Load faces
-		m_triangles_buffer.reserve(faceCount);
-
-		for (size_t i = 0; i < faceCount; i++)
-		{
-			std::getline(file, line);
-			std::stringstream ss(line);
-
-			int verts;
-			ss >> verts;
-
-			if (verts != 3)
-				continue;
-
-			Triangle tri;
-
-			ss >> tri.vertex[0];
-			ss >> tri.vertex[1];
-			ss >> tri.vertex[2];
-
-			tri.normal[0] = tri.normal[1] = tri.normal[2] = -1;
-			tri.coords[0] = tri.coords[1] = tri.coords[2] = -1;
-
-			m_triangles_buffer.push_back(tri);
-		}
-
-		// Create default triangle group
-		TriangleGroup group;
-		group.start = 0;
-		group.length = (index_t)m_triangles_buffer.size();
-		group.matname = "default";
-
-		m_groups_buffer.push_back(group);
-	}
+	//void Mesh::LoadPLY(std::filesystem::path filepath)
+	//{
+	//
+	//}
 
 	void Mesh::ComputeAll()
 	{
 		ComputeBounds();
+		ComputeTriangleNormals();
+		ComputeTriangleAreas();
 
 		if (m_normals_buffer.empty())
 		{
 			ComputeVertexNormals();
 		}
-
-		ComputeTriangleNormals();
-		ComputeTriangleAreas();
 
 		m_surface_area = ComputeSurfaceArea();
 	}
@@ -285,6 +241,11 @@ namespace geo
 
 	void Mesh::ComputeBounds()
 	{
+		assert(!m_vertices_buffer.empty());
+
+		m_bboxMin = glm::vec3(F32_MAX, F32_MAX, F32_MAX);
+		m_bboxMax = glm::vec3(-F32_MAX, -F32_MAX, -F32_MAX);
+
 		for (const auto& v : m_vertices_buffer)
 		{
 			m_bboxMin = glm::min(m_bboxMin, v);
@@ -302,10 +263,20 @@ namespace geo
 			const glm::vec3& v1 = m_vertices_buffer[tri.vertex[1]];
 			const glm::vec3& v2 = m_vertices_buffer[tri.vertex[2]];
 
-			glm::vec3 e1 = v1 - v0;
-			glm::vec3 e2 = v2 - v0;
+			const glm::vec3 e1 = v1 - v0;
+			const glm::vec3 e2 = v2 - v0;
 
-			tri.face_normal = glm::normalize(glm::cross(e1, e2));
+			const glm::vec3 c = glm::cross(e1, e2);
+			const f32 len2 = glm::dot(c, c);
+
+			if (len2 > 0.0f)
+			{
+				tri.face_normal = c / std::sqrt(len2);
+			}
+			else
+			{
+				tri.face_normal = glm::vec3(0.0f);
+			}
 		}
 	}
 
@@ -318,14 +289,23 @@ namespace geo
 		{
 			for (int i = 0; i < 3; i++)
 			{
-				index_t v = tri.vertex[i];
+				const index_t v = tri.vertex[i];
+				assert(v < m_normals_buffer.size());
 				m_normals_buffer[v] += tri.face_normal;
 			}
 		}
 
 		for (auto& n : m_normals_buffer)
 		{
-			n = glm::normalize(n);
+			const f32 len2 = glm::dot(n, n);
+			if (len2 > 0.0f)
+			{
+				n /= std::sqrt(len2);
+			}
+			else
+			{
+				n = glm::vec3(0.0f, 1.0f, 0.0f);
+			}
 		}
 	}
 
@@ -337,8 +317,8 @@ namespace geo
 			const glm::vec3& v1 = m_vertices_buffer[tri.vertex[1]];
 			const glm::vec3& v2 = m_vertices_buffer[tri.vertex[2]];
 
-			glm::vec3 e1 = v1 - v0;
-			glm::vec3 e2 = v2 - v0;
+			const glm::vec3 e1 = v1 - v0;
+			const glm::vec3 e2 = v2 - v0;
 
 			tri.area = 0.5f * glm::length(glm::cross(e1, e2));
 		}
