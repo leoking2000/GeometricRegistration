@@ -2,8 +2,6 @@
 #include <memory>
 #include "INearestNeighbor.h"
 
-// TODO:
-// parallel nearest neighbor.
 
 namespace geo
 {
