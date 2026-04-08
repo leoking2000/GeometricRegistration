@@ -5,6 +5,7 @@
 
 namespace geo
 {
+	// Represents a 3D rigid transform with an orthonormal rotation matrix.
 	class RigidTransform
 	{
 	public:
@@ -58,7 +59,7 @@ namespace geo
 		}
 	};
 
-	inline bool NearlyEqual(
+	inline bool RigidTransformNearlyEqual(
 		const RigidTransform& A,
 		const RigidTransform& B,
 		f32 eps = 1e-5f)

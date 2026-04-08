@@ -1,5 +1,6 @@
 #include <filesystem>
 #include <fstream>
+#include <thread>
 #include <gtest/gtest.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
@@ -30,6 +31,391 @@ static inline void ExpectVec3Near(
     EXPECT_NEAR(a.z, b.z, tolerance);
 }
 
+// geo::Random class Test
+
+TEST(GeoRand, SameSeedProducesSameIntSequence)
+{
+    geo::Random a(12345u);
+    geo::Random b(12345u);
+
+    for (int i = 0; i < 100; ++i)
+        EXPECT_EQ(a.Int(-50, 50), b.Int(-50, 50));
+}
+
+TEST(GeoRand, SameSeedProducesSameFloatSequence)
+{
+    geo::Random a(12345u);
+    geo::Random b(12345u);
+
+    for (int i = 0; i < 100; ++i)
+        EXPECT_FLOAT_EQ(a.Float(-2.0f, 3.0f), b.Float(-2.0f, 3.0f));
+}
+
+TEST(GeoRand, SetSeedResetsSequence)
+{
+    geo::Random rng(2026u);
+
+    const geo::i32 first = rng.Int(0, 1000);
+    rng.Int(0, 1000);
+    rng.Int(0, 1000);
+
+    rng.SetSeed(2026u);
+    EXPECT_EQ(first, rng.Int(0, 1000));
+}
+
+TEST(GeoRand, IntStaysWithinInclusiveBounds)
+{
+    geo::Random rng(9999u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const geo::i32 v = rng.Int(-3, 5);
+        EXPECT_GE(v, -3);
+        EXPECT_LE(v, 5);
+    }
+}
+
+TEST(GeoRand, UIntStaysWithinInclusiveBounds)
+{
+    geo::Random rng(8888u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const geo::u32 v = rng.UInt(2u, 9u);
+        EXPECT_GE(v, 2u);
+        EXPECT_LE(v, 9u);
+    }
+}
+
+TEST(GeoRand, FloatStaysWithinRange)
+{
+    geo::Random rng(7777u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const geo::f32 v = rng.Float(-1.5f, 2.5f);
+        EXPECT_GE(v, -1.5f);
+        EXPECT_LT(v, 2.5f);
+    }
+}
+
+TEST(GeoRand, FloatReturnsExactValueForDegenerateRange)
+{
+    geo::Random rng(6666u);
+
+    for (int i = 0; i < 100; ++i)
+        EXPECT_FLOAT_EQ(rng.Float(3.25f, 3.25f), 3.25f);
+}
+
+TEST(GeoRand, Float2ComponentsStayWithinRange)
+{
+    geo::Random rng(5555u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const glm::vec2 v = rng.Float2(-2.0f, 4.0f);
+        EXPECT_GE(v.x, -2.0f);
+        EXPECT_LT(v.x, 4.0f);
+        EXPECT_GE(v.y, -2.0f);
+        EXPECT_LT(v.y, 4.0f);
+    }
+}
+
+TEST(GeoRand, Float3ComponentsStayWithinRange)
+{
+    geo::Random rng(4444u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const glm::vec3 v = rng.Float3(-2.0f, 4.0f);
+        EXPECT_GE(v.x, -2.0f);
+        EXPECT_LT(v.x, 4.0f);
+        EXPECT_GE(v.y, -2.0f);
+        EXPECT_LT(v.y, 4.0f);
+        EXPECT_GE(v.z, -2.0f);
+        EXPECT_LT(v.z, 4.0f);
+    }
+}
+
+TEST(GeoRand, Dir2DHasRequestedLength)
+{
+    geo::Random rng(3333u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const glm::vec2 v = rng.Dir2D(2.5f);
+        EXPECT_NEAR(glm::length(v), 2.5f, 1e-5f);
+    }
+}
+
+TEST(GeoRand, Dir3DHasRequestedLength)
+{
+    geo::Random rng(2222u);
+
+    for (int i = 0; i < 1000; ++i)
+    {
+        const glm::vec3 v = rng.Dir3D(2.5f);
+        EXPECT_NEAR(glm::length(v), 2.5f, 1e-5f);
+    }
+}
+
+TEST(GeoRand, ZeroLengthDirectionsReturnZeroVector)
+{
+    geo::Random rng(2026u);
+
+    EXPECT_EQ(rng.Dir2D(0.0f), glm::vec2(0.0f));
+    EXPECT_EQ(rng.Dir3D(0.0f), glm::vec3(0.0f));
+}
+
+// GeoTime
+
+TEST(GeoTime, TimeDifferenceMsReturnsPositiveDuration)
+{
+    const geo::TimePoint start = geo::Clock::now();
+    const geo::TimePoint end = start + std::chrono::milliseconds(5);
+
+    const geo::f64 dt = geo::TimeDifferenceMs(end, start);
+
+    EXPECT_NEAR(dt, 5.0, 1e-6);
+}
+
+TEST(GeoTime, TimingStatIsEmptyInitially)
+{
+    geo::TimingStat stat;
+
+    EXPECT_TRUE(stat.Empty());
+    EXPECT_EQ(stat.count, 0u);
+    EXPECT_DOUBLE_EQ(stat.totalMs, 0.0);
+    EXPECT_DOUBLE_EQ(stat.AverageMs(), 0.0);
+}
+
+TEST(GeoTime, TimingStatAddSampleUpdatesTotals)
+{
+    geo::TimingStat stat;
+
+    stat.AddSample(10.0);
+    stat.AddSample(20.0);
+
+    EXPECT_FALSE(stat.Empty());
+    EXPECT_EQ(stat.count, 2u);
+    EXPECT_DOUBLE_EQ(stat.totalMs, 30.0);
+    EXPECT_DOUBLE_EQ(stat.AverageMs(), 15.0);
+}
+
+TEST(GeoTime, TimingStatClampsNegativeSampleToZero)
+{
+    geo::TimingStat stat;
+
+    stat.AddSample(-5.0);
+
+    EXPECT_EQ(stat.count, 1u);
+    EXPECT_DOUBLE_EQ(stat.totalMs, 0.0);
+    EXPECT_DOUBLE_EQ(stat.AverageMs(), 0.0);
+}
+
+TEST(GeoTime, TimingStatToStringForEmptyStat)
+{
+    geo::TimingStat stat;
+
+    EXPECT_EQ(stat.ToString(), "count=0 total=0ms avg=0ms");
+}
+
+TEST(GeoTime, ScopedTimerAddsSampleOnDestruction)
+{
+    geo::TimingStat stat;
+
+    {
+        geo::ScopedTimer timer(&stat);
+        std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    }
+
+    EXPECT_EQ(stat.count, 1u);
+    EXPECT_GE(stat.totalMs, 0.0);
+}
+
+TEST(GeoTime, StopwatchIsNotRunningInitially)
+{
+    geo::Stopwatch sw;
+
+    EXPECT_FALSE(sw.IsRunning());
+    EXPECT_DOUBLE_EQ(sw.ElapsedMs(), 0.0);
+    EXPECT_DOUBLE_EQ(sw.StopMs(), 0.0);
+}
+
+TEST(GeoTime, StopwatchStartAndStopWorks)
+{
+    geo::Stopwatch sw;
+
+    sw.Start();
+    EXPECT_TRUE(sw.IsRunning());
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+
+    const geo::f64 elapsed = sw.StopMs();
+
+    EXPECT_FALSE(sw.IsRunning());
+    EXPECT_GE(elapsed, 0.0);
+    EXPECT_DOUBLE_EQ(sw.ElapsedMs(), 0.0);
+}
+
+TEST(GeoTime, StopwatchRestartStartsWhenStopped)
+{
+    geo::Stopwatch sw;
+
+    const geo::f64 elapsed = sw.RestartMs();
+
+    EXPECT_DOUBLE_EQ(elapsed, 0.0);
+    EXPECT_TRUE(sw.IsRunning());
+}
+
+TEST(GeoTime, StopwatchRestartReturnsElapsedWhenRunning)
+{
+    geo::Stopwatch sw;
+    sw.Start();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    const geo::f64 elapsed = sw.RestartMs();
+
+    EXPECT_TRUE(sw.IsRunning());
+    EXPECT_GE(elapsed, 0.0);
+}
+
+TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
+{
+    geo::Stopwatch sw;
+    sw.Start();
+
+    std::this_thread::sleep_for(std::chrono::milliseconds(2));
+    const geo::f64 elapsed = sw.ElapsedMs();
+
+    EXPECT_TRUE(sw.IsRunning());
+    EXPECT_GE(elapsed, 0.0);
+}
+
+// Stats Tests
+
+TEST(Stats, PointToPointRMSEReturnsF32MaxForEmptyInput)
+{
+    const std::vector<glm::vec3> source;
+    const std::vector<glm::vec3> target;
+
+    EXPECT_EQ(geo::PointToPointRMSE(source, target), geo::F32_MAX);
+}
+
+TEST(Stats, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
+{
+    const std::vector<glm::vec3> source;
+    const std::vector<glm::vec3> target;
+    const std::vector<glm::vec3> normals;
+
+    EXPECT_EQ(geo::PointToPlaneRMSE(source, target, normals), geo::F32_MAX);
+}
+
+TEST(Stats, PointToPointRMSEIsZeroForIdenticalInputs)
+{
+    const std::vector<glm::vec3> points = {
+        {0.0f, 0.0f, 0.0f},
+        {1.0f, 2.0f, 3.0f},
+        {-1.0f, 4.0f, 0.5f}
+    };
+
+    EXPECT_FLOAT_EQ(geo::PointToPointRMSE(points, points), 0.0f);
+}
+
+TEST(Stats, PointToPlaneRMSEIsZeroForIdenticalInputs)
+{
+    const std::vector<glm::vec3> source = {
+        {0.0f, 0.0f, 0.0f},
+        {1.0f, 2.0f, 3.0f}
+    };
+
+    const std::vector<glm::vec3> target = source;
+    const std::vector<glm::vec3> normals = {
+        {0.0f, 0.0f, 1.0f},
+        {1.0f, 0.0f, 0.0f}
+    };
+
+    EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 0.0f);
+}
+
+TEST(Stats, PointToPointRMSEComputesExpectedValue)
+{
+    const std::vector<glm::vec3> source = {
+        {1.0f, 0.0f, 0.0f},
+        {0.0f, 2.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> target = {
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 0.0f, 0.0f}
+    };
+
+    // sqrt((1^2 + 2^2) / 2) = sqrt(2.5)
+    const float expected = std::sqrt(2.5f);
+
+    EXPECT_NEAR(geo::PointToPointRMSE(source, target), expected, 1e-6f);
+}
+
+TEST(Stats, PointToPlaneRMSEUsesOnlyNormalComponent)
+{
+    const std::vector<glm::vec3> source = {
+        {1.0f, 5.0f, 0.0f},
+        {2.0f, 7.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> target = {
+        {0.0f, 1.0f, 0.0f},
+        {0.0f, 3.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> normals = {
+        {1.0f, 0.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f}
+    };
+
+    // residuals along normals: 1, 2 -> rmse = sqrt((1 + 4)/2) = sqrt(2.5)
+    const float expected = std::sqrt(2.5f);
+
+    EXPECT_NEAR(geo::PointToPlaneRMSE(source, target, normals), expected, 1e-6f);
+}
+
+TEST(Stats, PointToPlaneRMSEIgnoresTangentialComponent)
+{
+    const std::vector<glm::vec3> source = {
+        {0.0f, 10.0f, 0.0f},
+        {0.0f, -3.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> target = {
+        {0.0f, 0.0f, 0.0f},
+        {0.0f, 5.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> normals = {
+        {1.0f, 0.0f, 0.0f},
+        {1.0f, 0.0f, 0.0f}
+    };
+
+    EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 0.0f);
+}
+
+TEST(Stats, PointToPlaneRMSEHandlesNonUnitNormalsAsImplemented)
+{
+    const std::vector<glm::vec3> source = {
+        {1.0f, 0.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> target = {
+        {0.0f, 0.0f, 0.0f}
+    };
+
+    const std::vector<glm::vec3> normals = {
+        {2.0f, 0.0f, 0.0f}
+    };
+
+    // dot((1,0,0),(2,0,0)) = 2
+    EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 2.0f);
+}
 
 // PointCloudTest
 
@@ -527,6 +913,46 @@ TEST_F(KDTreeTest, PerformanceQueryBatchTest)
     std::vector<geo::index_t> indexes(rng_points_large.size(), 0);
 
     kd.QueryBatch(rng_points_large, indexes);
+}
+
+static std::vector<glm::vec3> MakeRandomPoints(std::size_t count, unsigned seed)
+{
+    std::mt19937 rng(seed);
+    std::uniform_real_distribution<float> dist(-100.0f, 100.0f);
+
+    std::vector<glm::vec3> points;
+    points.reserve(count);
+
+    for (std::size_t i = 0; i < count; ++i)
+    {
+        points.push_back({ dist(rng), dist(rng), dist(rng) });
+    }
+
+    return points;
+}
+
+static double MeasureBatchQueryMs(const geo::INearestNeighbor& nn, const std::vector<glm::vec3>& queries)
+{
+    std::vector<geo::index_t> results;
+    const auto t0 = std::chrono::steady_clock::now();
+    nn.QueryBatch(queries, results);
+    const auto t1 = std::chrono::steady_clock::now();
+
+    return std::chrono::duration<double, std::milli>(t1 - t0).count();
+}
+
+TEST(KDTreePerformance, KDTreeBatchQueryScalesToLargeInput)
+{
+    const std::vector<glm::vec3> points = MakeRandomPoints(200000, 11u);
+    const std::vector<glm::vec3> queries = MakeRandomPoints(50000, 22u);
+
+    geo::KDTree tree(points);
+
+    const double kdMs = MeasureBatchQueryMs(tree, queries);
+
+    std::cout << "\nKDTree large batch query time: " << kdMs << " ms\n";
+
+    EXPECT_GT(kdMs, 0.0);
 }
 
 

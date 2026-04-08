@@ -52,10 +52,9 @@ namespace geo
     }
 
     ScopedTimer::ScopedTimer(TimingStat* stat)
-        : m_name("")
-        , m_start(Clock::now())
-        , m_stat(stat)
-        , m_logLevel(NONE)
+        :
+        m_start(Clock::now()),
+        m_stat(stat)
     {
     }
 
@@ -102,9 +101,10 @@ namespace geo
             return 0.0;
         }
 
+        m_running = false;
+
         const TimePoint end = Clock::now();
         const f64 elapsedMs = TimeDifferenceMs(end, m_start);
-        m_running = false;
         return elapsedMs;
     }
 
@@ -122,6 +122,7 @@ namespace geo
         const f64 elapsedMs = TimeDifferenceMs(now, m_start);
         m_start = now;
         m_running = true;
+
         return elapsedMs;
     }
 

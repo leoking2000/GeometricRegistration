@@ -6,6 +6,7 @@
 #include <string>
 #include <sstream>
 #include <iomanip>
+#include <functional>
 
 #include <geo/GeometricRegistration.h>
 #include <glm/gtc/constants.hpp>

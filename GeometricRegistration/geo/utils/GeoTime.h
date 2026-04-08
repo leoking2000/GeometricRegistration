@@ -9,7 +9,7 @@ namespace geo
     using Clock = std::chrono::steady_clock;
     using TimePoint = Clock::time_point;
 
-    // Compute a - b in milliseconds
+    // TimeDifferenceMs(end, start) returns end - start in milliseconds.
     f64 TimeDifferenceMs(TimePoint end, TimePoint start);
 
     struct TimingStat
@@ -18,12 +18,15 @@ namespace geo
         f64 totalMs = 0.0;
         u32 count   = 0;
     public:
+        // Negative samples are clamped to 0 to keep aggregate timing stats well-formed.
         void AddSample(f64 sample_ms);
         f64 AverageMs() const;
         bool Empty() const;
         std::string ToString() const;
     };
 
+    // ScopedTimer accumulates into TimingStat if provided and optionally logs on scope exit.
+    // Logging is emitted only when both a non-empty name and a non-NONE log level are provided.
     class ScopedTimer
     {
     public:
@@ -41,6 +44,7 @@ namespace geo
         LogLevel m_logLevel = NONE;
     };
 
+    // Stopwatch is edge-triggered: ElapsedMs() and StopMs() return 0 when not running.
     class Stopwatch
     {
     public:

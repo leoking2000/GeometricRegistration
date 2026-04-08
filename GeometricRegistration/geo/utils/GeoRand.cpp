@@ -39,6 +39,9 @@ namespace geo
     {
         assert(min <= max);
 
+        if (min == max)
+            return min;
+
         std::uniform_real_distribution<f32> dist(min, max);
         return dist(m_Rng);
     }
@@ -55,6 +58,8 @@ namespace geo
 
     glm::vec2 Random::Dir2D(f32 length)
     {
+        assert(length >= 0.0f);
+
         f32 angle = Float(0.0f, glm::two_pi<f32>());
         return {
             glm::cos(angle) * length,
@@ -64,6 +69,8 @@ namespace geo
 
     glm::vec3 Random::Dir3D(f32 length)
     {
+        assert(length >= 0.0f);
+
         // Uniform spherical distribution
         f32 z = Float(-1.0f, 1.0f);
         f32 theta = Float(0.0f, glm::two_pi<f32>());

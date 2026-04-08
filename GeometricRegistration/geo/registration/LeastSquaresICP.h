@@ -14,5 +14,5 @@ namespace geo
 
 	// Least squares ICP
 	ICPResult LeastSquaresICP(
-		const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, LeastSquaresICPParameters params = {});
+		const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, const LeastSquaresICPParameters& params = {});
 }

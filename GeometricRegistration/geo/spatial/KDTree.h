@@ -2,7 +2,6 @@
 #include <memory>
 #include "INearestNeighbor.h"
 
-
 namespace geo
 {
     // Kd-Tree for 3D points using glm::vec3.

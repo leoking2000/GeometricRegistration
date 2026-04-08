@@ -211,10 +211,10 @@ namespace geo
             f32 bi = glm::dot(n, q - p);
 
             // Compute rotation part: cross(n, p)
-            glm::vec3 crossPn = glm::cross(n, p);
+            glm::vec3 crossnp = glm::cross(n, p);
 
             // Fill AtA and Atb
-            std::array<f32, 6> row{ crossPn.x, crossPn.y, crossPn.z, n.x, n.y, n.z };
+            std::array<f32, 6> row{ crossnp.x, crossnp.y, crossnp.z, n.x, n.y, n.z };
 
             // Accumulate AtA = sum row^T * row
             for (int r = 0; r < 6; ++r)
@@ -235,6 +235,57 @@ namespace geo
         // Convert small rotation vector to rotation matrix
         glm::mat3 R = Rodrigues(rotVec);
 
+        return { R, t };
+    }
+
+    RigidTransform SolveRigidPointToPlaneShifted(
+        const std::vector<glm::vec3>& source,
+        const std::vector<glm::vec3>& target,
+        const std::vector<glm::vec3>& normals,
+        const std::vector<f32>& offsets)
+    {
+        assert(source.size() == target.size());
+        assert(target.size() == normals.size());
+        assert(normals.size() == offsets.size());
+        assert(source.size() >= 3);
+
+        const size_t N = source.size();
+
+        Mat6 AtA{};
+        Vec6 Atb{};
+
+        for (size_t i = 0; i < N; ++i)
+        {
+            const glm::vec3& p = source[i];
+            const glm::vec3& q = target[i];
+            const glm::vec3& n = normals[i];
+            const f32 c        = offsets[i];
+
+            const glm::vec3 rotJac = glm::cross(n, p);
+
+            const std::array<f32, 6> row{
+                rotJac.x, rotJac.y, rotJac.z,
+                n.x, n.y, n.z
+            };
+
+            const f32 bi = glm::dot(n, q - p) + c;
+
+            for (int r = 0; r < 6; ++r)
+            {
+                for (int col = 0; col < 6; ++col)
+                {
+                    AtA[r][col] += row[r] * row[col];
+                }
+                Atb[r] += row[r] * bi;
+            }
+        }
+
+        const Vec6 x = Solve6x6(AtA, Atb);
+
+        const glm::vec3 omega(x[0], x[1], x[2]);
+        const glm::vec3 t(x[3], x[4], x[5]);
+
+        const glm::mat3 R = Rodrigues(omega);
         return { R, t };
     }
 }

@@ -4,6 +4,8 @@
 
 namespace geo
 {
+    // Common fixed-width numeric aliases used across the library for consistency.
+
     using i8 = std::int8_t;
     using u8 = std::uint8_t;
 
@@ -19,13 +21,13 @@ namespace geo
     using f32 = float;
     using f64 = double;
 
+    // index_t is the canonical index type for point, vertex, and correspondence access.
     using index_t = u32;
 
+    // INVALID_INDEX is a sentinel for APIs that need to report "no valid index".
+    inline constexpr index_t INVALID_INDEX = std::numeric_limits<index_t>::max();
+
     inline constexpr f32 F32_MAX = std::numeric_limits<f32>::max();
-    inline constexpr f32 F32_MIN = std::numeric_limits<f32>::lowest();
-
     inline constexpr f64 F64_MAX = std::numeric_limits<f64>::max();
-    inline constexpr f64 F64_MIN = std::numeric_limits<f64>::lowest();
 
-    inline constexpr f32 GEO_EPS = 1e-6f;
 }

@@ -5,7 +5,6 @@
 #include "utils/GeoTypes.h"
 #include "RigidTransform.h"
 
-
 namespace geo
 {
     using Vec6 = std::array<f32, 6>;
@@ -35,5 +34,10 @@ namespace geo
     // residual_i = dot(n_i, (R x_i + t - y_i)
     RigidTransform SolveRigidPointToPlane(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target,
         const std::vector<glm::vec3>& normals);
+
+    // Solves linearized point-to-plane least squares using target normals
+    // residual_i = (dot(n_i, (R x_i + t - y_i) - c_i) where c_i is the offset
+    RigidTransform SolveRigidPointToPlaneShifted(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target,
+        const std::vector<glm::vec3>& normals, const std::vector<f32>& offsets);
 }
 

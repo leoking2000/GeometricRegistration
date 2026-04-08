@@ -12,9 +12,11 @@ namespace geo
         f32 p = 0.4f;
         f32 mu = 10;
         u32 admmIterations = 10;
-        bool useNormals = false;
     };
 
-    ICPResult SparseICP(
+    ICPResult SparseICPPointToPoint(
+        const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, SparseICPParameters params = {});
+
+    ICPResult SparseICPPointToPlane(
         const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, SparseICPParameters params = {});
 }
