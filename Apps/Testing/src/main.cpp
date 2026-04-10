@@ -1130,6 +1130,142 @@ TEST(NaiveICP, PointToPlaneRandomRect)
     ExpectVec3Near(result.transform.translation, expectedT, 1e-2f);
 }
 
+// SparseICP Tests
+
+TEST(SparseICPTest, ShrinkLpReturnsZeroForZeroInput)
+{
+    const glm::vec3 h(0.0f, 0.0f, 0.0f);
+    const geo::f32 p = 0.5f;
+    const geo::f32 mu = 10.0f;
+
+    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
+
+    ExpectVec3Near(z, glm::vec3(0.0f), 1e-7f);
+}
+
+TEST(SparseICPTest, ShrinkLpScalarReturnsZeroForZeroInput)
+{
+    const geo::f32 h = 0.0f;
+    const geo::f32 p = 0.5f;
+    const geo::f32 mu = 10.0f;
+
+    const geo::f32 z = geo::ShrinkLpScalar(h, p, mu);
+
+    EXPECT_NEAR(z, 0.0f, 1e-7f);
+}
+
+TEST(SparseICPTest, ShrinkLpDoesNotIncreaseMagnitude)
+{
+    const glm::vec3 h(3.0f, -4.0f, 0.0f); // norm = 5
+    const geo::f32 p = 0.5f;
+    const geo::f32 mu = 10.0f;
+
+    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
+
+    EXPECT_LE(glm::length(z), glm::length(h) + 1e-6f);
+}
+
+TEST(SparseICPTest, ShrinkLpPreservesDirectionWhenNonzero)
+{
+    const glm::vec3 h(2.0f, -1.0f, 4.0f);
+    const geo::f32 p = 0.5f;
+    const geo::f32 mu = 10.0f;
+
+    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
+
+    if (glm::length(z) > 1e-7f)
+    {
+        const glm::vec3 h_dir = glm::normalize(h);
+        const glm::vec3 z_dir = glm::normalize(z);
+        ExpectVec3Near(h_dir, z_dir, 1e-5f);
+    }
+}
+
+TEST(SparseICPTest, ShrinkLpScalarPreservesSign)
+{
+    const geo::f32 p = 0.5f;
+    const geo::f32 mu = 10.0f;
+
+    const geo::f32 pos = geo::ShrinkLpScalar(3.0f, p, mu);
+    const geo::f32 neg = geo::ShrinkLpScalar(-3.0f, p, mu);
+
+    EXPECT_GE(pos, 0.0f);
+    EXPECT_LE(neg, 0.0f);
+}
+
+TEST(SparseICPTest, SparsePointToPointConvergesOnIdenticalClouds)
+{
+    std::vector<glm::vec3> points({
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+        });
+
+    geo::PointCloud3D target(std::move(points));
+    // Apply a small known transform
+    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0, 1, 0));
+    glm::vec3 trans(1.0f, 0.2f, 0.1f);
+
+    geo::PointCloud3D source = target; // copy
+    source.Transform({ rot, trans });
+
+    geo::LinearNN nn(target.GetPoints());
+
+    geo::SparseICPParameters params;
+    params.maxIterations = 200;
+    params.admmIterations = 10;
+    params.tolerance = 1e-6f;
+    params.p = 0.9f;
+    params.mu = 10.0f;
+
+    geo::ICPResult result = geo::SparseICPPointToPoint(target, source, nn, params);
+
+    EXPECT_TRUE(result.converged);
+    EXPECT_NEAR(result.rmse, 0.0f, 1e-5f);
+    //EXPECT_LT(result.rmse, 1e-3f);
+}
+
+TEST(SparseICPTest, SparsePointToPlaneConvergesOnIdenticalCloudsWithNormals)
+{
+    std::vector<glm::vec3> points({
+        glm::vec3(0.0f, 0.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, 1.0f, 0.0f),
+        glm::vec3(1.0f, 0.0f, 1.0f)
+        });
+
+    std::vector<glm::vec3> normals = {
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    };
+
+    geo::PointCloud3D target(std::move(points), std::move(normals));
+    // Apply a small known transform
+    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(5.0f), glm::vec3(0, 1, 0));
+    glm::vec3 trans(1.0f, 0.2f, 0.1f);
+
+    geo::PointCloud3D source = target; // copy
+    source.Transform({ rot, trans });
+
+    geo::LinearNN nn(target.GetPoints());
+
+    geo::SparseICPParameters params;
+    params.maxIterations = 200;
+    params.admmIterations = 10;
+    params.tolerance = 1e-6f;
+    params.p = 0.9f;
+    params.mu = 10.0f;
+
+    geo::ICPResult result = geo::SparseICPPointToPlane(target, source, nn, params);
+
+    EXPECT_TRUE(result.converged);
+    EXPECT_NEAR(result.rmse, 0.0f, 1e-5f);
+    //EXPECT_LT(result.rmse, 1e-3f);
+}
+
 int main(int argc, char** argv)
 {
 	::testing::InitGoogleTest(&argc, argv);

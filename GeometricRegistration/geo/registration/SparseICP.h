@@ -14,6 +14,9 @@ namespace geo
         u32 admmIterations = 10;
     };
 
+    glm::vec3 ShrinkLp(const glm::vec3& h, f32 p, f32 mu);
+    f32 ShrinkLpScalar(f32 h, f32 p, f32 mu);
+
     ICPResult SparseICPPointToPoint(
         const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, SparseICPParameters params = {});
 

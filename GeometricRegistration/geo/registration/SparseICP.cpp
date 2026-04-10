@@ -16,7 +16,7 @@ namespace geo
 		return beta;
 	}
 
-	static inline glm::vec3 ShrinkLp(const glm::vec3& h, f32 p, f32 mu)
+	glm::vec3 ShrinkLp(const glm::vec3& h, f32 p, f32 mu)
 	{
 		f32 alpha_a = std::pow((2.0f / mu) * (1.0f - p), 1.0f / (2.0f - p));
 		f32 h_threshold = alpha_a + (p / mu) * std::pow(alpha_a, p - 1.0f);
@@ -30,7 +30,7 @@ namespace geo
 		return scaler * h;
 	}
 
-	static inline f32 ShrinkLpScalar(f32 h, f32 p, f32 mu)
+	f32 ShrinkLpScalar(f32 h, f32 p, f32 mu)
 	{
 		f32 alpha_a = std::pow((2.0f / mu) * (1.0f - p), 1.0f / (2.0f - p));
 		f32 h_threshold = alpha_a + (p / mu) * std::pow(alpha_a, p - 1.0f);
@@ -146,7 +146,7 @@ namespace geo
 			result.transform = RigidTransform::Compose(localTransform, result.transform);
 
 
-			// Step 4: compute sparse-style RMS
+			// Step 4: compute RMSE on current correspondences
 			result.rmse = PointToPointRMSE(source.GetPoints(), targets);
 
 			result.iterations = iter + 1;
@@ -210,7 +210,7 @@ namespace geo
 			for (index_t t = 0; t < N; t++)
 			{
 				targets[t] = target.Point(correspondences[t]);
-				
+				normals[t] = target.Normal(correspondences[t]);
 			}
 
 			RigidTransform localTransform = RigidTransform::Identity();
@@ -266,7 +266,7 @@ namespace geo
 			result.transform = RigidTransform::Compose(localTransform, result.transform);
 
 
-			// Step 4: compute sparse-style RMS
+			// Step 4: compute RMSE on current correspondences
 			result.rmse = PointToPlaneRMSE(source.GetPoints(), targets, normals);
 
 			result.iterations = iter + 1;
