@@ -249,8 +249,7 @@ namespace geo
 					const glm::vec3& y = targets[i];
 					const glm::vec3& n = normals[i];
 
-					const f32 delta =
-						glm::dot(n, localTransform.rotation * x + localTransform.translation - y);
+					const f32 delta = glm::dot(n, localTransform.rotation * x + localTransform.translation - y);
 
 					lambda[i] += params.mu * (delta - z[i]);
 				}
@@ -267,7 +266,7 @@ namespace geo
 
 
 			// Step 4: compute RMSE on current correspondences
-			result.rmse = PointToPlaneRMSE(source.GetPoints(), targets, normals);
+			result.rmse = PointToPointRMSE(source.GetPoints(), targets);
 
 			result.iterations = iter + 1;
 

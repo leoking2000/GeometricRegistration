@@ -37,21 +37,27 @@ void ICPSystem::SetSource(geo::PointCloud3D source)
 geo::ICPResult ICPSystem::Solve(int max_iterations)
 {
 	geo::ICPResult r;
+	geo::SparseICPParameters p = {};
 
 	switch (m_method)
 	{
 	case ICPMethod::NAIVE:
-		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-5f, false });
+		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-4f, false });
 		break;
 	case ICPMethod::NAIVE_PLANE:
-		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-5f, true });
+		r = geo::LeastSquaresICP(m_target, m_source, m_tree, { (geo::u32)max_iterations, 1e-4f, true });
 		break;
 	case ICPMethod::SPARSE:
-		geo::SparseICPParameters p = {};
+		p.maxIterations = max_iterations;
+		p.p = 0.4f;
+		p.tolerance = 1e-4f;
+		r = geo::SparseICPPointToPoint(m_target, m_source, m_tree, p);
+		break;
+	case ICPMethod::SPARSE_PLANE:
 		p.maxIterations = max_iterations;
 		p.p = 0.9f;
-		p.tolerance = 1e-5f;
-		r = geo::SparseICP(m_target, m_source, m_tree, p);
+		p.tolerance = 1e-4f;
+		r = geo::SparseICPPointToPlane(m_target, m_source, m_tree, p);
 		break;
 	}
 

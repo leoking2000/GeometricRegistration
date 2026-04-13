@@ -69,7 +69,7 @@ static void RunProjectWithWindow(ICPSystem& system, const std::vector<glm::vec3>
         //if (IsKeyDown(KEY_SPACE))
         if(IsKeyPressed(KEY_SPACE))
         {
-            result = system.Solve(500);
+            result = system.Solve(1);
         }
 
         // ---------------- Rendering ----------------
@@ -85,7 +85,7 @@ static void RunProjectWithWindow(ICPSystem& system, const std::vector<glm::vec3>
         ss << "FPS:" << GetFPS() << "\n";
         ss << "Press SPACE to run 1 ICP iteration\n";
         ss << "Current Truth RMSE: " << std::fixed << std::setprecision(6) 
-            << geo::RMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
+            << geo::PointToPointRMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
         ss << "Total Time: "          << result.totalIterationTime.totalMs << "ms\n";
         ss << "Correspondence Time: " << result.correspondenceSearchTime.totalMs << "ms\n";
         ss << "Solver Time: "         << result.alignmentSolveTime.totalMs << "ms\n";
@@ -109,7 +109,7 @@ static void RunProjectInConsole(ICPSystem& system, const std::vector<glm::vec3>&
     ss << "Avg Solver Time: " << result.alignmentSolveTime.AverageMs() << "ms\n";
     ss << "converged: " << result.converged << "\n";
     ss << "Current Truth RMSE: " << std::fixed << std::setprecision(6)
-        << geo::RMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
+        << geo::PointToPointRMSE(system.GetSource().GetPoints(), ground_truth) << "\n";
 
     std::cout << ss.str();
 }
@@ -128,12 +128,12 @@ int main()
     geo::PointCloud3D source = mesh.ToPointCloud();
  
     // make the target be a part, this way the "outliers are in source cloud"
-    const float splitX = source.Centroid().x;
+    const float splitZ = source.Centroid().z;
     geo::PointCloud3D target = CropPointCloud(
         source,
-        [splitX](const glm::vec3& p)
+        [splitZ](const glm::vec3& p)
         {
-            return p.x > splitX * 2.5;
+            return p.z > splitZ;
         });
 
     geo::SetLogLevel(geo::VERBOSE);
@@ -173,8 +173,11 @@ int main()
     ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
     RunProjectInConsole(system_sparse, sourceTruth);
 
+    std::cout << "\n<<Sparse Point to Plane>>\n\n";
+    ICPSystem system_sparse_p(ICPMethod::SPARSE_PLANE, target, source);
+    RunProjectInConsole(system_sparse_p, sourceTruth);
 
-    //RunProjectWithWindow(system_ptp, vertices);
+    //RunProjectWithWindow(system_sparse_p, sourceTruth);
 
     return 0;
 }
