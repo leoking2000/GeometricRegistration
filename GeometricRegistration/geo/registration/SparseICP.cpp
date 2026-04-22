@@ -64,7 +64,7 @@ namespace geo
 
 		std::vector<glm::vec3> targets(N, { 0.0f, 0.0f, 0.0f });
 
-		f32 prevError = F32_MAX;
+		f64 prevError = F64_MAX;
 
 		// ADMM variables
 		std::vector<glm::vec3> z(N, glm::vec3(0.0f));
@@ -187,7 +187,7 @@ namespace geo
 		std::vector<glm::vec3> targets(N, { 0.0f, 0.0f, 0.0f });
 		std::vector<glm::vec3> normals(N, { 1.0f, 0.0f, 0.0f });
 
-		f32 prevError = F32_MAX;
+		f64 prevError = F64_MAX;
 
 		// ADMM variables
 		std::vector<f32> z(N, 0.0f);

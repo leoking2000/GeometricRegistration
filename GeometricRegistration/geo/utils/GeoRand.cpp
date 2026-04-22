@@ -75,7 +75,7 @@ namespace geo
         f32 z = Float(-1.0f, 1.0f);
         f32 theta = Float(0.0f, glm::two_pi<f32>());
 
-        f32 r = glm::sqrt(1.0f - z * z);
+        f32 r = glm::sqrt(glm::max(0.0f, 1.0f - z * z));
 
         return {
             r * glm::cos(theta) * length,

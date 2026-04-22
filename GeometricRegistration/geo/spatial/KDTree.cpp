@@ -94,7 +94,7 @@ namespace geo
         std::for_each(std::execution::par, results.begin(), results.end(),
             [&](index_t& i_placeholder)
             {
-                const index_t i = &i_placeholder - results.data();
+                const index_t i = index_t(&i_placeholder - results.data());
 
                 size_t idx = 0;
                 f32 distSq = 0.0f;

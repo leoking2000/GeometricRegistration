@@ -1,11 +1,14 @@
 #pragma once
-#include "Entry.h"
+#include <ostream>
+#include "LogLevel.h"
 
 namespace geo
 {
+    // Sets the global log level (affects all logging)
     void SetLogLevel(LogLevel level);
+    // Returns the current global log level
     LogLevel GetLogLevel();
 
-    void LogMessage(std::string_view message);
-    void LogEntry(const Entry& e);
+    // Low-level logging backend. Prefer using macros/wrappers.
+    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine, std::ostream& output);
 }

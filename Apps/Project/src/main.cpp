@@ -136,7 +136,7 @@ int main()
             return p.z > splitZ;
         });
 
-    geo::SetLogLevel(geo::VERBOSE);
+    geo::SetLogLevel(geo::LogLevel::VERBOSE);
 
     GEOLOGDEBUG("Number of points: " << source.Size() + target.Size());
     GEOLOGDEBUG("Number of source points: " << source.Size());
@@ -161,17 +161,17 @@ int main()
 
     source.Transform({ rotation, translation });
 
-    std::cout << "<<Point to Point>>\n\n";
-    ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
-    RunProjectInConsole(system_ptp, sourceTruth);
+    //std::cout << "<<Point to Point>>\n\n";
+    //ICPSystem system_ptp(ICPMethod::NAIVE, target, source);
+    //RunProjectInConsole(system_ptp, sourceTruth);
     
     std::cout << "\n<<Point to Plane>>\n\n";
     ICPSystem system_ptpl(ICPMethod::NAIVE_PLANE, target, source);
     RunProjectInConsole(system_ptpl, sourceTruth);
 
-    std::cout << "\n<<Sparse Point to Point>>\n\n";
-    ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
-    RunProjectInConsole(system_sparse, sourceTruth);
+    //std::cout << "\n<<Sparse Point to Point>>\n\n";
+    //ICPSystem system_sparse(ICPMethod::SPARSE, target, source);
+    //RunProjectInConsole(system_sparse, sourceTruth);
 
     std::cout << "\n<<Sparse Point to Plane>>\n\n";
     ICPSystem system_sparse_p(ICPMethod::SPARSE_PLANE, target, source);

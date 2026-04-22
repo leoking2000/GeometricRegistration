@@ -1,7 +1,9 @@
 #include <algorithm>
 #include <limits>
 #include <sstream>
+#include <iomanip>
 #include "GeoTime.h"
+#include "logging/LogMacros.h"
 
 namespace geo
 {
@@ -44,7 +46,8 @@ namespace geo
             return oss.str();
         }
 
-        oss << "count=" << count
+        oss << std::fixed << std::setprecision(3) 
+            << "count=" << count
             << " total=" << totalMs << "ms"
             << " avg=" << AverageMs() << "ms";
 
@@ -76,7 +79,7 @@ namespace geo
             m_stat->AddSample(elapsedMs);
         }
 
-        if (!m_name.empty())
+        if (!m_name.empty() && m_logLevel != LogLevel::NONE)
         {
             GEOLOGLEVEL(m_logLevel, m_name << " took " << elapsedMs << " ms");
         }

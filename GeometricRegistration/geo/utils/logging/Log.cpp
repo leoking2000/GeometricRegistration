@@ -1,59 +1,42 @@
 #include "Log.h"
 #include <mutex>
-#include <iostream>
 #include <sstream>
-#include <chrono>
-#include <iomanip>
 
 namespace geo
 {
     static LogLevel g_logLevel = LogLevel::INFO;
     static std::mutex g_logMutex;
 
-    static inline std::string GetTimeString()
-    {
-        using namespace std::chrono;
-
-        auto now = system_clock::now();
-        std::time_t t = system_clock::to_time_t(now);
-
-        std::tm tm{};
-#ifdef _WIN32
-        localtime_s(&tm, &t);
-#else
-        localtime_r(&t, &tm);
-#endif
-
-        std::ostringstream oss;
-        oss << std::put_time(&tm, "%H:%M:%S");
-        return oss.str();
-    }
-
     void SetLogLevel(LogLevel level)
     {
+        std::lock_guard<std::mutex> lock(g_logMutex);
         g_logLevel = level;
     }
 
     LogLevel GetLogLevel()
     {
+        std::lock_guard<std::mutex> lock(g_logMutex);
         return g_logLevel;
     }
 
-    void LogMessage(std::string_view message)
+    static inline std::string FormatEntry(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine)
     {
-        std::lock_guard<std::mutex> lock(g_logMutex);
-        std::cout << message << std::endl;
+        std::ostringstream oss;
+        oss << GetLogLevelName(level)
+            << msg
+            << " (" << (sourceFile ? sourceFile : "<unknown>") << ":" << sourceLine << ")";
+
+        return oss.str();
     }
 
-    void LogEntry(const Entry& e)
+    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine, std::ostream& output)
     {
-        std::ostringstream builder;
-        builder << "[" << GetTimeString() << "]";
-        builder << GetLogLevelName(e.level);
-        builder << e.note;
-        builder << "  (" << e.sourceFile << ":" << e.sourceLine << ")";
+        std::lock_guard<std::mutex> lock(g_logMutex);
 
-        std::string msg = builder.str();
-        LogMessage(msg);
+        if (!IsLevelActive(level, g_logLevel)) {
+            return;
+        }
+
+        output << FormatEntry(level, msg, sourceFile, sourceLine) << '\n';
     }
 }
