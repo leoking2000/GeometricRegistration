@@ -27,8 +27,8 @@ namespace geo
         }
     }
 
-    // solves A*x=b system that is 6x6
-    Vec6 Solve6x6(Mat6 A_in, Vec6 b_in)
+    // solves A*x=b system that is 6x6, symmetric positive-definite
+    Vec6 SolveSymmetric6x6(const Mat6& A_in, const Vec6& b_in)
     {
         Eigen::Matrix<f32, 6, 6> A;
         Eigen::Matrix<f32, 6, 1> b;
@@ -43,6 +43,7 @@ namespace geo
 
         // Solve using LDLT (stable for symmetric positive-definite)
         Eigen::Matrix<f32, 6, 1> x = A.ldlt().solve(b);
+        Eigen::LDLT<Eigen::Matrix<f32, 6, 6>> dec(A);
 
         // Copy back to std::array
         Vec6 result;
@@ -227,7 +228,7 @@ namespace geo
         }
 
         // Solve 6x6 system
-        geo::Vec6 x = Solve6x6(AtA, Atb);
+        geo::Vec6 x = SolveSymmetric6x6(AtA, Atb);
 
         glm::vec3 rotVec(x[0], x[1], x[2]);
         glm::vec3 t(x[3], x[4], x[5]);
@@ -280,7 +281,7 @@ namespace geo
             }
         }
 
-        const Vec6 x = Solve6x6(AtA, Atb);
+        const Vec6 x = SolveSymmetric6x6(AtA, Atb);
 
         const glm::vec3 omega(x[0], x[1], x[2]);
         const glm::vec3 t(x[3], x[4], x[5]);

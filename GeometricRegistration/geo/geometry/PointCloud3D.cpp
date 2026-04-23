@@ -50,7 +50,7 @@ namespace geo
 			for (size_t i = 0; i < m_points.size(); i++)
 			{
 				m_points[i] = transform.TransformPoint(m_points[i]);
-				m_normals[i] = transform.TransformNormal(m_normals[i]);
+				m_normals[i] = glm::normalize(transform.TransformNormal(m_normals[i]));
 			}
 		}
 		else

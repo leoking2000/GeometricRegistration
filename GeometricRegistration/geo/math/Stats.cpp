@@ -1,17 +1,17 @@
 #include "Stats.h"
-#include <cassert>
 #include <cmath>
 
 namespace geo
 {
 	f32 PointToPointRMSE(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target)
 	{
-		assert(source.size() == target.size());
-
 		const size_t N = source.size();
-		if (N == 0) return F32_MAX;
+		if (N != target.size() || N == 0)
+		{
+			return F32_MAX;
+		}
 
-		f64 sumSq = 0.0f;
+		f64 sumSq = 0.0;
 		for (size_t i = 0; i < N; i++)
 		{
 			glm::vec3 diff = source[i] - target[i];
@@ -23,13 +23,13 @@ namespace geo
 
 	f32 PointToPlaneRMSE(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target, const std::vector<glm::vec3>& normals)
 	{
-		assert(source.size() == target.size());
-		assert(target.size() == normals.size());
-
 		const size_t N = source.size();
-		if (N == 0) return F32_MAX;
+		if (N != target.size() || N != normals.size() || N == 0)
+		{
+			return F32_MAX;
+		}
 
-		f64 sumSq = 0.0f;
+		f64 sumSq = 0.0;
 		for (size_t i = 0; i < N; i++)
 		{
 			glm::vec3 diff = source[i] - target[i];

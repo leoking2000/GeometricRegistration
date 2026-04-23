@@ -10,7 +10,7 @@ namespace geo
         RigidTransform transform = {};
         u32 iterations = 0;
         bool converged = false;
-        f64 rmse = 0.0;
+        f32 rmse = 0.0;
         TimingStat totalIterationTime;
         TimingStat correspondenceSearchTime;
         TimingStat alignmentSolveTime;

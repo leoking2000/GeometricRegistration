@@ -19,7 +19,7 @@ namespace geo
 
 		inline glm::vec3 TransformNormal(const glm::vec3& n) const
 		{
-			return glm::normalize(rotation * n);
+			return rotation * n;
 		}
 
 		inline RigidTransform ComputeInverse() const
@@ -49,7 +49,7 @@ namespace geo
 			return { glm::mat3(1.0f), glm::vec3(0.0f) };
 		}
 
-		// Apply B then A
+		// C = A ∘ B (apply B, then A), C(p) = A(B(p))
 		static inline RigidTransform Compose(const RigidTransform& A, const RigidTransform& B)
 		{
 			RigidTransform C;

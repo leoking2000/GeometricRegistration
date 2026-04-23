@@ -11,7 +11,7 @@ namespace geo
     using Mat6 = std::array<std::array<f32, 6>, 6>;
 
     // solves A*x=b system that is 6x6
-    Vec6 Solve6x6(Mat6 A_in, Vec6 b_in);
+    Vec6 SolveSymmetric6x6(const Mat6& A_in, const Vec6& b_in);
 
     struct SVDResult
     {
