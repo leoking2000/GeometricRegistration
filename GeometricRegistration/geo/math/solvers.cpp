@@ -27,33 +27,6 @@ namespace geo
         }
     }
 
-    // solves A*x=b system that is 6x6, symmetric positive-definite
-    Vec6 SolveSymmetric6x6(const Mat6& A_in, const Vec6& b_in)
-    {
-        Eigen::Matrix<f32, 6, 6> A;
-        Eigen::Matrix<f32, 6, 1> b;
-
-        // Copy std::array to Eigen
-        for (int i = 0; i < 6; ++i)
-        {
-            b(i) = b_in[i];
-            for (int j = 0; j < 6; ++j)
-                A(i, j) = A_in[i][j];
-        }
-
-        // Solve using LDLT (stable for symmetric positive-definite)
-        Eigen::Matrix<f32, 6, 1> x = A.ldlt().solve(b);
-        Eigen::LDLT<Eigen::Matrix<f32, 6, 6>> dec(A);
-
-        // Copy back to std::array
-        Vec6 result;
-        for (int i = 0; i < 6; ++i)
-        {
-            result[i] = x(i);
-        }
-
-        return result;
-    }
 
     SVDResult SVD(const glm::mat3& A)
     {
@@ -91,7 +64,7 @@ namespace geo
 
         // Compute covariance matrix
         glm::mat3 H(0.0f);
-        for (index_t i = 0; i < N; ++i)
+        for (size_t i = 0; i < N; ++i)
         {
             glm::vec3 p = source[i] - centroidSrc;
             glm::vec3 q = target[i] - centroidTrg;
@@ -128,7 +101,7 @@ namespace geo
         glm::vec3 centroidSrc(0.0);
         glm::vec3 centroidTgt(0.0);
 
-        for (index_t i = 0; i < N; i++)
+        for (size_t i = 0; i < N; i++)
         {
             f32 w = weights[i];
             sumW += w;
@@ -146,7 +119,7 @@ namespace geo
 
         glm::mat3 H(0.0);
 
-        for (index_t i = 0; i < N; ++i)
+        for (size_t i = 0; i < N; ++i)
         {
             const f32 w = weights[i];
 
@@ -171,6 +144,39 @@ namespace geo
         return { R, t };
     }
 
+    // solves A*x=b system that is 6x6, symmetric positive-definite
+    Vec6 SolveSymmetric6x6(const Mat6& A_in, const Vec6& b_in)
+    {
+        Eigen::Matrix<f32, 6, 6> A;
+        Eigen::Matrix<f32, 6, 1> b;
+
+        // Copy std::array to Eigen
+        for (int i = 0; i < 6; ++i)
+        {
+            b(i) = b_in[i];
+            for (int j = 0; j < 6; ++j)
+                A(i, j) = A_in[i][j];
+        }
+
+        // Solve using LDLT (stable for symmetric positive-definite)
+        Eigen::LDLT<Eigen::Matrix<f32, 6, 6>> dec(A);
+        Eigen::Matrix<f32, 6, 1> x = dec.solve(b);
+
+        if (dec.info() != Eigen::Success ||!dec.isPositive())
+        {
+            return Vec6{ 0,0,0,0,0,0 };
+        }
+
+        // Copy back to std::array
+        Vec6 result;
+        for (int i = 0; i < 6; ++i)
+        {
+            result[i] = x(i);
+        }
+
+        return result;
+    }
+
     static inline glm::mat3 Skew(const glm::vec3& v)
     {
         return glm::mat3{
@@ -183,9 +189,15 @@ namespace geo
     static inline glm::mat3 Rodrigues(const glm::vec3& omega)
     {
         float theta = glm::length(omega);
-        if (theta < 1e-8f) return glm::mat3(1.0f) + Skew(omega);
+        if (theta < 1e-8f)
+        {
+            glm::mat3 K = Skew(omega);
+            return glm::mat3(1.0f) + K + 0.5f * K * K;
+        }
+
         glm::vec3 k = omega / theta;
         glm::mat3 K = Skew(k); // Skew is cross-product matrix
+
         return glm::mat3(1.0f) + std::sin(theta) * K + (1 - std::cos(theta)) * K * K;
     }
 
@@ -193,6 +205,7 @@ namespace geo
     {
         assert(source.size() == target.size());
         assert(source.size() >= 3);
+        assert(source.size() == normals.size());
 
         const size_t N = source.size();
 
@@ -200,7 +213,7 @@ namespace geo
         geo::Mat6 AtA{};
         geo::Vec6 Atb{};
 
-        for (index_t i = 0; i < N; ++i)
+        for (size_t i = 0; i < N; ++i)
         {
             const glm::vec3& p = source[i];
             const glm::vec3& q = target[i];
@@ -225,6 +238,13 @@ namespace geo
             // Accumulate Atb = sum row * b_i
             for (int r = 0; r < 6; ++r)
                 Atb[r] += row[r] * bi;
+
+        }
+
+        const f32 lambda = 1e-6f;
+        for (int i = 0; i < 6; ++i)
+        {
+            AtA[i][i] += lambda;
         }
 
         // Solve 6x6 system
@@ -262,6 +282,8 @@ namespace geo
             const glm::vec3& n = normals[i];
             const f32 c        = offsets[i];
 
+            assert(std::isfinite(c));
+
             const glm::vec3 rotJac = glm::cross(n, p);
 
             const std::array<f32, 6> row{
@@ -280,6 +302,10 @@ namespace geo
                 Atb[r] += row[r] * bi;
             }
         }
+
+        const f32 lambda = 1e-6f;
+        for (int i = 0; i < 6; ++i)
+            AtA[i][i] += lambda;
 
         const Vec6 x = SolveSymmetric6x6(AtA, Atb);
 

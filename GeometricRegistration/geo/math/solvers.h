@@ -36,7 +36,7 @@ namespace geo
         const std::vector<glm::vec3>& normals);
 
     // Solves linearized point-to-plane least squares using target normals
-    // residual_i = (dot(n_i, (R x_i + t - y_i) - c_i) where c_i is the offset
+    // residual_i = (dot(n_i, (R x_i + t - y_i) - c_i) where c_i is the offset => linearized RHS: dot(n, q - p) + c
     RigidTransform SolveRigidPointToPlaneShifted(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target,
         const std::vector<glm::vec3>& normals, const std::vector<f32>& offsets);
 }

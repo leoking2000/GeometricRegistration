@@ -292,9 +292,9 @@ TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
     EXPECT_GE(elapsed, 0.0);
 }
 
-// Stats Tests
+// RMSE Tests
 
-TEST(Stats, PointToPointRMSEReturnsF32MaxForEmptyInput)
+TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)
 {
     const std::vector<glm::vec3> source;
     const std::vector<glm::vec3> target;
@@ -302,7 +302,7 @@ TEST(Stats, PointToPointRMSEReturnsF32MaxForEmptyInput)
     EXPECT_EQ(geo::PointToPointRMSE(source, target), geo::F32_MAX);
 }
 
-TEST(Stats, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
+TEST(RMSETests, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
 {
     const std::vector<glm::vec3> source;
     const std::vector<glm::vec3> target;
@@ -311,7 +311,7 @@ TEST(Stats, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
     EXPECT_EQ(geo::PointToPlaneRMSE(source, target, normals), geo::F32_MAX);
 }
 
-TEST(Stats, PointToPointRMSEIsZeroForIdenticalInputs)
+TEST(RMSETests, PointToPointRMSEIsZeroForIdenticalInputs)
 {
     const std::vector<glm::vec3> points = {
         {0.0f, 0.0f, 0.0f},
@@ -322,7 +322,7 @@ TEST(Stats, PointToPointRMSEIsZeroForIdenticalInputs)
     EXPECT_FLOAT_EQ(geo::PointToPointRMSE(points, points), 0.0f);
 }
 
-TEST(Stats, PointToPlaneRMSEIsZeroForIdenticalInputs)
+TEST(RMSETests, PointToPlaneRMSEIsZeroForIdenticalInputs)
 {
     const std::vector<glm::vec3> source = {
         {0.0f, 0.0f, 0.0f},
@@ -338,7 +338,7 @@ TEST(Stats, PointToPlaneRMSEIsZeroForIdenticalInputs)
     EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 0.0f);
 }
 
-TEST(Stats, PointToPointRMSEComputesExpectedValue)
+TEST(RMSETests, PointToPointRMSEComputesExpectedValue)
 {
     const std::vector<glm::vec3> source = {
         {1.0f, 0.0f, 0.0f},
@@ -356,7 +356,7 @@ TEST(Stats, PointToPointRMSEComputesExpectedValue)
     EXPECT_NEAR(geo::PointToPointRMSE(source, target), expected, 1e-6f);
 }
 
-TEST(Stats, PointToPlaneRMSEUsesOnlyNormalComponent)
+TEST(RMSETests, PointToPlaneRMSEUsesOnlyNormalComponent)
 {
     const std::vector<glm::vec3> source = {
         {1.0f, 5.0f, 0.0f},
@@ -379,7 +379,7 @@ TEST(Stats, PointToPlaneRMSEUsesOnlyNormalComponent)
     EXPECT_NEAR(geo::PointToPlaneRMSE(source, target, normals), expected, 1e-6f);
 }
 
-TEST(Stats, PointToPlaneRMSEIgnoresTangentialComponent)
+TEST(RMSETests, PointToPlaneRMSEIgnoresTangentialComponent)
 {
     const std::vector<glm::vec3> source = {
         {0.0f, 10.0f, 0.0f},
@@ -399,7 +399,7 @@ TEST(Stats, PointToPlaneRMSEIgnoresTangentialComponent)
     EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 0.0f);
 }
 
-TEST(Stats, PointToPlaneRMSEHandlesNonUnitNormalsAsImplemented)
+TEST(RMSETests, PointToPlaneRMSEHandlesNonUnitNormalsAsImplemented)
 {
     const std::vector<glm::vec3> source = {
         {1.0f, 0.0f, 0.0f}
@@ -1148,7 +1148,294 @@ TEST(PointToPlaneRMSE, MismatchedSizesReturnMax)
     EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
 }
 
-// 
+// SVD
+
+TEST(SVDTest, ReconstructsMatrix)
+{
+    glm::mat3 A(
+        1.0f, 2.0f, 3.0f,
+        0.0f, 1.0f, 4.0f,
+        5.0f, 6.0f, 0.0f
+    );
+
+    geo::SVDResult svd = geo::SVD(A);
+
+    glm::mat3 U = svd.U;
+    glm::mat3 V = svd.V;
+    glm::mat3 S(0.0f);
+    S[0][0] = svd.S.x;
+    S[1][1] = svd.S.y;
+    S[2][2] = svd.S.z;
+
+    glm::mat3 reconstructed = U * S * glm::transpose(V);
+
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_NEAR(A[i][j], reconstructed[i][j], 1e-4f);
+        }
+    }
+}
+
+// SolveRigidPointToPointTest
+
+TEST(SolveRigidPointToPointTest, Identity)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    auto T = geo::SolveRigidPointToPoint(pts, pts);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, PureTranslation)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    glm::vec3 t(1, 2, 3);
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(p + t);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, t, 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, PureRotation)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    float angle = glm::radians(90.0f);
+    glm::mat3 R = glm::mat3(
+        cos(angle), -sin(angle), 0,
+        sin(angle), cos(angle), 0,
+        0, 0, 1
+    );
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(R * p);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, R, 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, RotationAndTranslation)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    float angle = glm::radians(45.0f);
+    glm::mat3 R = glm::mat3(
+        cos(angle), -sin(angle), 0,
+        sin(angle), cos(angle), 0,
+        0, 0, 1
+    );
+
+    glm::vec3 t(1, 2, 3);
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(R * p + t);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, R, 1e-5f);
+
+    ExpectVec3Near(T.translation, t, 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, ReflectionIsCorrected)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    // Reflect across X
+    std::vector<glm::vec3> trg = {
+        {-1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    // Must still be a proper rotation
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+}
+
+// SolveRigidPointToPlaneTest
+
+TEST(SolveRigidPointToPlaneTest, Identity)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(pts, pts, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, TranslationAlongNormal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f, 0.0f, -1.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, NoTangentialCorrection)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {2,0,0}, {3,0,0}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {2,0,0}, {3,0,0}, {4,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,1,0}, {0,1,0}, {0,1,0}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, SmallRotationObservable)
+{
+    float angle = glm::radians(15.0f);
+    glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1, 0, 0));
+    glm::mat3 R = glm::mat3(rot4);
+
+    std::vector<glm::vec3> trg = {
+        {1,0,0}, {-2,0,4}, {5,0,-6}, {2,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,1,0}, {0,1,0}, {0,1,0}, {1,0,0}
+    };
+
+    std::vector<glm::vec3> src;
+    for (auto& p : trg)
+        src.push_back(R * p);
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::transpose(R), 1e-2f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+// SolveRigidPointToPlaneShiftedTest
+
+TEST(SolveRigidPointToPlaneShiftedTest, ZeroOffsetsMatchesOriginal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(src.size(), 0.0f);
+
+    auto T1 = geo::SolveRigidPointToPlane(src, trg, normals);
+    auto T2 = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
+
+    ExpectMat3Near(T1.rotation, T2.rotation, 1e-5f);
+    ExpectVec3Near(T1.translation, T2.translation, 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneShiftedTest, OffsetMovesAlongNormal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(src.size(), 1.0f);
+
+    auto T = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
+
+    // Expect translation shifted along + normal direction
+    EXPECT_NEAR(T.translation.z, 0.0f, 1e-4f);
+}
+
+TEST(SolveRigidPointToPlaneShiftedTest, ZeroSystem)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(pts.size(), 0.0f);
+
+    auto T = geo::SolveRigidPointToPlaneShifted(pts, pts, normals, offsets);
+
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
 
 // ICP
 
