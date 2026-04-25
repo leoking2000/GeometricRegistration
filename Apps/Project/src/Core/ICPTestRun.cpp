@@ -13,18 +13,18 @@ namespace test
         return glm::length(t1 - t2);
     }
 
-	ICPTestResult RunLeastSquares(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params)
+	ICPTestResult RunLeastSquaresICP(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params)
 	{
         geo::PointCloud3D sourceCopy = test.source;
 
         geo::KDTree nn(test.target.GetPoints());
 
-        auto result = LeastSquaresICP(test.target, sourceCopy, nn, params);
+        auto result = geo::LeastSquaresICP(test.target, sourceCopy, nn, params);
 
         geo::RigidTransform gtInv = test.groundTruth.ComputeInverse();
 
         ICPTestResult out;
-        out.methodName = "LeastSquaresICP";
+        out.methodName = "LeastSquaresICP " + ((params.useNormals) ? std::string("PointToPlane") : std::string("PointToPoint"));
         out.testName = test.name;
 
         out.result = result;
@@ -45,6 +45,50 @@ namespace test
 
         std::cout << "Rotation Error (rad): " << r.rotationError << "\n";
         std::cout << "Translation Error: " << r.translationError << "\n\n";
+    }
+
+    ICPTestResult RunSparseICPPointToPoint(const ICPTestCase& test, const geo::SparseICPParameters& params)
+    {
+        geo::PointCloud3D sourceCopy = test.source;
+
+        geo::KDTree nn(test.target.GetPoints());
+
+        auto result = geo::SparseICPPointToPoint(test.target, sourceCopy, nn, params);
+
+        geo::RigidTransform gtInv = test.groundTruth.ComputeInverse();
+
+        ICPTestResult out;
+        out.methodName = "SparseICP PointToPoint ";
+        out.testName = test.name;
+
+        out.result = result;
+
+        out.rotationError = RotationError(result.transform.rotation, gtInv.rotation);
+        out.translationError = TranslationError(result.transform.translation, gtInv.translation);
+
+        return out;
+    }
+
+    ICPTestResult RunSparseICPPointToPlane(const ICPTestCase& test, const geo::SparseICPParameters& params)
+    {
+        geo::PointCloud3D sourceCopy = test.source;
+
+        geo::KDTree nn(test.target.GetPoints());
+
+        auto result = geo::SparseICPPointToPlane(test.target, sourceCopy, nn, params);
+
+        geo::RigidTransform gtInv = test.groundTruth.ComputeInverse();
+
+        ICPTestResult out;
+        out.methodName = "SparseICP PointToPlane";
+        out.testName = test.name;
+
+        out.result = result;
+
+        out.rotationError = RotationError(result.transform.rotation, gtInv.rotation);
+        out.translationError = TranslationError(result.transform.translation, gtInv.translation);
+
+        return out;
     }
 
 }

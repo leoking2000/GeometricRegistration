@@ -5,7 +5,7 @@ static geo::Random rng{ 2026 };
 
 int main()
 {
-    geo::SetLogLevel(geo::LogLevel::DEBUG);
+    geo::SetLogLevel(geo::LogLevel::INFO);
 
     // get a mesh
     geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
@@ -39,7 +39,9 @@ int main()
     {
         geo::LeastSquaresICPParameters p;
         p.useNormals = true;
-        auto res = test::RunLeastSquares(test, p);
+        auto res = test::RunLeastSquaresICP(test, p);
+        test::PrintResult(res);
+        res = test::RunSparseICPPointToPlane(test);
         test::PrintResult(res);
     }
 

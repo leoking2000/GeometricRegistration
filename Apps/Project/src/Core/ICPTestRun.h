@@ -13,6 +13,9 @@ namespace test
         geo::f32 translationError = 0.0f;  // L2 error
     };
 
-    ICPTestResult RunLeastSquares(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params = {});
+    ICPTestResult RunLeastSquaresICP(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params = {});
     void PrintResult(const ICPTestResult& r);
+
+    ICPTestResult RunSparseICPPointToPoint(const ICPTestCase& test, const geo::SparseICPParameters& params = {});
+    ICPTestResult RunSparseICPPointToPlane(const ICPTestCase& test, const geo::SparseICPParameters& params = {});
 }
