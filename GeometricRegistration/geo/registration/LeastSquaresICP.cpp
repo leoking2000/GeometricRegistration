@@ -1,9 +1,21 @@
+#include <geo/utils/logging/LogMacros.h>
 #include "math/Solvers.h"
 #include "math/Stats.h"
 #include "LeastSquaresICP.h"
 
 namespace geo
 {
+	f32 RotationAngle(const glm::mat3& R)
+	{
+		f32 trace = R[0][0] + R[1][1] + R[2][2];
+		f32 cos_theta = (trace - 1.0f) * 0.5f;
+
+		// Clamp for numerical safety
+		cos_theta = glm::clamp(cos_theta, -1.0f, 1.0f);
+
+		return std::acos(cos_theta);
+	}
+
 	ICPResult LeastSquaresICP(
 		const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, const LeastSquaresICPParameters& params)
 	{
@@ -20,7 +32,7 @@ namespace geo
 		ICPResult result;
 		result.transform = RigidTransform::Identity();
 
-		f64 prevError = F32_MAX;
+		f32 prevError = F32_MAX;
 
 		std::vector<index_t> correspondences(numberOfPoints, 0);
 
@@ -69,9 +81,9 @@ namespace geo
 			TimePoint endSolveTime = Clock::now();
 			result.alignmentSolveTime.AddSample(TimeDifferenceMs(endSolveTime, startSolveTime));
 
+
 			// Apply transform
 			source.Transform(localTransform);
-
 			result.transform = RigidTransform::Compose(localTransform, result.transform);
 
 			// Compute RMS
@@ -84,19 +96,31 @@ namespace geo
 				result.rmse = PointToPointRMSE(source.GetPoints(), targets);
 			}
 
+			// converged check
+			
+			// Compute motion magnitude
+			const f32 transNorm = glm::length(localTransform.translation);
+			const f32 rotAngle = RotationAngle(localTransform.rotation);
+
+			const bool smallMotion = (transNorm < params.transTolerance) && (rotAngle < params.rotTolerance);
+			const bool smallErrorChange = std::abs(prevError - result.rmse) < params.tolerance;
+
+			prevError = result.rmse;
 			result.iterations = iter + 1;
 
 			TimePoint endTime = Clock::now();
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-			// converged check
-			if (std::abs(prevError - result.rmse) < params.tolerance)
+			GEOLOGDEBUG("iter: " << iter + 1
+					 << " rmse: " << result.rmse
+				     << " trans: " << transNorm
+				     << " rot: " << rotAngle << "\n");
+
+			if (smallMotion && smallErrorChange)
 			{
 				result.converged = true;
 				break;
 			}
-
-			prevError = result.rmse;
 		}
 
 		return result;

@@ -292,7 +292,7 @@ TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
     EXPECT_GE(elapsed, 0.0);
 }
 
-// RMSE Tests
+// RMSETests
 
 TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)
 {
@@ -399,22 +399,576 @@ TEST(RMSETests, PointToPlaneRMSEIgnoresTangentialComponent)
     EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 0.0f);
 }
 
-TEST(RMSETests, PointToPlaneRMSEHandlesNonUnitNormalsAsImplemented)
+TEST(RMSETests, LargeValuesDoNotOverflow)
 {
-    const std::vector<glm::vec3> source = {
-        {1.0f, 0.0f, 0.0f}
+    std::vector<glm::vec3> a = {
+        {1000,1000,1000},
+        {2000,2000,2000}
     };
 
-    const std::vector<glm::vec3> target = {
-        {0.0f, 0.0f, 0.0f}
+    std::vector<glm::vec3> b = {
+        {1001,1001,1001},
+        {1999,1999,1999}
     };
 
-    const std::vector<glm::vec3> normals = {
-        {2.0f, 0.0f, 0.0f}
+    EXPECT_NEAR(geo::PointToPointRMSE(a, b), std::sqrt(3.0f), 1e-4f);
+}
+
+TEST(RMSETests, ConstantPlaneOffset)
+{
+    std::vector<glm::vec3> source = {
+        {0,0,1}, {1,0,1}
     };
 
-    // dot((1,0,0),(2,0,0)) = 2
-    EXPECT_FLOAT_EQ(geo::PointToPlaneRMSE(source, target, normals), 2.0f);
+    std::vector<glm::vec3> target = {
+        {0,0,0}, {1,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}
+    };
+
+    EXPECT_NEAR(geo::PointToPlaneRMSE(source, target, normals), 1.0f, 1e-6f);
+}
+
+TEST(RMSETests, DiagonalNormalProjection)
+{
+    std::vector<glm::vec3> source = {
+        {1,1,0}
+    };
+
+    std::vector<glm::vec3> target = {
+        {0,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        glm::normalize(glm::vec3(1,1,0))
+    };
+
+    float rmse = geo::PointToPlaneRMSE(source, target, normals);
+
+    float expected = std::sqrt(2.0f);
+
+    EXPECT_NEAR(rmse, expected, 1e-5f);
+}
+
+TEST(RMSETests, AxisAlignedSimpleCase)
+{
+    std::vector<glm::vec3> source = { {1,0,0} };
+    std::vector<glm::vec3> target = { {0,0,0} };
+    std::vector<glm::vec3> normals = { {1,0,0} };
+
+    float rmse = geo::PointToPlaneRMSE(source, target, normals);
+
+    EXPECT_NEAR(rmse, 1.0f, 1e-6f);
+}
+
+TEST(RMSETests, SimpleCase)
+{
+    std::vector<glm::vec3> source = { {1,1,0} };
+    std::vector<glm::vec3> target = { {0,0,0} };
+    std::vector<glm::vec3> normals = { {1,0,0} };
+
+    float rmse = geo::PointToPlaneRMSE(source, target, normals);
+
+    EXPECT_NEAR(rmse, 1.0f, 1e-6f);
+}
+
+TEST(RMSETests, EmptyInputReturnsMax)
+{
+    std::vector<glm::vec3> a, b, n;
+
+    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
+}
+
+TEST(RMSETests, MismatchedSizesReturnMax)
+{
+    std::vector<glm::vec3> a = { {1,2,3} };
+    std::vector<glm::vec3> b = { {1,2,3}, {4,5,6} };
+    std::vector<glm::vec3> n = { {0,0,1} };
+
+    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
+}
+
+// RigidTransformTests
+
+glm::mat3 RotationZ(float radians)
+{
+    const float c = std::cos(radians);
+    const float s = std::sin(radians);
+
+    return glm::mat3(
+        glm::vec3(c, s, 0.0f),
+        glm::vec3(-s, c, 0.0f),
+        glm::vec3(0.0f, 0.0f, 1.0f)
+    );
+}
+
+glm::mat3 RotationX(float radians)
+{
+    const float c = std::cos(radians);
+    const float s = std::sin(radians);
+
+    return glm::mat3(
+        glm::vec3(1.0f, 0.0f, 0.0f),
+        glm::vec3(0.0f, c, s),
+        glm::vec3(0.0f, -s, c)
+    );
+}
+
+TEST(RigidTransformTests, IdentityTransformPointReturnsSamePoint)
+{
+    const geo::RigidTransform T = geo::RigidTransform::Identity();
+    const glm::vec3 p(1.5f, -2.0f, 3.25f);
+
+    const glm::vec3 result = T.TransformPoint(p);
+
+    ExpectVec3Near(result, p);
+}
+
+TEST(RigidTransformTests, IdentityTransformNormalReturnsSameNormal)
+{
+    const geo::RigidTransform T = geo::RigidTransform::Identity();
+    const glm::vec3 n(0.0f, 1.0f, 0.0f);
+
+    const glm::vec3 result = T.TransformNormal(n);
+
+    ExpectVec3Near(result, n);
+}
+
+TEST(RigidTransformTests, TransformPointAppliesRotationAndTranslation)
+{
+    geo::RigidTransform T;
+    T.rotation = RotationZ(glm::half_pi<float>());
+    T.translation = glm::vec3(10.0f, 0.0f, 5.0f);
+
+    const glm::vec3 p(1.0f, 0.0f, 0.0f);
+    const glm::vec3 expected(10.0f, 1.0f, 5.0f);
+
+    const glm::vec3 result = T.TransformPoint(p);
+
+    ExpectVec3Near(result, expected);
+}
+
+TEST(RigidTransformTests, TransformNormalAppliesRotationOnly)
+{
+    geo::RigidTransform T;
+    T.rotation = RotationZ(glm::half_pi<float>());
+    T.translation = glm::vec3(100.0f, 200.0f, 300.0f);
+
+    const glm::vec3 n(1.0f, 0.0f, 0.0f);
+    const glm::vec3 expected(0.0f, 1.0f, 0.0f);
+
+    const glm::vec3 result = T.TransformNormal(n);
+
+    ExpectVec3Near(result, expected);
+}
+
+TEST(RigidTransformTests, InverseUndoesPointTransform)
+{
+    geo::RigidTransform T;
+    T.rotation = RotationZ(0.7f);
+    T.translation = glm::vec3(3.0f, -2.0f, 4.0f);
+
+    const glm::vec3 p(1.0f, 2.0f, -1.0f);
+
+    const glm::vec3 transformed = T.TransformPoint(p);
+    const glm::vec3 recovered = T.ComputeInverse().TransformPoint(transformed);
+
+    ExpectVec3Near(recovered, p, 1e-4f);
+}
+
+TEST(RigidTransformTests, InverseUndoesNormalTransform)
+{
+    geo::RigidTransform T;
+    T.rotation = RotationX(0.35f);
+    T.translation = glm::vec3(7.0f, 8.0f, 9.0f);
+
+    const glm::vec3 n = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
+
+    const glm::vec3 transformed = T.TransformNormal(n);
+    const glm::vec3 recovered = T.ComputeInverse().TransformNormal(transformed);
+
+    ExpectVec3Near(recovered, n, 1e-4f);
+}
+
+TEST(RigidTransformTests, ComposeMatchesSequentialApplication)
+{
+    geo::RigidTransform A;
+    A.rotation = RotationZ(0.5f);
+    A.translation = glm::vec3(1.0f, 2.0f, 3.0f);
+
+    geo::RigidTransform B;
+    B.rotation = RotationX(-0.25f);
+    B.translation = glm::vec3(-4.0f, 0.5f, 2.0f);
+
+    const geo::RigidTransform C = geo::RigidTransform::Compose(A, B);
+
+    const glm::vec3 p(2.0f, -1.0f, 0.25f);
+
+    const glm::vec3 sequential = A.TransformPoint(B.TransformPoint(p));
+    const glm::vec3 composed = C.TransformPoint(p);
+
+    ExpectVec3Near(composed, sequential, 1e-4f);
+}
+
+TEST(RigidTransformTests, InverseOfIdentityIsIdentity)
+{
+    const geo::RigidTransform I = geo::RigidTransform::Identity();
+    const geo::RigidTransform inv = I.ComputeInverse();
+
+    ExpectMat3Near(inv.rotation, glm::mat3(1.0f));
+    ExpectVec3Near(inv.translation, glm::vec3(0.0f));
+}
+
+TEST(RigidTransformTests, ToMat4MatchesPointTransform)
+{
+    geo::RigidTransform T;
+    T.rotation = RotationZ(glm::half_pi<float>());
+    T.translation = glm::vec3(2.0f, 3.0f, 4.0f);
+
+    const glm::vec3 p(1.0f, 0.0f, 5.0f);
+
+    const glm::vec3 expected = T.TransformPoint(p);
+
+    const glm::mat4 M = T.ToMat4();
+    const glm::vec4 hp = M * glm::vec4(p, 1.0f);
+    const glm::vec3 result(hp.x, hp.y, hp.z);
+
+    ExpectVec3Near(result, expected, 1e-5f);
+}
+
+TEST(RigidTransformTests, IdentityDoesNotChangePoint)
+{
+    geo::RigidTransform I = geo::RigidTransform::Identity();
+
+    glm::vec3 p(1.0f, 2.0f, 3.0f);
+    EXPECT_EQ(I.TransformPoint(p), p);
+}
+
+TEST(RigidTransformTests, InverseCancelsTransform)
+{
+    geo::RigidTransform T;
+    T.rotation = glm::mat3(1.0f);
+    T.translation = glm::vec3(1.0f, 2.0f, 3.0f);
+
+    auto inv = T.ComputeInverse();
+
+    glm::vec3 p(0.5f, -1.0f, 2.0f);
+    glm::vec3 q = T.TransformPoint(p);
+    glm::vec3 p2 = inv.TransformPoint(q);
+
+    EXPECT_TRUE(RigidTransformNearlyEqual(
+        geo::RigidTransform{ glm::mat3(1.0f), p },
+        geo::RigidTransform{ glm::mat3(1.0f), p2 }
+    ));
+}
+
+TEST(RigidTransformTests, CompositionIsConsistent)
+{
+    geo::RigidTransform A, B;
+
+    A.translation = glm::vec3(1, 0, 0);
+    B.translation = glm::vec3(0, 1, 0);
+
+    auto C = geo::RigidTransform::Compose(A, B);
+
+    glm::vec3 p(1, 1, 1);
+    glm::vec3 direct = A.TransformPoint(B.TransformPoint(p));
+    glm::vec3 composed = C.TransformPoint(p);
+
+    EXPECT_NEAR(direct.x, composed.x, 1e-5f);
+    EXPECT_NEAR(direct.y, composed.y, 1e-5f);
+    EXPECT_NEAR(direct.z, composed.z, 1e-5f);
+}
+
+// SVD
+
+TEST(SVDTest, ReconstructsMatrix)
+{
+    glm::mat3 A(
+        1.0f, 2.0f, 3.0f,
+        0.0f, 1.0f, 4.0f,
+        5.0f, 6.0f, 0.0f
+    );
+
+    geo::SVDResult svd = geo::SVD(A);
+
+    glm::mat3 U = svd.U;
+    glm::mat3 V = svd.V;
+    glm::mat3 S(0.0f);
+    S[0][0] = svd.S.x;
+    S[1][1] = svd.S.y;
+    S[2][2] = svd.S.z;
+
+    glm::mat3 reconstructed = U * S * glm::transpose(V);
+
+    for (int i = 0; i < 3; ++i) {
+        for (int j = 0; j < 3; ++j)
+        {
+            EXPECT_NEAR(A[i][j], reconstructed[i][j], 1e-4f);
+        }
+    }
+}
+
+// SolveRigidPointToPointTest
+
+TEST(SolveRigidPointToPointTest, Identity)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    auto T = geo::SolveRigidPointToPoint(pts, pts);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, PureTranslation)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    glm::vec3 t(1, 2, 3);
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(p + t);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, t, 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, PureRotation)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    float angle = glm::radians(90.0f);
+    glm::mat3 R = glm::mat3(
+        cos(angle), -sin(angle), 0,
+        sin(angle), cos(angle), 0,
+        0, 0, 1
+    );
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(R * p);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, R, 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, RotationAndTranslation)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    float angle = glm::radians(45.0f);
+    glm::mat3 R = glm::mat3(
+        cos(angle), -sin(angle), 0,
+        sin(angle), cos(angle), 0,
+        0, 0, 1
+    );
+
+    glm::vec3 t(1, 2, 3);
+
+    std::vector<glm::vec3> trg;
+    for (auto& p : src)
+        trg.push_back(R * p + t);
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, R, 1e-5f);
+
+    ExpectVec3Near(T.translation, t, 1e-5f);
+}
+
+TEST(SolveRigidPointToPointTest, ReflectionIsCorrected)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    // Reflect across X
+    std::vector<glm::vec3> trg = {
+        {-1,0,0}, {0,1,0}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPoint(src, trg);
+
+    // Must still be a proper rotation
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+}
+
+// SolveRigidPointToPlaneTest
+
+TEST(SolveRigidPointToPlaneTest, Identity)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(pts, pts, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, TranslationAlongNormal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f, 0.0f, -1.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, NoTangentialCorrection)
+{
+    std::vector<glm::vec3> src = {
+        {1,0,0}, {2,0,0}, {3,0,0}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {2,0,0}, {3,0,0}, {4,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,1,0}, {0,1,0}, {0,1,0}
+    };
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneTest, SmallRotationObservable)
+{
+    float angle = glm::radians(15.0f);
+    glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1, 0, 0));
+    glm::mat3 R = glm::mat3(rot4);
+
+    std::vector<glm::vec3> trg = {
+        {1,0,0}, {-2,0,4}, {5,0,-6}, {2,0,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,1,0}, {0,1,0}, {0,1,0}, {1,0,0}
+    };
+
+    std::vector<glm::vec3> src;
+    for (auto& p : trg)
+        src.push_back(R * p);
+
+    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
+
+    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
+    ExpectMat3Near(T.rotation, glm::transpose(R), 1e-2f);
+
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
+}
+
+// SolveRigidPointToPlaneShiftedTest
+
+TEST(SolveRigidPointToPlaneShiftedTest, ZeroOffsetsMatchesOriginal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(src.size(), 0.0f);
+
+    auto T1 = geo::SolveRigidPointToPlane(src, trg, normals);
+    auto T2 = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
+
+    ExpectMat3Near(T1.rotation, T2.rotation, 1e-5f);
+    ExpectVec3Near(T1.translation, T2.translation, 1e-5f);
+}
+
+TEST(SolveRigidPointToPlaneShiftedTest, OffsetMovesAlongNormal)
+{
+    std::vector<glm::vec3> src = {
+        {0,0,1}, {1,0,1}, {0,1,1}
+    };
+
+    std::vector<glm::vec3> trg = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(src.size(), 1.0f);
+
+    auto T = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
+
+    // Expect translation shifted along + normal direction
+    EXPECT_NEAR(T.translation.z, 0.0f, 1e-4f);
+}
+
+TEST(SolveRigidPointToPlaneShiftedTest, ZeroSystem)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    std::vector<geo::f32> offsets(pts.size(), 0.0f);
+
+    auto T = geo::SolveRigidPointToPlaneShifted(pts, pts, normals, offsets);
+
+    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
+    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
 }
 
 // PointCloudTest
@@ -807,637 +1361,7 @@ TEST(KDTreePerformance, KDTreeBatchQueryScalesToLargeInput)
     EXPECT_GT(kdMs, 0.0);
 }
 
-// RigidTransformTests
-
-glm::mat3 RotationZ(float radians)
-{
-    const float c = std::cos(radians);
-    const float s = std::sin(radians);
-
-    return glm::mat3(
-        glm::vec3(c, s, 0.0f),
-        glm::vec3(-s, c, 0.0f),
-        glm::vec3(0.0f, 0.0f, 1.0f)
-    );
-}
-
-glm::mat3 RotationX(float radians)
-{
-    const float c = std::cos(radians);
-    const float s = std::sin(radians);
-
-    return glm::mat3(
-        glm::vec3(1.0f, 0.0f, 0.0f),
-        glm::vec3(0.0f, c, s),
-        glm::vec3(0.0f, -s, c)
-    );
-}
-
-TEST(RigidTransformTests, IdentityTransformPointReturnsSamePoint)
-{
-    const geo::RigidTransform T = geo::RigidTransform::Identity();
-    const glm::vec3 p(1.5f, -2.0f, 3.25f);
-
-    const glm::vec3 result = T.TransformPoint(p);
-
-    ExpectVec3Near(result, p);
-}
-
-TEST(RigidTransformTests, IdentityTransformNormalReturnsSameNormal)
-{
-    const geo::RigidTransform T = geo::RigidTransform::Identity();
-    const glm::vec3 n(0.0f, 1.0f, 0.0f);
-
-    const glm::vec3 result = T.TransformNormal(n);
-
-    ExpectVec3Near(result, n);
-}
-
-TEST(RigidTransformTests, TransformPointAppliesRotationAndTranslation)
-{
-    geo::RigidTransform T;
-    T.rotation = RotationZ(glm::half_pi<float>());
-    T.translation = glm::vec3(10.0f, 0.0f, 5.0f);
-
-    const glm::vec3 p(1.0f, 0.0f, 0.0f);
-    const glm::vec3 expected(10.0f, 1.0f, 5.0f);
-
-    const glm::vec3 result = T.TransformPoint(p);
-
-    ExpectVec3Near(result, expected);
-}
-
-TEST(RigidTransformTests, TransformNormalAppliesRotationOnly)
-{
-    geo::RigidTransform T;
-    T.rotation = RotationZ(glm::half_pi<float>());
-    T.translation = glm::vec3(100.0f, 200.0f, 300.0f);
-
-    const glm::vec3 n(1.0f, 0.0f, 0.0f);
-    const glm::vec3 expected(0.0f, 1.0f, 0.0f);
-
-    const glm::vec3 result = T.TransformNormal(n);
-
-    ExpectVec3Near(result, expected);
-}
-
-TEST(RigidTransformTests, InverseUndoesPointTransform)
-{
-    geo::RigidTransform T;
-    T.rotation = RotationZ(0.7f);
-    T.translation = glm::vec3(3.0f, -2.0f, 4.0f);
-
-    const glm::vec3 p(1.0f, 2.0f, -1.0f);
-
-    const glm::vec3 transformed = T.TransformPoint(p);
-    const glm::vec3 recovered = T.ComputeInverse().TransformPoint(transformed);
-
-    ExpectVec3Near(recovered, p, 1e-4f);
-}
-
-TEST(RigidTransformTests, InverseUndoesNormalTransform)
-{
-    geo::RigidTransform T;
-    T.rotation = RotationX(0.35f);
-    T.translation = glm::vec3(7.0f, 8.0f, 9.0f);
-
-    const glm::vec3 n = glm::normalize(glm::vec3(1.0f, 2.0f, 3.0f));
-
-    const glm::vec3 transformed = T.TransformNormal(n);
-    const glm::vec3 recovered = T.ComputeInverse().TransformNormal(transformed);
-
-    ExpectVec3Near(recovered, n, 1e-4f);
-}
-
-TEST(RigidTransformTests, ComposeMatchesSequentialApplication)
-{
-    geo::RigidTransform A;
-    A.rotation = RotationZ(0.5f);
-    A.translation = glm::vec3(1.0f, 2.0f, 3.0f);
-
-    geo::RigidTransform B;
-    B.rotation = RotationX(-0.25f);
-    B.translation = glm::vec3(-4.0f, 0.5f, 2.0f);
-
-    const geo::RigidTransform C = geo::RigidTransform::Compose(A, B);
-
-    const glm::vec3 p(2.0f, -1.0f, 0.25f);
-
-    const glm::vec3 sequential = A.TransformPoint(B.TransformPoint(p));
-    const glm::vec3 composed = C.TransformPoint(p);
-
-    ExpectVec3Near(composed, sequential, 1e-4f);
-}
-
-TEST(RigidTransformTests, InverseOfIdentityIsIdentity)
-{
-    const geo::RigidTransform I = geo::RigidTransform::Identity();
-    const geo::RigidTransform inv = I.ComputeInverse();
-
-    ExpectMat3Near(inv.rotation, glm::mat3(1.0f));
-    ExpectVec3Near(inv.translation, glm::vec3(0.0f));
-}
-
-TEST(RigidTransformTests, ToMat4MatchesPointTransform)
-{
-    geo::RigidTransform T;
-    T.rotation = RotationZ(glm::half_pi<float>());
-    T.translation = glm::vec3(2.0f, 3.0f, 4.0f);
-
-    const glm::vec3 p(1.0f, 0.0f, 5.0f);
-
-    const glm::vec3 expected = T.TransformPoint(p);
-
-    const glm::mat4 M = T.ToMat4();
-    const glm::vec4 hp = M * glm::vec4(p, 1.0f);
-    const glm::vec3 result(hp.x, hp.y, hp.z);
-
-    ExpectVec3Near(result, expected, 1e-5f);
-}
-
-TEST(RigidTransformTests, IdentityDoesNotChangePoint)
-{
-    geo::RigidTransform I = geo::RigidTransform::Identity();
-
-    glm::vec3 p(1.0f, 2.0f, 3.0f);
-    EXPECT_EQ(I.TransformPoint(p), p);
-}
-
-TEST(RigidTransformTests, InverseCancelsTransform)
-{
-    geo::RigidTransform T;
-    T.rotation = glm::mat3(1.0f);
-    T.translation = glm::vec3(1.0f, 2.0f, 3.0f);
-
-    auto inv = T.ComputeInverse();
-
-    glm::vec3 p(0.5f, -1.0f, 2.0f);
-    glm::vec3 q = T.TransformPoint(p);
-    glm::vec3 p2 = inv.TransformPoint(q);
-
-    EXPECT_TRUE(RigidTransformNearlyEqual(
-        geo::RigidTransform{ glm::mat3(1.0f), p },
-        geo::RigidTransform{ glm::mat3(1.0f), p2 }
-    ));
-}
-
-TEST(RigidTransformTests, CompositionIsConsistent)
-{
-    geo::RigidTransform A, B;
-
-    A.translation = glm::vec3(1, 0, 0);
-    B.translation = glm::vec3(0, 1, 0);
-
-    auto C = geo::RigidTransform::Compose(A, B);
-
-    glm::vec3 p(1, 1, 1);
-    glm::vec3 direct = A.TransformPoint(B.TransformPoint(p));
-    glm::vec3 composed = C.TransformPoint(p);
-
-    EXPECT_NEAR(direct.x, composed.x, 1e-5f);
-    EXPECT_NEAR(direct.y, composed.y, 1e-5f);
-    EXPECT_NEAR(direct.z, composed.z, 1e-5f);
-}
-
-// PointToPointRMSE
-
-TEST(PointToPointRMSE, PerfectMatchIsZero)
-{
-    std::vector<glm::vec3> a = {
-        {1,2,3}, {4,5,6}, {7,8,9}
-    };
-    std::vector<glm::vec3> b = a;
-
-    EXPECT_NEAR(geo::PointToPointRMSE(a, b), 0.0f, 1e-6f);
-}
-
-TEST(PointToPointRMSE, SimpleOffset)
-{
-    std::vector<glm::vec3> a = {
-        {1,0,0}, {0,1,0}
-    };
-    std::vector<glm::vec3> b = {
-        {2,0,0}, {0,3,0}
-    };
-
-    // diffs: 1 and 2 => squared: 1, 4 => mean = 2.5 => sqrt ≈ 1.5811
-    EXPECT_NEAR(geo::PointToPointRMSE(a, b), 1.5811f, 1e-4f);
-}
-
-TEST(PointToPointRMSE, EmptyInputReturnsMax)
-{
-    std::vector<glm::vec3> a;
-    std::vector<glm::vec3> b;
-
-    EXPECT_EQ(geo::PointToPointRMSE(a, b), geo::F32_MAX);
-}
-
-TEST(PointToPointRMSE, MismatchedSizeHandledGracefully)
-{
-    std::vector<glm::vec3> a = { {1,2,3} };
-    std::vector<glm::vec3> b = { {1,2,3}, {4,5,6} };
-
-    EXPECT_EQ(geo::PointToPointRMSE(a, b), geo::F32_MAX);
-}
-
-TEST(PointToPointRMSE, LargeValuesDoNotOverflow)
-{
-    std::vector<glm::vec3> a = {
-        {1000,1000,1000},
-        {2000,2000,2000}
-    };
-
-    std::vector<glm::vec3> b = {
-        {1001,1001,1001},
-        {1999,1999,1999}
-    };
-
-    EXPECT_NEAR(geo::PointToPointRMSE(a, b), std::sqrt(3.0f), 1e-4f);
-}
-
-// PointToPlaneRMSE
-
-TEST(PointToPlaneRMSE, PerfectMatchIsZero)
-{
-    std::vector<glm::vec3> source = {
-        {1,2,3}, {4,5,6}
-    };
-
-    std::vector<glm::vec3> target = source;
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}
-    };
-
-    EXPECT_NEAR(geo::PointToPlaneRMSE(source, target, normals), 0.0f, 1e-6f);
-}
-
-TEST(PointToPlaneRMSE, ConstantPlaneOffset)
-{
-    std::vector<glm::vec3> source = {
-        {0,0,1}, {1,0,1}
-    };
-
-    std::vector<glm::vec3> target = {
-        {0,0,0}, {1,0,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}
-    };
-
-    EXPECT_NEAR(geo::PointToPlaneRMSE(source, target, normals), 1.0f, 1e-6f);
-}
-
-TEST(PointToPlaneRMSE, DiagonalNormalProjection)
-{
-    std::vector<glm::vec3> source = {
-        {1,1,0}
-    };
-
-    std::vector<glm::vec3> target = {
-        {0,0,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        glm::normalize(glm::vec3(1,1,0))
-    };
-
-    float rmse = geo::PointToPlaneRMSE(source, target, normals);
-
-    float expected = std::sqrt(2.0f);
-
-    EXPECT_NEAR(rmse, expected, 1e-5f);
-}
-
-TEST(PointToPlaneRMSE, AxisAlignedSimpleCase)
-{
-    std::vector<glm::vec3> source = { {1,0,0} };
-    std::vector<glm::vec3> target = { {0,0,0} };
-    std::vector<glm::vec3> normals = { {1,0,0} };
-
-    float rmse = geo::PointToPlaneRMSE(source, target, normals);
-
-    EXPECT_NEAR(rmse, 1.0f, 1e-6f);
-}
-
-TEST(PointToPlaneRMSE, SimpleCase)
-{
-    std::vector<glm::vec3> source = { {1,1,0} };
-    std::vector<glm::vec3> target = { {0,0,0} };
-    std::vector<glm::vec3> normals = { {1,0,0} };
-
-    float rmse = geo::PointToPlaneRMSE(source, target, normals);
-
-    EXPECT_NEAR(rmse, 1.0f, 1e-6f);
-}
-
-TEST(PointToPlaneRMSE, EmptyInputReturnsMax)
-{
-    std::vector<glm::vec3> a, b, n;
-
-    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
-}
-
-TEST(PointToPlaneRMSE, MismatchedSizesReturnMax)
-{
-    std::vector<glm::vec3> a = { {1,2,3} };
-    std::vector<glm::vec3> b = { {1,2,3}, {4,5,6} };
-    std::vector<glm::vec3> n = { {0,0,1} };
-
-    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
-}
-
-// SVD
-
-TEST(SVDTest, ReconstructsMatrix)
-{
-    glm::mat3 A(
-        1.0f, 2.0f, 3.0f,
-        0.0f, 1.0f, 4.0f,
-        5.0f, 6.0f, 0.0f
-    );
-
-    geo::SVDResult svd = geo::SVD(A);
-
-    glm::mat3 U = svd.U;
-    glm::mat3 V = svd.V;
-    glm::mat3 S(0.0f);
-    S[0][0] = svd.S.x;
-    S[1][1] = svd.S.y;
-    S[2][2] = svd.S.z;
-
-    glm::mat3 reconstructed = U * S * glm::transpose(V);
-
-    for (int i = 0; i < 3; ++i) {
-        for (int j = 0; j < 3; ++j)
-        {
-            EXPECT_NEAR(A[i][j], reconstructed[i][j], 1e-4f);
-        }
-    }
-}
-
-// SolveRigidPointToPointTest
-
-TEST(SolveRigidPointToPointTest, Identity)
-{
-    std::vector<glm::vec3> pts = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    auto T = geo::SolveRigidPointToPoint(pts, pts);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-TEST(SolveRigidPointToPointTest, PureTranslation)
-{
-    std::vector<glm::vec3> src = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    glm::vec3 t(1, 2, 3);
-
-    std::vector<glm::vec3> trg;
-    for (auto& p : src)
-        trg.push_back(p + t);
-
-    auto T = geo::SolveRigidPointToPoint(src, trg);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-
-    ExpectVec3Near(T.translation, t, 1e-5f);
-}
-
-TEST(SolveRigidPointToPointTest, PureRotation)
-{
-    std::vector<glm::vec3> src = {
-        {1,0,0}, {0,1,0}, {0,0,1}
-    };
-
-    float angle = glm::radians(90.0f);
-    glm::mat3 R = glm::mat3(
-        cos(angle), -sin(angle), 0,
-        sin(angle), cos(angle), 0,
-        0, 0, 1
-    );
-
-    std::vector<glm::vec3> trg;
-    for (auto& p : src)
-        trg.push_back(R * p);
-
-    auto T = geo::SolveRigidPointToPoint(src, trg);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, R, 1e-5f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-TEST(SolveRigidPointToPointTest, RotationAndTranslation)
-{
-    std::vector<glm::vec3> src = {
-        {1,0,0}, {0,1,0}, {0,0,1}
-    };
-
-    float angle = glm::radians(45.0f);
-    glm::mat3 R = glm::mat3(
-        cos(angle), -sin(angle), 0,
-        sin(angle), cos(angle), 0,
-        0, 0, 1
-    );
-
-    glm::vec3 t(1, 2, 3);
-
-    std::vector<glm::vec3> trg;
-    for (auto& p : src)
-        trg.push_back(R * p + t);
-
-    auto T = geo::SolveRigidPointToPoint(src, trg);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, R, 1e-5f);
-
-    ExpectVec3Near(T.translation, t, 1e-5f);
-}
-
-TEST(SolveRigidPointToPointTest, ReflectionIsCorrected)
-{
-    std::vector<glm::vec3> src = {
-        {1,0,0}, {0,1,0}, {0,0,1}
-    };
-
-    // Reflect across X
-    std::vector<glm::vec3> trg = {
-        {-1,0,0}, {0,1,0}, {0,0,1}
-    };
-
-    auto T = geo::SolveRigidPointToPoint(src, trg);
-
-    // Must still be a proper rotation
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-}
-
-// SolveRigidPointToPlaneTest
-
-TEST(SolveRigidPointToPlaneTest, Identity)
-{
-    std::vector<glm::vec3> pts = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}, {0,0,1}
-    };
-
-    auto T = geo::SolveRigidPointToPlane(pts, pts, normals);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-TEST(SolveRigidPointToPlaneTest, TranslationAlongNormal)
-{
-    std::vector<glm::vec3> src = {
-        {0,0,1}, {1,0,1}, {0,1,1}
-    };
-
-    std::vector<glm::vec3> trg = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}, {0,0,1}
-    };
-
-    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f, 0.0f, -1.0f), 1e-5f);
-}
-
-TEST(SolveRigidPointToPlaneTest, NoTangentialCorrection)
-{
-    std::vector<glm::vec3> src = {
-        {1,0,0}, {2,0,0}, {3,0,0}
-    };
-
-    std::vector<glm::vec3> trg = {
-        {2,0,0}, {3,0,0}, {4,0,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,1,0}, {0,1,0}, {0,1,0}
-    };
-
-    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-TEST(SolveRigidPointToPlaneTest, SmallRotationObservable)
-{
-    float angle = glm::radians(15.0f);
-    glm::mat4 rot4 = glm::rotate(glm::mat4(1.0f), angle, glm::vec3(1, 0, 0));
-    glm::mat3 R = glm::mat3(rot4);
-
-    std::vector<glm::vec3> trg = {
-        {1,0,0}, {-2,0,4}, {5,0,-6}, {2,0,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,1,0}, {0,1,0}, {0,1,0}, {1,0,0}
-    };
-
-    std::vector<glm::vec3> src;
-    for (auto& p : trg)
-        src.push_back(R * p);
-
-    auto T = geo::SolveRigidPointToPlane(src, trg, normals);
-
-    EXPECT_NEAR(glm::determinant(T.rotation), 1.0f, 1e-5f);
-    ExpectMat3Near(T.rotation, glm::transpose(R), 1e-2f);
-
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-// SolveRigidPointToPlaneShiftedTest
-
-TEST(SolveRigidPointToPlaneShiftedTest, ZeroOffsetsMatchesOriginal)
-{
-    std::vector<glm::vec3> src = {
-        {0,0,1}, {1,0,1}, {0,1,1}
-    };
-
-    std::vector<glm::vec3> trg = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}, {0,0,1}
-    };
-
-    std::vector<geo::f32> offsets(src.size(), 0.0f);
-
-    auto T1 = geo::SolveRigidPointToPlane(src, trg, normals);
-    auto T2 = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
-
-    ExpectMat3Near(T1.rotation, T2.rotation, 1e-5f);
-    ExpectVec3Near(T1.translation, T2.translation, 1e-5f);
-}
-
-TEST(SolveRigidPointToPlaneShiftedTest, OffsetMovesAlongNormal)
-{
-    std::vector<glm::vec3> src = {
-        {0,0,1}, {1,0,1}, {0,1,1}
-    };
-
-    std::vector<glm::vec3> trg = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}, {0,0,1}
-    };
-
-    std::vector<geo::f32> offsets(src.size(), 1.0f);
-
-    auto T = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
-
-    // Expect translation shifted along + normal direction
-    EXPECT_NEAR(T.translation.z, 0.0f, 1e-4f);
-}
-
-TEST(SolveRigidPointToPlaneShiftedTest, ZeroSystem)
-{
-    std::vector<glm::vec3> pts = {
-        {0,0,0}, {1,0,0}, {0,1,0}
-    };
-
-    std::vector<glm::vec3> normals = {
-        {0,0,1}, {0,0,1}, {0,0,1}
-    };
-
-    std::vector<geo::f32> offsets(pts.size(), 0.0f);
-
-    auto T = geo::SolveRigidPointToPlaneShifted(pts, pts, normals, offsets);
-
-    ExpectMat3Near(T.rotation, glm::mat3(1.0f), 1e-5f);
-    ExpectVec3Near(T.translation, glm::vec3(0.0f), 1e-5f);
-}
-
-// ICP
+// LeastSquaresICP
 
 static std::vector<glm::vec3> CreateFromArray(float* arr, size_t size)
 {
@@ -1451,7 +1375,7 @@ static std::vector<glm::vec3> CreateFromArray(float* arr, size_t size)
     return points;
 }
 
-TEST(NaiveICP, IdentityAlignment)
+TEST(LeastSquaresICP, IdentityAlignment)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1475,7 +1399,7 @@ TEST(NaiveICP, IdentityAlignment)
     ExpectVec3Near(result.transform.translation, glm::vec3(0.0f), 1e-6f);
 }
 
-TEST(NaiveICP, RecoversKnownTransform)
+TEST(LeastSquaresICP, RecoversKnownTransform)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1506,11 +1430,11 @@ TEST(NaiveICP, RecoversKnownTransform)
     glm::mat3 R_expected = glm::transpose(R);
     glm::vec3 t_expected = -R_expected * t;
 
-    ExpectMat3Near(result.transform.rotation, R_expected, 1e-4f);
-    ExpectVec3Near(result.transform.translation, t_expected, 1e-4f);
+    ExpectMat3Near(result.transform.rotation, R_expected, 1e-5f);
+    ExpectVec3Near(result.transform.translation, t_expected, 1e-5f);
 }
 
-TEST(NaiveICP, RotationIsOrthogonal)
+TEST(LeastSquaresICP, RotationIsOrthogonal)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1533,7 +1457,7 @@ TEST(NaiveICP, RotationIsOrthogonal)
 }
 
 
-TEST(NaiveICP, RotationHasUnitDeterminant)
+TEST(LeastSquaresICP, RotationHasUnitDeterminant)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1554,7 +1478,7 @@ TEST(NaiveICP, RotationHasUnitDeterminant)
     EXPECT_NEAR(det, 1.0f, 1e-4f);
 }
 
-TEST(NaiveICP, RMSIsReduced)
+TEST(LeastSquaresICP, RMSIsReduced)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1576,7 +1500,7 @@ TEST(NaiveICP, RMSIsReduced)
     EXPECT_LT(result.rmse, 2.0f);
 }
 
-TEST(NaiveICP, PointToPlaneRandomRect)
+TEST(LeastSquaresICP, PointToPlaneRandomRect)
 {
     geo::Random rng(8888); // reproducible seed
 
@@ -1585,8 +1509,8 @@ TEST(NaiveICP, PointToPlaneRandomRect)
         glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 100, rng, true);
 
     // Apply a small known transform
-    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(10.0f), glm::vec3(0, 1, 0));
-    glm::vec3 trans(5.0f, 2.0f, 1.0f);
+    glm::mat3 rot = glm::rotate(glm::mat4(1.0f), glm::radians(15.0f), glm::vec3(0, 1, 0));
+    glm::vec3 trans(8.0f, 4.0f, -2.0f);
 
     geo::PointCloud3D source = target; // copy
     source.Transform({ rot, trans });
@@ -1595,20 +1519,22 @@ TEST(NaiveICP, PointToPlaneRandomRect)
     geo::KDTree nn(target.GetPoints());
 
     // Run point-to-plane ICP
-    auto result = geo::LeastSquaresICP(target, source, nn, { 100, 1e-2f, true }); // useNormals = true
+    geo::LeastSquaresICPParameters params;
+    params.useNormals = true;
+    auto result = geo::LeastSquaresICP(target, source, nn, params);
 
     // Check convergence
     EXPECT_TRUE(result.converged);
 
     // RMS should be very small (since we generated the transform)
-    EXPECT_LT(result.rmse, 1e-2f);
+    EXPECT_LT(result.rmse, 1e-5f);
 
     // The recovered transform should be approximately the inverse of the applied transform
     glm::mat3 expectedR = glm::transpose(rot); // inverse rotation
     glm::vec3 expectedT = -expectedR * trans;  // inverse translation
 
-    ExpectMat3Near(result.transform.rotation, expectedR, 1e-2f);
-    ExpectVec3Near(result.transform.translation, expectedT, 1e-2f);
+    ExpectMat3Near(result.transform.rotation, expectedR, 1e-5f);
+    ExpectVec3Near(result.transform.translation, expectedT, 1e-5f);
 }
 
 // SparseICP Tests
