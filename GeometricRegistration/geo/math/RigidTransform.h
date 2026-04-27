@@ -85,4 +85,15 @@ namespace geo
 
 		return true;
 	}
+
+	inline f32 RotationAngle(const glm::mat3& R)
+	{
+		f32 trace = R[0][0] + R[1][1] + R[2][2];
+		f32 cos_theta = (trace - 1.0f) * 0.5f;
+
+		// Clamp for numerical safety
+		cos_theta = glm::clamp(cos_theta, -1.0f, 1.0f);
+
+		return std::acos(cos_theta);
+	}
 }

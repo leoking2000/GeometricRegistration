@@ -1,3 +1,4 @@
+#include <geo/utils/logging/LogMacros.h>
 #include "math/Solvers.h"
 #include "math/Stats.h"
 #include "SparseICP.h"
@@ -89,7 +90,7 @@ namespace geo
 				targets[t] = target.Point(correspondences[t]);
 			}
 
-			RigidTransform localTransform = { glm::mat3(1.0f), glm::vec3(0.0f) };
+			RigidTransform localTransform = RigidTransform::Identity();
 
 			TimePoint startSolveTime = Clock::now();
 
@@ -146,21 +147,32 @@ namespace geo
 			result.transform = RigidTransform::Compose(localTransform, result.transform);
 
 
-			// Step 4: compute RMSE on current correspondences
+			// Step 4: compute RMSE
 			result.rmse = PointToPointRMSE(source.GetPoints(), targets);
 
+			// Step 5: converged check
+			const f32 transNorm = glm::length(localTransform.translation);
+			const f32 rotAngle = RotationAngle(localTransform.rotation);
+
+			const bool smallMotion = (transNorm < params.transTolerance) && (rotAngle < params.rotTolerance);
+			const bool smallErrorChange = std::abs(prevError - result.rmse) < params.tolerance;
+
+			prevError = result.rmse;
 			result.iterations = iter + 1;
 
 			TimePoint endTime = Clock::now();
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-			if (std::abs(prevError - result.rmse) < params.tolerance)
+			GEOLOGDEBUG("iter: " << iter + 1
+				<< " rmse: " << result.rmse
+				<< " trans: " << transNorm
+				<< " rot: " << rotAngle << "\n");
+
+			if (smallMotion && smallErrorChange)
 			{
 				result.converged = true;
 				break;
 			}
-
-			prevError = result.rmse;
 		}
 
 		return result;

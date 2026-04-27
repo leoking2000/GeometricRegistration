@@ -8,7 +8,11 @@ namespace geo
     struct SparseICPParameters
     {
         u32 maxIterations = 500;
+
         f32 tolerance = 1e-5f;
+        f32 transTolerance = 1e-5f;
+        f32 rotTolerance = 1e-4f; // radians
+
         f32 p = 0.4f;
         f32 mu = 10;
         u32 admmIterations = 10;

@@ -1,6 +1,6 @@
-#include "ICPTestCase.h"
-
 #include <glm/gtc/matrix_transform.hpp>
+#include <geo/utils/GeoRand.h>
+#include "ICPTestCase.h"
 
 namespace test
 {
@@ -13,6 +13,67 @@ namespace test
             name,
             target,
             source,
+            T
+        };
+    }
+
+    ICPTestCase PartialOverlap(const geo::PointCloud3D& target, const geo::RigidTransform& T,
+        std::function<bool(const glm::vec3&)> keep, const std::string& name)
+    {
+        assert(keepRatio > 0.0f && keepRatio <= 1.0f);
+
+        geo::PointCloud3D source = target;
+        source.Transform(T);
+
+        const auto& pts = source.GetPoints();
+        const size_t N = pts.size();
+
+        std::vector<glm::vec3> subset;
+        subset.reserve(N);
+
+        for (size_t i = 0; i < N; ++i)
+        {
+            if (keep(pts[i])) {
+                subset.emplace_back(pts[i]);
+            }
+        }
+
+        geo::PointCloud3D partialSource(subset);
+
+        return {
+            name,
+            target,
+            partialSource,
+            T
+        };
+    }
+
+
+    ICPTestCase WithOutliers(const geo::PointCloud3D& target, const geo::RigidTransform& T,
+        geo::u32 outlierCount, geo::f32 range, const std::string& name, geo::u32 seed)
+    {
+        assert(outlierCount >= 0);
+        assert(range > 0.0f);
+
+        geo::Random rng{ seed };
+
+        geo::PointCloud3D source = target;
+        source.Transform(T);
+
+        std::vector<glm::vec3> pts = source.GetPoints();
+
+        // Simple deterministic pseudo-random (no RNG dependency)
+        for (int i = 0; i < outlierCount; ++i)
+        {
+            pts.emplace_back(rng.Float3(-range, range));
+        }
+
+        geo::PointCloud3D outlierSource(pts);
+
+        return {
+            name,
+            target,
+            outlierSource,
             T
         };
     }
