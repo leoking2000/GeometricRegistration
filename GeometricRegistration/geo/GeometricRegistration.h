@@ -7,6 +7,7 @@
 #include "geometry/Mesh.h"
 #include "geometry/RandomPointCloud.h"
 
+#include "math/BBox.h"
 #include "math/RigidTransform.h"
 #include "math/Stats.h"
 #include "math/solvers.h"

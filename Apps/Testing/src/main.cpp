@@ -292,6 +292,91 @@ TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
     EXPECT_GE(elapsed, 0.0);
 }
 
+// BBoxTests
+
+using namespace geo;
+
+TEST(BBoxTests, DefaultIsInvalid)
+{
+    geo::BBox box;
+    EXPECT_FALSE(box.IsValid());
+}
+
+TEST(BBoxTests, SetAndAccessors)
+{
+    BBox box({ 0,0,0 }, { 2,4,6 });
+
+    EXPECT_TRUE(box.IsValid());
+    EXPECT_EQ(box.Min(), glm::vec3(0, 0, 0));
+    EXPECT_EQ(box.Max(), glm::vec3(2, 4, 6));
+    EXPECT_EQ(box.Size(), glm::vec3(2, 4, 6));
+    EXPECT_EQ(box.Center(), glm::vec3(1, 2, 3));
+    EXPECT_EQ(box.MaxSize(), 6.0f);
+}
+
+TEST(BBoxTests, SetSymmetrical)
+{
+    geo::BBox box;
+    box.SetSymmetrical({ 1,1,1 }, { 2,2,2 });
+
+    EXPECT_EQ(box.Min(), glm::vec3(0, 0, 0));
+    EXPECT_EQ(box.Max(), glm::vec3(2, 2, 2));
+}
+
+TEST(BBoxTests, ExpandByPoint)
+{
+    geo::BBox box;
+    box.MakeEmpty();
+
+    box.ExpandBy({ 1,2,3 });
+    EXPECT_EQ(box.Min(), glm::vec3(1, 2, 3));
+    EXPECT_EQ(box.Max(), glm::vec3(1, 2, 3));
+
+    box.ExpandBy({ -1,5,0 });
+    EXPECT_EQ(box.Min(), glm::vec3(-1, 2, 0));
+    EXPECT_EQ(box.Max(), glm::vec3(1, 5, 3));
+}
+
+TEST(BBoxTests, ExpandByBox)
+{
+    geo::BBox a({ 0,0,0 }, { 1,1,1 });
+    geo::BBox b({ -2,0,0 }, { 0,2,2 });
+
+    a.ExpandBy(b);
+
+    EXPECT_EQ(a.Min(), glm::vec3(-2, 0, 0));
+    EXPECT_EQ(a.Max(), glm::vec3(1, 2, 2));
+}
+
+TEST(BBoxTests, Contains)
+{
+    geo::BBox box({ 0,0,0 }, { 1,1,1 });
+
+    EXPECT_TRUE(box.Contains({ 0.5f,0.5f,0.5f }));
+    EXPECT_TRUE(box.Contains({ 0,0,0 }));
+    EXPECT_TRUE(box.Contains({ 1,1,1 }));
+
+    EXPECT_FALSE(box.Contains({ -1,0,0 }));
+    EXPECT_FALSE(box.Contains({ 2,0,0 }));
+}
+
+TEST(BBoxTests, Corner)
+{
+    geo::BBox box({ 0,0,0 }, { 1,2,3 });
+
+    EXPECT_EQ(box.Corner(0), glm::vec3(0, 0, 0));
+    EXPECT_EQ(box.Corner(1), glm::vec3(1, 0, 0));
+    EXPECT_EQ(box.Corner(2), glm::vec3(0, 2, 0));
+    EXPECT_EQ(box.Corner(4), glm::vec3(0, 0, 3));
+    EXPECT_EQ(box.Corner(7), glm::vec3(1, 2, 3));
+}
+
+TEST(BBoxTests, Radius)
+{
+    geo::BBox box({ -1,-1,-1 }, { 1,1,1 });
+    EXPECT_NEAR(box.Radius(), std::sqrt(3.0f), 1e-6f);
+}
+
 // RMSETests
 
 TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)

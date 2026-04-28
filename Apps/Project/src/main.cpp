@@ -6,14 +6,15 @@ static geo::Random rng{ 2026 };
 int main()
 {
     geo::SetLogLevel(geo::LogLevel::INFO);
-
-    // get a mesh
-    geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
-    //geo::Mesh dora_1 = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
     //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
 
     geo::PointCloud3D rect_pc = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
+
+    geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
     geo::PointCloud3D bunny_pc = bunny.ToPointCloud();
+
+    geo::Mesh dora_1 = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
+    geo::PointCloud3D dora_pc = dora_1.ToPointCloud();
 
     glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
     glm::vec3 translation(-1.0f, 0.0f, 1.0f);
@@ -39,7 +40,8 @@ int main()
             [](const glm::vec3& v) -> bool { return v.x >= -1.3f; }, "PartialOverlap Bunny 50% overlap (x axis cut)"),
         test::PartialOverlap(bunny_pc, { glm::mat3(rotation), translation },
             [](const glm::vec3& v) -> bool { return v.x >= -1.1f; }, "PartialOverlap Bunny 35% overlap (x axis cut)"),
-        test::WithOutliers(bunny_pc, { glm::mat3(rotation), translation }, 14405, 2.0f, "Bunny 20% Outliers")
+        test::WithOutliers(bunny_pc, { glm::mat3(rotation), translation }, 14405, 2.0f, "Bunny 20% Outliers"),
+        test::WithOutliers(bunny_pc, { glm::mat3(rotation), translation }, 4000, 50.0f, "Dora_1 Outliers")
     };
 
     for (const auto& test : tests)
