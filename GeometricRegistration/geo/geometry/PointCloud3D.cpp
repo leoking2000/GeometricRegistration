@@ -43,6 +43,18 @@ namespace geo
 		return m_centroid;
 	}
 
+	BBox PointCloud3D::ComputeBoundingBox() const
+	{
+		BBox box;
+
+		for (const auto& v : m_points)
+		{
+			box.ExpandBy(v);
+		}
+
+		return box;
+	}
+
 	void PointCloud3D::Transform(const RigidTransform& transform)
 	{
 		if (HasNormals())

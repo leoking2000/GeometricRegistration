@@ -69,6 +69,34 @@ namespace geo
         m_center = 0.5f * (m_min + m_max);
     }
 
+    void BBox::ExpandByFactor(f32 factor)
+    {
+        if (!IsValid())
+            return;
+
+        glm::vec3 halfExpand = 0.5f * m_size * factor;
+
+        m_min -= halfExpand;
+        m_max += halfExpand;
+
+        m_size = m_max - m_min;
+        m_center = 0.5f * (m_min + m_max);
+    }
+
+    void BBox::ExpandByAbsolute(f32 padding)
+    {
+        if (!IsValid())
+            return;
+
+        glm::vec3 p(padding);
+
+        m_min -= p;
+        m_max += p;
+
+        m_size = m_max - m_min;
+        m_center = 0.5f * (m_min + m_max);
+    }
+
     glm::vec3 BBox::Corner(u32 pos) const
     {
         assert(pos < 8);

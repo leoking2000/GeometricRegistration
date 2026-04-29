@@ -1,7 +1,8 @@
 #pragma once
 #include <vector>
-#include "utils/GeoTypes.h"
-#include "math/RigidTransform.h"
+#include <utils/GeoTypes.h>
+#include <math/RigidTransform.h>
+#include <math/BBox.h>
 
 namespace geo
 {
@@ -17,6 +18,8 @@ namespace geo
 		const glm::vec3& Point(index_t i) const;
 		const glm::vec3& Normal(index_t i) const;
 		glm::vec3 Centroid() const;
+	public:
+		BBox ComputeBoundingBox() const;
 	public:
 		// Note: Transform mutates point positions, and invalidates any spatial index built on this data.
 		void Transform(const RigidTransform& transform);

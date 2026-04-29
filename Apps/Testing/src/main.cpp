@@ -377,6 +377,38 @@ TEST(BBoxTests, Radius)
     EXPECT_NEAR(box.Radius(), std::sqrt(3.0f), 1e-6f);
 }
 
+TEST(BBoxTests, ExpandByFactor)
+{
+    geo::BBox box(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+
+    box.ExpandByFactor(0.1f); // 10%
+
+    // Expect 1 unit expansion per side
+    ExpectVec3Near(box.Min(), glm::vec3(-0.5f, -0.5f, -0.5f));
+    ExpectVec3Near(box.Max(), glm::vec3(10.5f, 10.5f, 10.5f));
+    ExpectVec3Near(box.Size(), glm::vec3(11.0f, 11.0f, 11.0f));
+}
+
+TEST(BBoxTests, ExpandByAbsolute)
+{
+    geo::BBox box(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+
+    box.ExpandByAbsolute(2.0f);
+
+    ExpectVec3Near(box.Min(), glm::vec3(-2, -2, -2));
+    ExpectVec3Near(box.Max(), glm::vec3(3, 3, 3));
+}
+
+TEST(BBoxTests, ExpandInvalidDoesNothing)
+{
+    geo::BBox box;
+    box.MakeEmpty();
+
+    box.ExpandByFactor(0.1f);
+
+    EXPECT_FALSE(box.IsValid());
+}
+
 // RMSETests
 
 TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)
@@ -1135,6 +1167,84 @@ TEST(PointCloudTest, TransformUpdatesCentroid)
 
     glm::vec3 expectedCentroid(1.0f, 1.0f, 3.0f / 2.0f);
     EXPECT_TRUE(glm::all(glm::epsilonEqual(cloud.Centroid(), expectedCentroid, EPSILON)));
+}
+
+TEST(PointCloudTest, ComputeBoundingBox_Simple)
+{
+    std::vector<glm::vec3> pts = {
+        {0,0,0},
+        {1,2,3},
+        {-1,5,2}
+    };
+
+    geo::PointCloud3D pc(pts);
+    geo::BBox box = pc.ComputeBoundingBox();
+
+    ExpectVec3Near(box.Min(), glm::vec3(-1, 0, 0));
+    ExpectVec3Near(box.Max(), glm::vec3(1, 5, 3));
+}
+
+TEST(PointCloudTest, ComputeBoundingBox_SinglePoint)
+{
+    std::vector<glm::vec3> pts = {
+        {2,3,4}
+    };
+
+    geo::PointCloud3D pc(pts);
+    geo::BBox box = pc.ComputeBoundingBox();
+
+    ExpectVec3Near(box.Min(), glm::vec3(2, 3, 4));
+    ExpectVec3Near(box.Max(), glm::vec3(2, 3, 4));
+    ExpectVec3Near(box.Size(), glm::vec3(0, 0, 0));
+}
+
+TEST(PointCloudTest, ComputeBoundingBox_NegativeCoordinates)
+{
+    std::vector<glm::vec3> pts = {
+        {-5,-2,-1},
+        {-1,-3,-4},
+        {-2,-1,-6}
+    };
+
+    geo::PointCloud3D pc(pts);
+    geo::BBox box = pc.ComputeBoundingBox();
+
+    ExpectVec3Near(box.Min(), glm::vec3(-5, -3, -6));
+    ExpectVec3Near(box.Max(), glm::vec3(-1, -1, -1));
+}
+
+TEST(PointCloudTest, ComputeBoundingBox_OrderIndependence)
+{
+    std::vector<glm::vec3> pts1 = {
+        {0,0,0}, {1,2,3}, {-1,5,2}
+    };
+
+    std::vector<glm::vec3> pts2 = {
+        {-1,5,2}, {0,0,0}, {1,2,3}
+    };
+
+    geo::PointCloud3D pc1(pts1);
+    geo::PointCloud3D pc2(pts2);
+
+    geo::BBox b1 = pc1.ComputeBoundingBox();
+    geo::BBox b2 = pc2.ComputeBoundingBox();
+
+    ExpectVec3Near(b1.Min(), b2.Min());
+    ExpectVec3Near(b1.Max(), b2.Max());
+}
+
+TEST(PointCloudTest, ComputeBoundingBox_CenterAndSize)
+{
+    std::vector<glm::vec3> pts = {
+        {-1,-1,-1},
+        {1,1,1}
+    };
+
+    geo::PointCloud3D pc(pts);
+    geo::BBox box = pc.ComputeBoundingBox();
+
+    ExpectVec3Near(box.Center(), glm::vec3(0, 0, 0));
+    ExpectVec3Near(box.Size(), glm::vec3(2, 2, 2));
 }
 
 // MeshTest

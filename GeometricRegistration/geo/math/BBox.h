@@ -38,12 +38,23 @@ namespace geo
 		inline f32 Radius2() const { return (IsValid()) ? 0.25f * (glm::dot(m_size, m_size)) : 0.0f; }
 	public:
 		// Expands the bounding box to include the given coordinate.
-		// If the box is uninitialized, set its m_min and m_max extents to v. */
+		// If the box is invalid/uninitialized, set its m_min and m_max extents to v.
 		void ExpandBy(const glm::vec3& v);
 
 		// Expands this bounding box to include the given bounding box.
-		// If this box is uninitialized, set it equal to box.
+		// If this box is invalid/uninitialized, set it equal to box.
 		void ExpandBy(const BBox& bbox);
+
+		// Expands the bounding box by a relative factor.
+		// factor = 0.1 expands each side by 10% of the current size
+		// (total size increases by 20%).
+		// If the box is invalid/uninitialized, does nothing.
+		void ExpandByFactor(f32 factor);
+
+		// Expands the bounding box by an absolute padding (in world units)
+		// applied equally in all directions.
+		// If the box is invalid/uninitialized, does nothing.
+		void ExpandByAbsolute(f32 padding);
 	public:
 		// Returns true if this bounding box contains the specified coordinate.
 		inline bool Contains(const glm::vec3& v) const

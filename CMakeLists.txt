@@ -8,14 +8,16 @@ option(PRODUCTION_BUILD "Make this a production build" OFF)
 
 ###### Add Libraries ######
 
+add_subdirectory(thirdparty/glm)             # math library
 add_subdirectory(thirdparty/Eigen)           # Eigen linear algebra
 add_subdirectory(thirdparty/nanoflann)       # Nearest Neighbor (NN) search
-add_subdirectory(thirdparty/glm)             # math library
-add_subdirectory(thirdparty/tiny_obj_loader)
+add_subdirectory(thirdparty/tiny_obj_loader) # obj loader
 
 add_subdirectory(thirdparty/googletest)     # unit tests
 
 add_subdirectory(thirdparty/raylib)         # rendering/ui library for Visualization
+
+
 
 
 ##################################
