@@ -1,8 +1,7 @@
 #pragma once
-#include <vector>
+#include <unordered_map>
 #include <glm/glm.hpp>
-#include <geo/utils/GeoTypes.h>
-#include <geo/math/BBox.h>
+#include <geo/geometry/PointCloud3D.h>
 
 
 namespace geo
@@ -14,11 +13,12 @@ namespace geo
 		f32 voxelSize = 0;        // world units per voxel
 	};
 
-    GridDescriptor ComputeGridDescriptor(const BBox& bbox, f32 resolution, f32 padding = 0.05f);
+    GridDescriptor ComputeGridDescriptor(const BBox& bbox, u32 resolution, f32 padding = 0.05f);
 
     class SparseVoxelGrid
     {
     public:
+        SparseVoxelGrid() = default;
         SparseVoxelGrid(const GridDescriptor& descriptor, f32 defaultValue);
     public:
         // Get value at voxel coordinate (returns default if: outside grid bounds or voxel not stored)
@@ -45,14 +45,26 @@ namespace geo
             return (u64(coord.x) << 42) | (u64(coord.y) << 21) | u64(coord.z);
         }
     private:
-        GridDescriptor m_descriptor;
+        GridDescriptor m_descriptor = {};
         f32 m_defaultValue = F32_MAX;
 
         // Sparse storage: only stores explicitly set voxels
         std::unordered_map<u64, f32> m_data;
     };
 
-
+    class DistanceField
+    {
+    public:
+        DistanceField() = default;
+    public:
+        // Build truncated distance field from PointCloud3D
+        void Build(const PointCloud3D& cloud, u32 resolution, f32 dTrunc, f32 padding = 0.05f);
+    public:
+        // Query distance at world-space point
+        f32 operator()(const glm::vec3& q) const;
+    private:
+        SparseVoxelGrid m_grid;
+    };
 
 }
 

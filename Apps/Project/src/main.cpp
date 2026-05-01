@@ -3,11 +3,12 @@
 
 static geo::Random rng{ 2026 };
 
-int main()
+static void TestICP()
 {
     geo::SetLogLevel(geo::LogLevel::INFO);
-    //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    std::cout << "==== ICP Test ====\n";
 
+    //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
     geo::PointCloud3D rect_pc = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
 
     geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
@@ -57,6 +58,71 @@ int main()
         res = test::RunSparseICPPointToPlane(test);
         test::PrintResult(res);
     }
+}
+
+static void TestDF()
+{
+    geo::SetLogLevel(geo::LogLevel::INFO);
+    std::cout << "==== DistanceField Test ====\n";
+
+    // 1. Create input data
+    //geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
+    geo::Mesh dora_3_med = geo::Mesh(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
+    geo::PointCloud3D cloud = dora_3_med.ToPointCloud();
+
+    // 2. Build DF
+    geo::DistanceField df;
+
+    const geo::u32 resolution = 128;
+    const geo::f32 dTrunc = 2.0f;
+    const geo::f32 padding = 0.1f;
+
+    geo::TimingStat buildTime;
+
+    geo::TimePoint startBuild = geo::Clock::now();
+    df.Build(cloud, resolution, dTrunc, padding);
+    geo::TimePoint endBuild = geo::Clock::now();
+
+    std::cout << "Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
+
+    // 3. Query test (1M samples)
+    const geo::u32 NUM_QUERIES = 1000000u;
+
+    geo::BBox bbox = cloud.ComputeBoundingBox();
+    bbox.ExpandByFactor(padding);
+
+
+    geo::TimingStat queryStat;
+    geo::f32 sum = 0.0f;
+
+    for (int i = 0; i < NUM_QUERIES; ++i)
+    {
+        geo::ScopedTimer scope(&queryStat);
+
+        // random point in bbox
+        glm::vec3 q(rng.Float(bbox.Min().x, bbox.Max().x), 
+                    rng.Float(bbox.Min().y, bbox.Max().y), 
+                    rng.Float(bbox.Min().z, bbox.Max().z));
+
+        sum += df(q);
+    }
+
+    std::cout << "Query Time (1M): " << queryStat.ToString() << "\n";
+
+    // 4. Sanity check
+    std::cout << "Zero-ish test: " << df(cloud.GetPoints()[0]) << "\n";
+
+    std::cout << "Far test: " << df(glm::vec3(100, 100, 100)) << "\n";
+    std::cout << "Accumulated Value (ignore): " << sum << "\n";
+
+    std::cout << "================================\n";
+}
+
+int main()
+{
+    //TestICP();
+    TestDF();
+
 
     return 0;
 }

@@ -40,6 +40,16 @@ target_include_directories("${PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}
 target_include_directories("${PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/geo")
 target_include_directories("${PROJECT_NAME}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/geo")
 
+if(OpenMP_CXX_FOUND)
+    target_link_libraries("${PROJECT_NAME}" PRIVATE OpenMP::OpenMP_CXX)
+else()
+    message(WARNING "OpenMP not found, building without it")
+endif()
+
+if(MSVC)
+    target_compile_options("${PROJECT_NAME}" PRIVATE /openmp)
+endif()
+
 ############ link libraries ############
 
 target_link_libraries("${PROJECT_NAME}" PRIVATE glm eigen nanoflann tiny_obj_loader)
