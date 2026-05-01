@@ -15,6 +15,7 @@
 #include "spatial/INearestNeighbor.h"
 #include "spatial/LinearNN.h"
 #include "spatial/KDTree.h"
+#include "spatial/DistanceField.h"
 
 #include "registration/LeastSquaresICP.h"
 #include "registration/SparseICP.h"

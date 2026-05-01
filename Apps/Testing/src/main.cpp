@@ -409,6 +409,194 @@ TEST(BBoxTests, ExpandInvalidDoesNothing)
     EXPECT_FALSE(box.IsValid());
 }
 
+TEST(GridDescriptorTest, BasicCube_NoPadding)
+{
+    BBox bbox(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10.0f, 0.0f);
+
+    ExpectVec3Near(data.bbox.Min(), glm::vec3(0, 0, 0));
+    ExpectVec3Near(data.bbox.Max(), glm::vec3(10, 10, 10));
+
+    EXPECT_FLOAT_EQ(data.voxelSize, 1.0f);
+    EXPECT_EQ(data.gridSize, glm::uvec3(10, 10, 10));
+}
+
+TEST(GridDescriptorTest, BasicCube_WithPadding)
+{
+    geo::BBox bbox(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10.0f, 0.1f); // 10% padding
+
+    // bbox expands to [-0.5, 10.5]
+    ExpectVec3Near(data.bbox.Min(), glm::vec3(-0.5f, -0.5f, -0.5f));
+    ExpectVec3Near(data.bbox.Max(), glm::vec3(10.5f, 10.5f, 10.5f));
+
+    EXPECT_FLOAT_EQ(data.voxelSize, 11.0f / 10.0f);
+
+    EXPECT_EQ(data.gridSize.x, (u32)std::ceil(11.0f / data.voxelSize));
+    EXPECT_EQ(data.gridSize.y, (u32)std::ceil(11.0f / data.voxelSize));
+    EXPECT_EQ(data.gridSize.z, (u32)std::ceil(11.0f / data.voxelSize));
+}
+
+TEST(GridDescriptorTest, NonUniformBox_RespectsMaxDimension)
+{
+    geo::BBox bbox(glm::vec3(0, 0, 0), glm::vec3(20, 5, 5));
+
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 20.0f, 0.0f);
+
+    // maxDim = 20 → voxelSize = 1
+    EXPECT_FLOAT_EQ(data.voxelSize, 1.0f);
+
+    EXPECT_EQ(data.gridSize.x, 20);
+    EXPECT_EQ(data.gridSize.y, 5);
+    EXPECT_EQ(data.gridSize.z, 5);
+}
+
+TEST(GridDescriptorTest, GridAlwaysCoversBBox)
+{
+    geo::BBox bbox(glm::vec3(-2, -1, -3), glm::vec3(3, 4, 1));
+
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 15.0f, 0.0f);
+
+    glm::vec3 extent = glm::vec3(data.gridSize) * data.voxelSize;
+
+    EXPECT_GE(extent.x, data.bbox.Size().x);
+    EXPECT_GE(extent.y, data.bbox.Size().y);
+    EXPECT_GE(extent.z, data.bbox.Size().z);
+}
+
+// SparseVoxelGrid Tests
+
+class SparseVoxelGridTest : public ::testing::Test
+{
+protected:
+    GridDescriptor CreateSimpleGrid()
+    {
+        BBox bbox;
+        bbox.Set(glm::vec3(0.0f), glm::vec3(1.0f));
+
+        // resolution = 10 → simple grid
+        return ComputeGridDescriptor(bbox, 10.0f, 0.0f);
+    }
+};
+
+TEST_F(SparseVoxelGridTest, ReturnsDefaultForUnsetVoxel)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 123.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get({ 1, 1, 1 }), 123.0f);
+}
+
+TEST_F(SparseVoxelGridTest, SetAndGetValue)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    glm::uvec3 coord(2, 3, 4);
+    grid.Set(coord, 42.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get(coord), 42.0f);
+}
+
+TEST_F(SparseVoxelGridTest, OverwritesValue)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    glm::uvec3 coord(1, 1, 1);
+
+    grid.Set(coord, 10.0f);
+    grid.Set(coord, 20.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get(coord), 20.0f);
+}
+
+TEST_F(SparseVoxelGridTest, ReturnsDefaultOutsideGrid)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, -1.0f);
+
+    glm::uvec3 outside(desc.gridSize.x + 5, 0, 0);
+
+    EXPECT_FLOAT_EQ(grid.Get(outside), -1.0f);
+}
+
+TEST_F(SparseVoxelGridTest, SetOutsideGridIsIgnored)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    glm::uvec3 outside(desc.gridSize.x + 1, 0, 0);
+
+    grid.Set(outside, 99.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get(outside), 0.0f);
+}
+
+TEST_F(SparseVoxelGridTest, IsInsideWorks)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    EXPECT_TRUE(grid.IsInside({ 0, 0, 0 }));
+    EXPECT_TRUE(grid.IsInside(desc.gridSize - glm::uvec3(1)));
+
+    EXPECT_FALSE(grid.IsInside({ desc.gridSize.x, 0, 0 }));
+    EXPECT_FALSE(grid.IsInside({ 0, desc.gridSize.y, 0 }));
+    EXPECT_FALSE(grid.IsInside({ 0, 0, desc.gridSize.z }));
+}
+
+TEST_F(SparseVoxelGridTest, ChangeDefaultValue)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 5.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get({ 1, 1, 1 }), 5.0f);
+
+    grid.SetDefaultValue(10.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get({ 2, 2, 2 }), 10.0f);
+}
+
+TEST_F(SparseVoxelGridTest, MultipleVoxelStorage)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    grid.Set({ 1, 2, 3 }, 10.0f);
+    grid.Set({ 4, 5, 6 }, 20.0f);
+    grid.Set({ 7, 8, 9 }, 30.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get({ 1, 2, 3 }), 10.0f);
+    EXPECT_FLOAT_EQ(grid.Get({ 4, 5, 6 }), 20.0f);
+    EXPECT_FLOAT_EQ(grid.Get({ 7, 8, 9 }), 30.0f);
+}
+
+TEST_F(SparseVoxelGridTest, BoundaryAccess)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, 0.0f);
+
+    glm::uvec3 maxCoord = desc.gridSize - glm::uvec3(1);
+
+    grid.Set(maxCoord, 77.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get(maxCoord), 77.0f);
+}
+
+TEST_F(SparseVoxelGridTest, SparseBehavior)
+{
+    auto desc = CreateSimpleGrid();
+    SparseVoxelGrid grid(desc, -5.0f);
+
+    grid.Set({ 1, 1, 1 }, 100.0f);
+
+    EXPECT_FLOAT_EQ(grid.Get({ 1, 1, 1 }), 100.0f);
+    EXPECT_FLOAT_EQ(grid.Get({ 2, 2, 2 }), -5.0f);
+}
+
 // RMSETests
 
 TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)
