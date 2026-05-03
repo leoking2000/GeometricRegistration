@@ -45,14 +45,20 @@ namespace geo
 
 	BBox PointCloud3D::ComputeBoundingBox() const
 	{
-		BBox box;
+		assert(!m_points.empty());
 
-		for (const auto& v : m_points)
+		glm::vec3 minP = m_points[0];
+		glm::vec3 maxP = m_points[0];
+
+		for (size_t i = 1; i < m_points.size(); ++i)
 		{
-			box.ExpandBy(v);
+			const glm::vec3& p = m_points[i];
+
+			minP = glm::min(minP, p);
+			maxP = glm::max(maxP, p);
 		}
 
-		return box;
+		return BBox(minP, maxP);
 	}
 
 	void PointCloud3D::Transform(const RigidTransform& transform)

@@ -413,7 +413,7 @@ TEST(GridDescriptorTest, BasicCube_NoPadding)
 {
     BBox bbox(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
 
-    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10.0f, 0.0f);
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10, 0.0f);
 
     ExpectVec3Near(data.bbox.Min(), glm::vec3(0, 0, 0));
     ExpectVec3Near(data.bbox.Max(), glm::vec3(10, 10, 10));
@@ -426,7 +426,7 @@ TEST(GridDescriptorTest, BasicCube_WithPadding)
 {
     geo::BBox bbox(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
 
-    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10.0f, 0.1f); // 10% padding
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 10, 0.1f); // 10% padding
 
     // bbox expands to [-0.5, 10.5]
     ExpectVec3Near(data.bbox.Min(), glm::vec3(-0.5f, -0.5f, -0.5f));
@@ -443,7 +443,7 @@ TEST(GridDescriptorTest, NonUniformBox_RespectsMaxDimension)
 {
     geo::BBox bbox(glm::vec3(0, 0, 0), glm::vec3(20, 5, 5));
 
-    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 20.0f, 0.0f);
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 20, 0.0f);
 
     // maxDim = 20 → voxelSize = 1
     EXPECT_FLOAT_EQ(data.voxelSize, 1.0f);
@@ -457,7 +457,7 @@ TEST(GridDescriptorTest, GridAlwaysCoversBBox)
 {
     geo::BBox bbox(glm::vec3(-2, -1, -3), glm::vec3(3, 4, 1));
 
-    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 15.0f, 0.0f);
+    geo::GridDescriptor data = geo::ComputeGridDescriptor(bbox, 15, 0.0f);
 
     glm::vec3 extent = glm::vec3(data.gridSize) * data.voxelSize;
 

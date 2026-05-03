@@ -8,7 +8,6 @@ static void TestICP()
     geo::SetLogLevel(geo::LogLevel::INFO);
     std::cout << "==== ICP Test ====\n";
 
-    //geo::Mesh mesh = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
     geo::PointCloud3D rect_pc = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
 
     geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
@@ -66,15 +65,22 @@ static void TestDF()
     std::cout << "==== DistanceField Test ====\n";
 
     // 1. Create input data
+    //geo::PointCloud3D cloud = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
+
     //geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
-    geo::Mesh dora_3_med = geo::Mesh(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
-    geo::PointCloud3D cloud = dora_3_med.ToPointCloud();
+    //geo::PointCloud3D cloud = bunny.ToPointCloud();
+
+    geo::Mesh fox = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    geo::PointCloud3D cloud = fox.ToPointCloud();
+
+    //geo::Mesh dora_3_med = geo::Mesh(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
+    //geo::PointCloud3D cloud = dora_3_med.ToPointCloud();
 
     // 2. Build DF
     geo::DistanceField df;
 
     const geo::u32 resolution = 128;
-    const geo::f32 dTrunc = 2.0f;
+    const geo::f32 dTrunc  = 1.0f;
     const geo::f32 padding = 0.1f;
 
     geo::TimingStat buildTime;
@@ -83,6 +89,7 @@ static void TestDF()
     df.Build(cloud, resolution, dTrunc, padding);
     geo::TimePoint endBuild = geo::Clock::now();
 
+    std::cout << "Number of Points: " << cloud.Size()  << "\n";
     std::cout << "Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
 
     // 3. Query test (1M samples)
@@ -91,19 +98,17 @@ static void TestDF()
     geo::BBox bbox = cloud.ComputeBoundingBox();
     bbox.ExpandByFactor(padding);
 
-
     geo::TimingStat queryStat;
     geo::f32 sum = 0.0f;
 
     for (int i = 0; i < NUM_QUERIES; ++i)
     {
-        geo::ScopedTimer scope(&queryStat);
-
         // random point in bbox
         glm::vec3 q(rng.Float(bbox.Min().x, bbox.Max().x), 
                     rng.Float(bbox.Min().y, bbox.Max().y), 
                     rng.Float(bbox.Min().z, bbox.Max().z));
 
+        geo::ScopedTimer scope(&queryStat);
         sum += df(q);
     }
 

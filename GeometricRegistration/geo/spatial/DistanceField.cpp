@@ -10,18 +10,27 @@ namespace geo
     {
         GridDescriptor data;
 
+        // 1. Expand bbox
         data.bbox = bbox;
         data.bbox.ExpandByFactor(padding);
 
+        // 2. Compute size
         glm::vec3 size = data.bbox.Size();
         f32 maxDim = std::max(size.x, std::max(size.y, size.z));
 
+        // 3. Voxel size (uniform)
         data.voxelSize = maxDim / resolution;
+
+        // 4. Grid resolution
         data.gridSize = glm::uvec3(
             (u32)std::ceil(size.x / data.voxelSize),
             (u32)std::ceil(size.y / data.voxelSize),
             (u32)std::ceil(size.z / data.voxelSize)
         );
+
+        // 5. Snap bbox to grid
+        glm::vec3 snappedSize = glm::vec3(data.gridSize) * data.voxelSize;
+        data.bbox = BBox(data.bbox.Min(), data.bbox.Min() + snappedSize);
 
         return data;
     }
@@ -110,7 +119,11 @@ namespace geo
 
                 // --- nearest neighbor ---
                 index_t idx = nn.Query(world);
-                f32 dist = glm::distance(world, points[idx]);
+                glm::vec3 p = points[idx];
+                //glm::vec3 n = normals[idx];
+
+                //f32 dist = std::abs(glm::dot(world - p, n)); // point to plane dist
+                f32 dist = glm::distance(world, p);
 
                 // --- truncate ---
                 if (dist < dTrunc)
@@ -120,7 +133,7 @@ namespace geo
             }
         }
 
-        // 4. Merge (single-threaded, cache-friendly)
+        // 4. Merge
         for (const auto& local : buffers)
         {
             for (const auto& [coord, dist] : local)
@@ -132,7 +145,7 @@ namespace geo
 
     f32 DistanceField::operator()(const glm::vec3& q) const
     {
-        const glm::vec3 local = (q - m_grid.GetBoundingBox().Min()) / m_grid.GetDescriptor().voxelSize;
+        const glm::vec3 local = (q - m_grid.GetBoundingBox().Min()) / m_grid.GetDescriptor().voxelSize - 0.5f;
         glm::ivec3 icoord = glm::floor(local);
 
         if (icoord.x < 0 || icoord.y < 0 || icoord.z < 0)
