@@ -21,4 +21,5 @@ namespace test
     ICPTestResult RunLeastSquaresICP(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params = {});
     ICPTestResult RunSparseICPPointToPoint(const ICPTestCase& test, const geo::SparseICPParameters& params = {});
     ICPTestResult RunSparseICPPointToPlane(const ICPTestCase& test, const geo::SparseICPParameters& params = {});
+    ICPTestResult RunEfficientICPPointToPlane(const ICPTestCase& test, const geo::EfficientICPParams& params = {});
 }

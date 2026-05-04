@@ -9,10 +9,19 @@ namespace test
         geo::PointCloud3D source = target;
         source.Transform(T);
 
+        geo::DistanceField df;
+
+        const geo::u32 resolution = 256;
+        const geo::f32 dTrunc = 10.0f;
+        const geo::f32 padding = 0.5f;
+
+        df.Build(target, resolution, dTrunc, padding);
+
         return {
             name,
             target,
             source,
+            df,
             T
         };
     }
@@ -40,10 +49,19 @@ namespace test
 
         geo::PointCloud3D partialSource(subset);
 
+        geo::DistanceField df;
+
+        const geo::u32 resolution = 128;
+        const geo::f32 dTrunc = 2.0f;
+        const geo::f32 padding = 1.1f;
+
+        df.Build(target, resolution, dTrunc, padding);
+
         return {
             name,
             target,
             partialSource,
+            df,
             T
         };
     }
@@ -70,10 +88,19 @@ namespace test
 
         geo::PointCloud3D outlierSource(pts);
 
+        geo::DistanceField df;
+
+        const geo::u32 resolution = 128;
+        const geo::f32 dTrunc = 2.0f;
+        const geo::f32 padding = 1.1f;
+
+        df.Build(target, resolution, dTrunc, padding);
+
         return {
             name,
             target,
             outlierSource,
+            df,
             T
         };
     }

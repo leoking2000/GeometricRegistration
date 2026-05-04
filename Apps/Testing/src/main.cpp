@@ -2056,6 +2056,11 @@ TEST(SparseICPTest, SparsePointToPlaneConvergesOnIdenticalCloudsWithNormals)
     //EXPECT_LT(result.rmse, 1e-3f);
 }
 
+// EfficientICP Tests
+
+
+
+
 int main(int argc, char** argv)
 {
 	::testing::InitGoogleTest(&argc, argv);

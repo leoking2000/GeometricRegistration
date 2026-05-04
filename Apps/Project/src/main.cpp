@@ -3,9 +3,16 @@
 
 static geo::Random rng{ 2026 };
 
+//#define RUN_LeastSquaresICP
+#define RUN_SparseICP
+#define RUN_EfficientICP
+
+#define PartialOverlap_Tests
+#define Outliers_Tests
+
 static void TestICP()
 {
-    geo::SetLogLevel(geo::LogLevel::INFO);
+    //geo::SetLogLevel(geo::LogLevel::DEBUG);
     std::cout << "==== ICP Test ====\n";
 
     geo::PointCloud3D rect_pc = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
@@ -15,6 +22,8 @@ static void TestICP()
 
     geo::Mesh dora_1 = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
     geo::PointCloud3D dora_pc = dora_1.ToPointCloud();
+
+    std::cout << "Models Loaded\n";
 
     glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
     glm::vec3 translation(-1.0f, 0.0f, 1.0f);
@@ -33,30 +42,54 @@ static void TestICP()
 
     std::vector<test::ICPTestCase> tests = {
         test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
-        test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny"),
+        test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
+#ifdef PartialOverlap_Tests
+        ,
         test::PartialOverlap(bunny_pc, { glm::mat3(rotation), translation },
             [](const glm::vec3& v) -> bool { return v.x >= -1.5f; }, "PartialOverlap Bunny 65% overlap (x axis cut)"),
         test::PartialOverlap(bunny_pc, { glm::mat3(rotation), translation },
             [](const glm::vec3& v) -> bool { return v.x >= -1.3f; }, "PartialOverlap Bunny 50% overlap (x axis cut)"),
         test::PartialOverlap(bunny_pc, { glm::mat3(rotation), translation },
-            [](const glm::vec3& v) -> bool { return v.x >= -1.1f; }, "PartialOverlap Bunny 35% overlap (x axis cut)"),
+            [](const glm::vec3& v) -> bool { return v.x >= -1.1f; }, "PartialOverlap Bunny 35% overlap (x axis cut)")
+#endif
+#ifdef Outliers_Tests
+        ,
         test::WithOutliers(bunny_pc, { glm::mat3(rotation), translation }, 14405, 2.0f, "Bunny 20% Outliers"),
         test::WithOutliers(bunny_pc, { glm::mat3(rotation), translation }, 4000, 50.0f, "Dora_1 Outliers")
+#endif
     };
+
+    std::cout << "Test Cases Created, Running tests\n";
 
     for (const auto& test : tests)
     {
+        test::ICPTestResult res = {};
+
+#ifdef RUN_LeastSquaresICP
         geo::LeastSquaresICPParameters p_ls;
         p_ls.useNormals = true;
         p_ls.maxIterations = 100;
-        auto res = test::RunLeastSquaresICP(test, p_ls);
+        res = test::RunLeastSquaresICP(test, p_ls);
         test::PrintResult(res);
+#endif
 
+#ifdef RUN_SparseICP
         geo::SparseICPParameters p_spa;
         p_spa.p = 0.4f;
-        res = test::RunSparseICPPointToPlane(test);
+        res = test::RunSparseICPPointToPlane(test, p_spa);
         test::PrintResult(res);
+#endif
+
+#ifdef RUN_EfficientICP
+        geo::EfficientICPParams p_eff;
+        p_eff.esaIterations = 3000;
+        p_eff.icpParams.p = 0.4f;
+        res = test::RunEfficientICPPointToPlane(test, p_eff);
+        test::PrintResult(res);
+#endif
     }
+
+    std::cout << "\nAll Done\n";
 }
 
 static void TestDF()
@@ -81,7 +114,7 @@ static void TestDF()
 
     const geo::u32 resolution = 128;
     const geo::f32 dTrunc  = 1.0f;
-    const geo::f32 padding = 0.1f;
+    const geo::f32 padding = 1.1f;
 
     geo::TimingStat buildTime;
 
@@ -125,8 +158,8 @@ static void TestDF()
 
 int main()
 {
-    //TestICP();
-    TestDF();
+    TestICP();
+    //TestDF();
 
 
     return 0;

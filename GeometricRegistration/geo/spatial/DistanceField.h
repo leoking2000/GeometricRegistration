@@ -62,7 +62,7 @@ namespace geo
     public:
         // Query distance at world-space point
         f32 operator()(const glm::vec3& q) const;
-    private:
+    public:
         SparseVoxelGrid m_grid;
     };
 

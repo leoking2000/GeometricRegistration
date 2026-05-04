@@ -11,6 +11,7 @@
 #include "math/RigidTransform.h"
 #include "math/Stats.h"
 #include "math/solvers.h"
+#include "math/ESA.h"
 
 #include "spatial/INearestNeighbor.h"
 #include "spatial/LinearNN.h"
@@ -19,4 +20,5 @@
 
 #include "registration/LeastSquaresICP.h"
 #include "registration/SparseICP.h"
+#include "registration/EfficientICP.h"
 

@@ -11,6 +11,8 @@ namespace test
         geo::PointCloud3D target;
         geo::PointCloud3D source;
 
+        geo::DistanceField df;
+
         geo::RigidTransform groundTruth;
     };
 

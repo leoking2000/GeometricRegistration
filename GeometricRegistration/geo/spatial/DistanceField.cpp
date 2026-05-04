@@ -79,7 +79,7 @@ namespace geo
 
         // 2. get points and create the KdTree
         const auto& points  = cloud.GetPoints();
-        //const auto& normals = cloud.GetNormals();
+        const auto& normals = cloud.GetNormals();
         const KDTree nn = KDTree(points);
 
         const glm::uvec3 size = descriptor.gridSize;
@@ -120,7 +120,7 @@ namespace geo
                 // --- nearest neighbor ---
                 index_t idx = nn.Query(world);
                 glm::vec3 p = points[idx];
-                //glm::vec3 n = normals[idx];
+                glm::vec3 n = normals[idx];
 
                 //f32 dist = std::abs(glm::dot(world - p, n)); // point to plane dist
                 f32 dist = glm::distance(world, p);
