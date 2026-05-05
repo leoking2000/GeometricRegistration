@@ -4,11 +4,11 @@
 static geo::Random rng{ 2026 };
 
 //#define RUN_LeastSquaresICP
-#define RUN_SparseICP
+//#define RUN_SparseICP
 #define RUN_EfficientICP
 
 #define PartialOverlap_Tests
-#define Outliers_Tests
+//#define Outliers_Tests
 
 static void TestICP()
 {
@@ -41,7 +41,7 @@ static void TestICP()
     glm::mat4 rotation = Ry * Rx * Rz;
 
     std::vector<test::ICPTestCase> tests = {
-        test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
+        //test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
         test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
 #ifdef PartialOverlap_Tests
         ,
@@ -84,6 +84,7 @@ static void TestICP()
         geo::EfficientICPParams p_eff;
         p_eff.esaIterations = 3000;
         p_eff.icpParams.p = 0.4f;
+        p_eff.esaRestarts = 5;
         res = test::RunEfficientICPPointToPlane(test, p_eff);
         test::PrintResult(res);
 #endif

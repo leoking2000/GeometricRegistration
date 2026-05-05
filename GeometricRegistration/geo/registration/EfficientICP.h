@@ -10,6 +10,7 @@ namespace geo
     {
         // --- ESA ---
         u32 esaIterations = 2000;
+        u32 esaRestarts   = 5;
 
         // --- ICP ---
         SparseICPParameters icpParams;

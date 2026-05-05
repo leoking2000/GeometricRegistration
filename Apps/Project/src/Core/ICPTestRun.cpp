@@ -33,9 +33,16 @@ namespace test
 
         std::cout << "--------------------------------\n";
 
-        std::cout << "Total Time [" << r.result.totalIterationTime.ToString() << "]\n";
+        std::cout << "Total Time: " << r.result.totalTime << "ms\n\n";
+
+        if (r.result.totalESATime.count != 0) {
+            std::cout << "ESA Time: " << r.result.totalESATime.ToString() << "ms\n";
+        }
+
+        std::cout << "Total ICP Time [" << r.result.totalIterationTime.ToString() << "]\n";
         std::cout << "Correspondence Search Time [" << r.result.correspondenceSearchTime.ToString() << "]\n";
-        std::cout << "Alignment Solve Time [" << r.result.alignmentSolveTime.ToString() << "]\n\n\n";
+        std::cout << "Alignment Solve Time [" << r.result.alignmentSolveTime.ToString() << "]\n";
+        std::cout << "--------------------------------\n\n\n";
     }
 
 	ICPTestResult RunLeastSquaresICP(const ICPTestCase& test, const geo::LeastSquaresICPParameters& params)

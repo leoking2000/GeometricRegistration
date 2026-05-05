@@ -56,6 +56,8 @@ namespace geo
 		assert(params.mu > 0.0f);
 		assert(params.admmIterations >= 1);
 
+		TimePoint startTotal = Clock::now();
+
 		const index_t N = source.Size();
 
 		ICPResult result;
@@ -175,6 +177,9 @@ namespace geo
 			}
 		}
 
+		TimePoint endTotal = Clock::now();
+		result.totalTime = TimeDifferenceMs(endTotal, startTotal);
+
 		return result;
 	}
 
@@ -188,6 +193,8 @@ namespace geo
 		assert(params.mu > 0.0f);
 		assert(params.admmIterations >= 1);
 		assert(target.HasNormals());
+
+		TimePoint startTotal = Clock::now();
 
 		const index_t N = source.Size();
 
@@ -294,6 +301,9 @@ namespace geo
 
 			prevError = result.rmse;
 		}
+
+		TimePoint endTotal = Clock::now();
+		result.totalTime = TimeDifferenceMs(endTotal, startTotal);
 
 		return result;
 	}

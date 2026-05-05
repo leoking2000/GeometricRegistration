@@ -14,6 +14,8 @@ namespace geo
 		assert(params.tolerance > 0.0f);
 		assert((params.useNormals && target.HasNormals()) || !params.useNormals);
 
+		TimePoint startTotal = Clock::now();
+
 		const bool usePointToPlane = params.useNormals && target.HasNormals();
 
 		const index_t numberOfPoints = source.Size();
@@ -111,6 +113,9 @@ namespace geo
 				break;
 			}
 		}
+
+		TimePoint endTotal = Clock::now();
+		result.totalTime = TimeDifferenceMs(endTotal, startTotal);
 
 		return result;
 	}

@@ -11,9 +11,9 @@ namespace test
 
         geo::DistanceField df;
 
-        const geo::u32 resolution = 256;
-        const geo::f32 dTrunc = 10.0f;
-        const geo::f32 padding = 0.5f;
+        const geo::u32 resolution = 128;
+        const geo::f32 dTrunc = 5.0f;
+        const geo::f32 padding = 0.2f;
 
         df.Build(target, resolution, dTrunc, padding);
 

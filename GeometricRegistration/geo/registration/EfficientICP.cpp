@@ -50,7 +50,7 @@ namespace geo
         // average cost (important for stability)
         return (count > 0) ? cost / (float)count : g_ctx.df->m_grid.GetDefaultValue();
     }
-
+     
     ICPResult EfficientICP(const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn,
         const DistanceField& df, const EfficientICPParams& params)
     {
@@ -62,10 +62,13 @@ namespace geo
         assert(params.icpParams.mu > 0.0f);
         assert(params.icpParams.admmIterations >= 1);
 
-        // 1. Build ESACostContext and Variables
+        TimePoint startTotal = Clock::now();
+
+        // 1. Build ESACostContext and ESA Variables
         g_ctx.df = &df;
         g_ctx.points = &source.GetPoints();
 
+        float bestCost = FLT_MAX;
         float x_best[6] = {0.0f};
 
         BBox targetBBox = target.ComputeBoundingBox();
@@ -82,7 +85,7 @@ namespace geo
         float x_min[6];
         float x_max[6];
         float step_fraction[6];
-        long wraparound[6];
+        long  wraparound[6];
 
         // --- translation ---
         x_min[0] = tMin.x; x_max[0] = tMax.x;
@@ -103,24 +106,43 @@ namespace geo
         wraparound[0] = 0; wraparound[1] = 0; wraparound[2] = 0;
         wraparound[3] = 1; wraparound[4] = 1; wraparound[5] = 1;
 
+        TimingStat totalESATime;
+
         // 2. Run ESA → get best x (6D vector)
-        EnhancedSimulatedAnnealingPlus(
-            6,                   // the dimensionality of the search space. 
-            1,                   // the dimensionality of the partitioning subspace (subdim <= dim).
-            x_init,              // x_init, initial starting point.
-            x_best,              // the returned variable vector.
-            x_min,               // the minimum x values vector.
-            x_max,               // the maximum x values vector. 
-            step_fraction,       // a vector defining the maximum ( normalized ) jump for each variable.
-            wraparound,          // a flag vector, ( 1=wrap, 0=truncate )
-            ESACostFunction,     // pointer the cost function to be minimized.
-            // pointer a monitoring function.
-            [](float* x, float e) {  
-                GEOLOGDEBUG("cost: " << e << " [" << x[0] << ", " << x[1] << ", " << x[2] << ", " << 
-                                                     x[3] << ", " << x[4] << ", " << x[5] << ", ");
-            },             
-            params.esaIterations // maximum itaerations.
-        );
+        for (u32 r = 0; r < params.esaRestarts; r++)
+        {
+            float x_candidate[6];
+
+            TimePoint startESA = Clock::now();
+
+            float cost = EnhancedSimulatedAnnealingPlus(
+                6,                   // the dimensionality of the search space. 
+                1,                   // the dimensionality of the partitioning subspace (subdim <= dim).
+                NULL,                // x_init, random initial starting point.
+                x_candidate,         // the returned variable vector.
+                x_min,               // the minimum x values vector.
+                x_max,               // the maximum x values vector. 
+                step_fraction,       // a vector defining the maximum ( normalized ) jump for each variable.
+                wraparound,          // a flag vector, ( 1=wrap, 0=truncate )
+                ESACostFunction,     // pointer the cost function to be minimized.
+                // pointer a monitoring function.
+                [](float* x, float e) {  
+                    GEOLOGVERBOSE("cost: " << e << " [" << x[0] << ", " << x[1] << ", " << x[2] << ", " << 
+                                                           x[3] << ", " << x[4] << ", " << x[5] << ", ");
+                },             
+                params.esaIterations // maximum itaerations.
+            );
+
+            TimePoint endESA = Clock::now();
+
+            totalESATime.AddSample(TimeDifferenceMs(endESA, startESA));
+
+            if (cost < bestCost)
+            {
+                bestCost = cost;
+                memcpy(x_best, x_candidate, sizeof(float) * 6);
+            }
+        }
 
         // 3. Convert x → transform T0
         RigidTransform T = VectorToTransform(x_best);
@@ -135,6 +157,10 @@ namespace geo
         result.transform = RigidTransform::Compose(result.transform, T);
 
         // 7. Return result
+        TimePoint endTotal = Clock::now();
+        result.totalTime = TimeDifferenceMs(endTotal, startTotal);
+        result.totalESATime = totalESATime;
+
         return result;
     }
 
