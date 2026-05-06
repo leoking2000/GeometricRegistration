@@ -41,7 +41,7 @@ static void TestICP()
     glm::mat4 rotation = Ry * Rx * Rz;
 
     std::vector<test::ICPTestCase> tests = {
-        //test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
+        test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
         test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
 #ifdef PartialOverlap_Tests
         ,
@@ -83,8 +83,9 @@ static void TestICP()
 #ifdef RUN_EfficientICP
         geo::EfficientICPParams p_eff;
         p_eff.esaIterations = 3000;
-        p_eff.icpParams.p = 0.4f;
-        p_eff.esaRestarts = 5;
+        p_eff.esaRestarts = 2;
+        p_eff.icpParams.maxIterations = 100;
+        p_eff.icpParams.p = 0.9f;
         res = test::RunEfficientICPPointToPlane(test, p_eff);
         test::PrintResult(res);
 #endif

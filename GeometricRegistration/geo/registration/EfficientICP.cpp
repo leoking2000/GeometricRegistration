@@ -35,20 +35,24 @@ namespace geo
         const auto& points = *g_ctx.points;
         const auto& df = *g_ctx.df;
 
+        const u32 stride = 20;
+
         float cost = 0.0f;
         u32 count = 0;
 
-        for (const auto& p : points)
+        #pragma omp parallel for reduction(+:cost, count)
+        for (int i = 0; i < (int)points.size(); i += stride)
         {
+            const glm::vec3& p = points[i];
+
             glm::vec3 tp = T.TransformPoint(p);
             float d = df(tp);
+
             cost += d * d;
+            count += 1;
         }
 
-        count = (u32)points.size();
-
-        // average cost (important for stability)
-        return (count > 0) ? cost / (float)count : g_ctx.df->m_grid.GetDefaultValue();
+        return (count > 0) ? cost / (float)count : df.m_grid.GetDefaultValue();
     }
      
     ICPResult EfficientICP(const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn,
@@ -99,16 +103,16 @@ namespace geo
         x_min[5] = -PI; x_max[5] = PI;
 
         // --- step size ---
-        step_fraction[0] = 0.05f; step_fraction[1] = 0.05f; step_fraction[2] = 0.05f;
-        step_fraction[3] = 0.01f; step_fraction[4] = 0.01f; step_fraction[5] = 0.01f;
+        step_fraction[0] = 0.1f; step_fraction[1] = 0.1f; step_fraction[2] = 0.1f;
+        step_fraction[3] = 0.05f; step_fraction[4] = 0.05f; step_fraction[5] = 0.05f;
 
         // --- wrap ---
         wraparound[0] = 0; wraparound[1] = 0; wraparound[2] = 0;
         wraparound[3] = 1; wraparound[4] = 1; wraparound[5] = 1;
 
-        TimingStat totalESATime;
 
         // 2. Run ESA → get best x (6D vector)
+        TimingStat totalESATime;
         for (u32 r = 0; r < params.esaRestarts; r++)
         {
             float x_candidate[6];
