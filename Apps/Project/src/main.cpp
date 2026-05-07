@@ -5,9 +5,9 @@ static geo::Random rng{ 2026 };
 
 //#define RUN_LeastSquaresICP
 #define RUN_SparseICP
-#define RUN_EfficientICP
+//#define RUN_EfficientICP
 
-#define PartialOverlap_Tests
+//#define PartialOverlap_Tests
 //#define Outliers_Tests
 
 static void TestICP()
@@ -17,19 +17,19 @@ static void TestICP()
 
     geo::PointCloud3D rect_pc = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
 
-    geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
-    geo::PointCloud3D bunny_pc = bunny.ToPointCloud();
+    //geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
+    //geo::PointCloud3D bunny_pc = bunny.ToPointCloud();
 
-    geo::Mesh dora_1 = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
-    geo::PointCloud3D dora_pc = dora_1.ToPointCloud();
+    //geo::Mesh dora_1 = geo::Mesh(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
+    //geo::PointCloud3D dora_pc = dora_1.ToPointCloud();
 
     std::cout << "Models Loaded\n";
 
-    //glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
-    //glm::vec3 translation(-1.0f, 0.0f, 1.0f);
-
-    glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
+    glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
     glm::vec3 translation(-1.0f, 0.0f, 1.0f);
+
+    //glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
+    //glm::vec3 translation(-1.0f, 0.0f, 1.0f);
 
     glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
         glm::radians(eulerRot.x),
@@ -44,8 +44,8 @@ static void TestICP()
     glm::mat4 rotation = Ry * Rx * Rz;
 
     std::vector<test::ICPTestCase> tests = {
-        //test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
-        test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
+        test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
+        //test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
 #ifdef PartialOverlap_Tests
         ,
         test::PartialOverlap(bunny_pc, { glm::mat3(rotation), translation },
@@ -104,13 +104,13 @@ static void TestDF()
     std::cout << "==== DistanceField Test ====\n";
 
     // 1. Create input data
-    //geo::PointCloud3D cloud = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
+    geo::PointCloud3D cloud = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
 
     //geo::Mesh bunny = geo::Mesh(RESOURCES_PATH"models/bunny/bunny.obj");
     //geo::PointCloud3D cloud = bunny.ToPointCloud();
 
-    geo::Mesh fox = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
-    geo::PointCloud3D cloud = fox.ToPointCloud();
+    //geo::Mesh fox = geo::Mesh(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    //geo::PointCloud3D cloud = fox.ToPointCloud();
 
     //geo::Mesh dora_3_med = geo::Mesh(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
     //geo::PointCloud3D cloud = dora_3_med.ToPointCloud();

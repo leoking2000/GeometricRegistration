@@ -1,12 +1,10 @@
-#pragma once
-#include "utils/GeoRand.h"
-#include "PointCloud3D.h"
+#include "RandomPointCloud.h"
 
 
 namespace geo
 {
-	static PointCloud3D GenerateRandomPointCloudRect(const glm::vec3& center, f32 width, f32 height, f32 depth, u32 pointCount,
-		Random& rng, bool haveNormals = true)
+	PointCloud3D GenerateRandomPointCloudRect(const glm::vec3& center, f32 width, f32 height, f32 depth, u32 pointCount,
+		Random& rng, bool haveNormals)
 	{
 		std::vector<glm::vec3> points;
 		std::vector<glm::vec3> normals;

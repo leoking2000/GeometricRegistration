@@ -16,8 +16,7 @@ namespace geo
         m_min = glm::min(corner_min, corner_max);
         m_max = glm::max(corner_min, corner_max);
 
-        m_size = m_max - m_min;
-        m_center = 0.5f * (m_min + m_max);
+        recomputeDerived();
     }
 
     void BBox::SetSymmetrical(const glm::vec3& center_point, const glm::vec3& size)
@@ -47,8 +46,7 @@ namespace geo
         m_min = glm::min(m_min, v);
         m_max = glm::max(m_max, v);
 
-        m_size = m_max - m_min;
-        m_center = 0.5f * (m_min + m_max);
+        recomputeDerived();
     }
 
     void BBox::ExpandBy(const BBox& bbox)
@@ -65,8 +63,7 @@ namespace geo
         m_min = glm::min(m_min, bbox.m_min);
         m_max = glm::max(m_max, bbox.m_max);
 
-        m_size = m_max - m_min;
-        m_center = 0.5f * (m_min + m_max);
+        recomputeDerived();
     }
 
     void BBox::ExpandByFactor(f32 factor)
@@ -79,8 +76,7 @@ namespace geo
         m_min -= halfExpand;
         m_max += halfExpand;
 
-        m_size = m_max - m_min;
-        m_center = 0.5f * (m_min + m_max);
+        recomputeDerived();
     }
 
     void BBox::ExpandByAbsolute(f32 padding)
@@ -93,8 +89,7 @@ namespace geo
         m_min -= p;
         m_max += p;
 
-        m_size = m_max - m_min;
-        m_center = 0.5f * (m_min + m_max);
+        recomputeDerived();
     }
 
     glm::vec3 BBox::Corner(u32 pos) const
@@ -106,5 +101,11 @@ namespace geo
             (pos & 2) ? m_max.y : m_min.y,
             (pos & 4) ? m_max.z : m_min.z
         );
+    }
+
+    void BBox::recomputeDerived()
+    {
+        m_size = m_max - m_min;
+        m_center = 0.5f * (m_min + m_max);
     }
 }
