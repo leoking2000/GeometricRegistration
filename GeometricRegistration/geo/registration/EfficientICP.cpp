@@ -1,4 +1,4 @@
-#include <array>
+#include <stdlib.h>
 #include <glm/gtc/constants.hpp>
 #include <geo/utils/logging/LogMacros.h>
 #include <geo/math/ESA.h>
@@ -35,7 +35,7 @@ namespace geo
         const auto& points = *g_ctx.points;
         const auto& df = *g_ctx.df;
 
-        const u32 stride = 20;
+        const u32 stride = 100;
 
         float cost = 0.0f;
         u32 count = 0;
@@ -115,6 +115,8 @@ namespace geo
         TimingStat totalESATime;
         for (u32 r = 0; r < params.esaRestarts; r++)
         {
+            srand(2077 + r);
+
             float x_candidate[6];
 
             TimePoint startESA = Clock::now();

@@ -4,7 +4,7 @@
 static geo::Random rng{ 2026 };
 
 //#define RUN_LeastSquaresICP
-//#define RUN_SparseICP
+#define RUN_SparseICP
 #define RUN_EfficientICP
 
 #define PartialOverlap_Tests
@@ -25,7 +25,10 @@ static void TestICP()
 
     std::cout << "Models Loaded\n";
 
-    glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
+    //glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
+    //glm::vec3 translation(-1.0f, 0.0f, 1.0f);
+
+    glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
     glm::vec3 translation(-1.0f, 0.0f, 1.0f);
 
     glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
@@ -41,7 +44,7 @@ static void TestICP()
     glm::mat4 rotation = Ry * Rx * Rz;
 
     std::vector<test::ICPTestCase> tests = {
-        test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
+        //test::KnowedTransform(rect_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Rect"),
         test::KnowedTransform(bunny_pc, { glm::mat3(rotation), translation } ,"KnowedTransform Bunny")
 #ifdef PartialOverlap_Tests
         ,
@@ -75,6 +78,7 @@ static void TestICP()
 
 #ifdef RUN_SparseICP
         geo::SparseICPParameters p_spa;
+        p_spa.maxIterations = 100;
         p_spa.p = 0.4f;
         res = test::RunSparseICPPointToPlane(test, p_spa);
         test::PrintResult(res);
@@ -83,9 +87,9 @@ static void TestICP()
 #ifdef RUN_EfficientICP
         geo::EfficientICPParams p_eff;
         p_eff.esaIterations = 3000;
-        p_eff.esaRestarts = 2;
+        p_eff.esaRestarts = 5;
         p_eff.icpParams.maxIterations = 100;
-        p_eff.icpParams.p = 0.9f;
+        p_eff.icpParams.p = 0.4f;
         res = test::RunEfficientICPPointToPlane(test, p_eff);
         test::PrintResult(res);
 #endif
