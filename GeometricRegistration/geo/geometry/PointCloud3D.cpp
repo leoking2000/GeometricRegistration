@@ -8,7 +8,7 @@ namespace geo
 		m_points(std::move(points)),
 		m_normals(std::move(normals))
 	{
-		recalculateCentroid();
+		RecalculateCentroid();
 	}
 
 	index_t PointCloud3D::Size() const
@@ -87,7 +87,7 @@ namespace geo
 		m_centroid = transform.TransformPoint(m_centroid);
 	}
 
-	void PointCloud3D::recalculateCentroid()
+	void PointCloud3D::RecalculateCentroid()
 	{
 		glm::vec3 c(0.0f);
 

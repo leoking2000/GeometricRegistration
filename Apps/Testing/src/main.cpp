@@ -1464,138 +1464,183 @@ TEST(PointCloudTest, ComputeBoundingBox_CenterAndSize)
 
 // MeshTest
 
-//class MeshTest : public ::testing::Test
-//{
-//protected:
-//    std::string objPath = "test_triangle.obj";
-//
-//    void SetUp() override
-//    {
-//        std::ofstream file(objPath);
-//
-//        file <<
-//            "o Triangle\n"
-//            "v 0 0 0\n"
-//            "v 1 0 0\n"
-//            "v 0 1 0\n"
-//            "vn 0 0 1\n"
-//            "vn 0 0 1\n"
-//            "vn 0 0 1\n"
-//            "f 1//1 2//2 3//3\n";
-//
-//        file.close();
-//    }
-//
-//    void TearDown() override
-//    {
-//        std::filesystem::remove(objPath);
-//    }
-//};
+TEST(MeshTest, ConstructionStoresDataCorrectly)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
 
-//TEST_F(MeshTest, LoadOBJ)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    EXPECT_GT(mesh.VertexCount(), 0);
-//    EXPECT_GT(mesh.TriangleCount(), 0);
-//}
-//
-//TEST_F(MeshTest, VertexCount)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    EXPECT_EQ(mesh.VertexCount(), 3);
-//}
-//
-//TEST_F(MeshTest, TriangleCount)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    EXPECT_EQ(mesh.TriangleCount(), 1);
-//}
-//
-//TEST_F(MeshTest, BoundingBox)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    glm::vec3 min = mesh.BBoxMin();
-//    glm::vec3 max = mesh.BBoxMax();
-//
-//    EXPECT_FLOAT_EQ(min.x, 0.0f);
-//    EXPECT_FLOAT_EQ(min.y, 0.0f);
-//    EXPECT_FLOAT_EQ(min.z, 0.0f);
-//
-//    EXPECT_FLOAT_EQ(max.x, 1.0f);
-//    EXPECT_FLOAT_EQ(max.y, 1.0f);
-//    EXPECT_FLOAT_EQ(max.z, 0.0f);
-//}
-//
-//TEST_F(MeshTest, CenterComputation)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    glm::vec3 center = mesh.Center();
-//
-//    EXPECT_FLOAT_EQ(center.x, 0.5f);
-//    EXPECT_FLOAT_EQ(center.y, 0.5f);
-//    EXPECT_FLOAT_EQ(center.z, 0.0f);
-//}
-//
-//TEST_F(MeshTest, TriangleNormal)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    const auto& tris = mesh.Triangles();
-//    ASSERT_EQ(tris.size(), 1);
-//
-//    glm::vec3 n = tris[0].face_normal;
-//
-//    EXPECT_NEAR(n.x, 0.0f, 1e-5);
-//    EXPECT_NEAR(n.y, 0.0f, 1e-5);
-//    EXPECT_NEAR(n.z, 1.0f, 1e-5);
-//}
-//
-//TEST_F(MeshTest, TriangleArea)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    const auto& tris = mesh.Triangles();
-//
-//    ASSERT_EQ(tris.size(), 1);
-//
-//    EXPECT_NEAR(tris[0].area, 0.5f, 1e-5);
-//}
-//
-//TEST_F(MeshTest, SurfaceArea)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    EXPECT_NEAR(mesh.SurfaceArea(), 0.5f, 1e-5);
-//}
-//
-//TEST_F(MeshTest, TriangleGroups)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    const auto& groups = mesh.TrianglesGroups();
-//
-//    ASSERT_EQ(groups.size(), 1);
-//
-//    EXPECT_EQ(groups[0].length, 1);
-//}
-//
-//TEST_F(MeshTest, VertexDataIntegrity)
-//{
-//    geo::Mesh mesh(objPath);
-//
-//    const auto& verts = mesh.Vertices();
-//
-//    ASSERT_EQ(verts.size(), 3);
-//
-//    EXPECT_FLOAT_EQ(verts[0].x, 0.0f);
-//    EXPECT_FLOAT_EQ(verts[0].y, 0.0f);
-//    EXPECT_FLOAT_EQ(verts[0].z, 0.0f);
-//}
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    std::vector<glm::vec3> normals = {
+        {0,0,1}, {0,0,1}, {0,0,1}
+    };
+
+    geo::Mesh mesh("test", points, triangles, normals);
+
+    EXPECT_EQ(mesh.VertexCount(), 3);
+    EXPECT_EQ(mesh.TriangleCount(), 1);
+}
+
+TEST(Mesh, TriangleAreaCorrectness)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("tri", points, triangles, {});
+
+    const auto& tri = mesh.Triangle(0);
+
+    EXPECT_NEAR(tri.area, 0.5f, 1e-6f);
+}
+
+TEST(Mesh, FaceNormalCorrectness)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("tri", points, triangles, {});
+
+    const auto& tri = mesh.Triangle(0);
+
+    glm::vec3 expected(0, 0, 1);
+
+    EXPECT_NEAR(tri.faceNormal.x, expected.x, 1e-6f);
+    EXPECT_NEAR(tri.faceNormal.y, expected.y, 1e-6f);
+    EXPECT_NEAR(tri.faceNormal.z, expected.z, 1e-6f);
+}
+
+TEST(Mesh, BoundingBoxCorrectness)
+{
+    std::vector<glm::vec3> points = {
+        {-1,-2,-3},
+        { 4, 5, 6},
+        { 0, 0, 0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("bbox", points, triangles, {});
+
+    auto bbox = mesh.BoundingBox();
+
+    EXPECT_EQ(bbox.Min(), glm::vec3(-1, -2, -3));
+    EXPECT_EQ(bbox.Max(), glm::vec3(4, 5, 6));
+}
+
+TEST(Mesh, SurfaceAreaConsistency)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("area", points, triangles, {});
+
+    float area = mesh.SurfaceArea();
+
+    EXPECT_NEAR(area, 0.5f, 1e-6f);
+}
+
+TEST(Mesh, VertexNormalsFlatSurface)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("normals", points, triangles, {});
+
+    const auto& n0 = mesh.Normal(0);
+    const auto& n1 = mesh.Normal(1);
+    const auto& n2 = mesh.Normal(2);
+
+    EXPECT_NEAR(glm::length(n0), 1.0f, 1e-6f);
+    EXPECT_NEAR(glm::dot(n0, n1), 1.0f, 1e-6f);
+    EXPECT_NEAR(glm::dot(n1, n2), 1.0f, 1e-6f);
+}
+
+TEST(Mesh, SamplePointsStayOnSurface)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("sample", points, triangles, {});
+
+    Random rng(123);
+    auto cloud = mesh.SamplePointsUniform(1000, rng, false);
+
+    for (const auto& p : cloud.GetPoints())
+    {
+        EXPECT_NEAR(p.z, 0.0f, 1e-5f);
+    }
+}
+
+TEST(Mesh, SamplingDeterministic)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {1,0,0}, {0,1,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    geo::Mesh mesh("det", points, triangles, {});
+
+    Random rng1(42);
+    Random rng2(42);
+
+    auto c1 = mesh.SamplePointsUniform(100, rng1, false);
+    auto c2 = mesh.SamplePointsUniform(100, rng2, false);
+
+    EXPECT_EQ(c1.GetPoints().size(), c2.GetPoints().size());
+
+    for (size_t i = 0; i < c1.GetPoints().size(); i++)
+    {
+        EXPECT_NEAR(glm::distance(c1.GetPoints()[i], c2.GetPoints()[i]), 0.0f, 1e-6f);
+    }
+}
+
+TEST(Mesh, DegenerateTriangleHandling)
+{
+    std::vector<glm::vec3> points = {
+        {0,0,0}, {0,0,0}, {0,0,0}
+    };
+
+    std::vector<glm::uvec3> triangles = {
+        {0,1,2}
+    };
+
+    EXPECT_NO_THROW({
+        geo::Mesh mesh("deg", points, triangles, {});
+        });
+}
 
 // KDTreeTest
 

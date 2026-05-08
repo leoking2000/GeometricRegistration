@@ -56,7 +56,7 @@ namespace geo
 	private:
 		// Recomputes the centroid based on current point data
 		// Should be called after any modification to m_points
-		void recalculateCentroid();
+		void RecalculateCentroid();
 	private:
 		std::vector<glm::vec3> m_points;  // Storage for 3D points
 		std::vector<glm::vec3> m_normals; // Storage for normals (optional, may be empty)

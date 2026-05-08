@@ -1,116 +1,234 @@
+#include <cassert>
+#include <limits>
+#include <geo/utils/logging/LogMacros.h>
 #include "Mesh.h"
-#include <algorithm>
-#include <glm/geometric.hpp>
 
 namespace geo
 {
-    Mesh::Mesh(const std::string& filename,
-        std::vector<glm::vec3> vertex_buffer,
-        std::vector<glm::ivec3> index_buffer,
-        std::vector<glm::vec3> normal_buffer,
-        std::vector<glm::vec2> coords_buffer
-    )
-        : 
-        m_filename(filename),
-        m_vertices_buffer(std::move(vertex_buffer)),
-        m_index_buffer(std::move(index_buffer)),
-        m_normals_buffer(std::move(normal_buffer)),
-        m_coords_buffer(std::move(coords_buffer))
+	Mesh::Mesh(std::string filename, 
+		std::vector<glm::vec3> points, std::vector<glm::uvec3> triangles, std::vector<glm::vec3> normals)
+		:
+		Mesh(filename, PointCloud3D(points, normals), triangles)
+	{}
+
+	Mesh::Mesh(std::string filename, PointCloud3D pointCloud, std::vector<glm::uvec3> triangles)
+		:
+		m_filename(filename),
+		m_pointCloud(std::move(pointCloud))
+	{
+		// reserve triangle storage
+		m_triangles.resize(triangles.size());
+
+        const auto& points = m_pointCloud.GetPoints();
+
+        #pragma omp parallel for schedule(static)
+		for (int i = 0; i < (int)triangles.size(); i++)
+		{
+            glm::uvec3 tri = triangles[i];
+
+			TriangleData data{};
+			data.vertexIndices = tri;
+
+			const glm::vec3& p0 = points[tri.x];
+			const glm::vec3& p1 = points[tri.y];
+			const glm::vec3& p2 = points[tri.z];
+
+			const glm::vec3 e0 = p1 - p0;
+			const glm::vec3 e1 = p2 - p0;
+
+			glm::vec3 cross = glm::cross(e0, e1);
+
+			const float crossLength = glm::length(cross);
+
+			data.area = 0.5f * crossLength;
+
+            f32 eps = std::numeric_limits<float>::epsilon();
+			data.faceNormal = 
+                glm::normalize((crossLength > eps) ? cross / crossLength : glm::vec3(1.0f, 0.0f, 0.0f));
+
+            m_triangles[i] = data;
+		}
+
+		// generate normals if missing
+		if (!m_pointCloud.HasNormals())
+		{
+            GEOLOGWARN("Mesh " << m_filename << " does not have vertex normals, we compute them");
+			ComputeVertexNormals();
+		}
+
+		// computes bounding box and area
+        m_bounding_box = m_pointCloud.ComputeBoundingBox();
+        ComputeSurfaceArea();
+	}
+	
+	Mesh::~Mesh()
+	{
+	}
+
+	const glm::vec3& Mesh::Point(index_t i) const
+	{
+		return m_pointCloud.Point(i);
+	}
+
+	const glm::vec3& Mesh::Normal(index_t i) const
+	{
+		return m_pointCloud.Normal(i);
+	}
+
+	const TriangleData& Mesh::Triangle(index_t i) const
+	{
+		assert(i < m_triangles.size());
+		return m_triangles[i];
+	}
+
+	const glm::vec3& Mesh::TriangleVertex(index_t tri, index_t corner) const
+	{
+		assert(tri < m_triangles.size());
+		assert(corner < 3);
+		return m_pointCloud.Point(m_triangles[tri][corner]);
+	}
+
+    PointCloud3D Mesh::SamplePointsUniform(u32 n, Random& rng, bool includeNormals) const
     {
-        // --- Compute Bounding Box ---
-        ComputeBoundingBox();
+        assert(!m_triangles.empty());
+        assert(n > 0);
 
-        // --- Optional: compute normals if missing ---
-        if (m_normals_buffer.empty() && !m_index_buffer.empty())
+        const auto& positions = m_pointCloud.GetPoints();
+        const auto& normals = m_pointCloud.GetNormals();
+
+        // Prepare Output Buffers
+        std::vector<glm::vec3> sampledPoints;
+        std::vector<glm::vec3> sampledNormals;
+
+        sampledPoints.reserve(n);
+
+        if (includeNormals)
         {
-            m_normals_buffer.resize(m_vertices_buffer.size(), glm::vec3(0.0f));
+            sampledNormals.reserve(n);
+        }
 
-            for (const auto& tri : m_index_buffer)
+        // Build cumulative distribution function (CDF) from triangle areas
+        std::vector<f32> cdf;
+        cdf.reserve(m_triangles.size());
+
+        f32 totalArea = 0.0f;
+        for (const TriangleData& tri : m_triangles)
+        {
+            totalArea += tri.area;
+            cdf.emplace_back(totalArea);
+        }
+
+        if (totalArea <= std::numeric_limits<float>::epsilon())
+        {
+            return PointCloud3D({});
+        }
+
+        // Uniformly sample points on surface
+        for (u32 i = 0; i < n; ++i)
+        {
+            // pick triangle proportional to area
+            float r = rng.Float(0.0f, totalArea);
+
+            auto it = std::lower_bound(cdf.begin(), cdf.end(), r);
+            index_t triIndex = static_cast<index_t>(std::distance(cdf.begin(), it));
+
+            const TriangleData& tri = m_triangles[triIndex];
+
+            const glm::vec3& p0 = positions[tri.vertexIndices.x];
+            const glm::vec3& p1 = positions[tri.vertexIndices.y];
+            const glm::vec3& p2 = positions[tri.vertexIndices.z];
+
+            // Uniform barycentric sampling
+            float u = rng.Float();
+            float v = rng.Float();
+
+            // reflection trick
+            if (u + v > 1.0f)
             {
-                const glm::vec3& v0 = m_vertices_buffer[tri.x];
-                const glm::vec3& v1 = m_vertices_buffer[tri.y];
-                const glm::vec3& v2 = m_vertices_buffer[tri.z];
-
-                glm::vec3 n = glm::normalize(glm::cross(v1 - v0, v2 - v0));
-
-                m_normals_buffer[tri.x] = n;
-                m_normals_buffer[tri.y] = n;
-                m_normals_buffer[tri.z] = n;
+                u = 1.0f - u;
+                v = 1.0f - v;
             }
 
-            for (auto& n : m_normals_buffer)
+            float w = 1.0f - u - v;
+
+            glm::vec3 sample =
+                w * p0 +
+                u * p1 +
+                v * p2;
+
+            sampledPoints.emplace_back(sample);
+
+            // Interpolate normals
+            if (includeNormals)
             {
-                n = glm::normalize(n);
+                glm::vec3 normal;
+
+                if (!normals.empty())
+                {
+                    const glm::vec3& n0 = normals[tri.vertexIndices.x];
+                    const glm::vec3& n1 = normals[tri.vertexIndices.y];
+                    const glm::vec3& n2 = normals[tri.vertexIndices.z];
+
+                    normal =
+                        w * n0 +
+                        u * n1 +
+                        v * n2;
+
+                    float len = glm::length(normal);
+
+                    if (len > std::numeric_limits<float>::epsilon())
+                    {
+                        normal /= len;
+                    }
+                    else
+                    {
+                        normal = tri.faceNormal;
+                    }
+                }
+                else
+                {
+                    normal = tri.faceNormal;
+                }
+
+                sampledNormals.emplace_back(normal);
             }
+        }
+
+        return PointCloud3D(std::move(sampledPoints), std::move(sampledNormals));
+    }
+
+    void Mesh::ComputeVertexNormals()
+    {
+        std::vector<glm::vec3>& normals = const_cast<std::vector<glm::vec3>&>(m_pointCloud.GetNormals());
+
+        normals.clear();
+        normals.resize(VertexCount(), glm::vec3(0.0f));
+
+        // Accumulate face normals to vertices
+        for (const TriangleData& tri : m_triangles)
+        {
+            const glm::vec3 weightedNormal = tri.faceNormal * tri.area;
+
+            normals[tri[0]] += weightedNormal;
+            normals[tri[1]] += weightedNormal;
+            normals[tri[2]] += weightedNormal;
+        }
+
+        // Normalize all vertex normals
+        for (glm::vec3& n : normals)
+        {
+            n = glm::normalize(n);
         }
     }
 
-    Mesh::~Mesh() = default;
-
-    void Mesh::flatten()
+    void Mesh::ComputeSurfaceArea()
     {
-        // Convert indexed mesh to triangle soup (no shared vertices)
-        if (m_index_buffer.empty())
-            return;
+        m_area = 0.0f;
 
-        std::vector<glm::vec3> new_vertices;
-        std::vector<glm::vec3> new_normals;
-        std::vector<glm::vec2> new_coords;
-
-        new_vertices.reserve(m_index_buffer.size() * 3);
-        if (!m_normals_buffer.empty())
-            new_normals.reserve(m_index_buffer.size() * 3);
-        if (!m_coords_buffer.empty())
-            new_coords.reserve(m_index_buffer.size() * 3);
-
-        for (const auto& tri : m_index_buffer)
+        //#pragma omp parallel for reduction(+:m_area)
+        for (size_t i = 0; i < m_triangles.size(); i++)
         {
-            const int ids[3] = { tri.x, tri.y, tri.z };
-
-            for (int i = 0; i < 3; ++i)
-            {
-                int idx = ids[i];
-
-                new_vertices.push_back(m_vertices_buffer[idx]);
-
-                if (!m_normals_buffer.empty())
-                    new_normals.push_back(m_normals_buffer[idx]);
-
-                if (!m_coords_buffer.empty())
-                    new_coords.push_back(m_coords_buffer[idx]);
-            }
-        }
-
-        // Replace buffers
-        m_vertices_buffer = std::move(new_vertices);
-        m_normals_buffer = std::move(new_normals);
-        m_coords_buffer = std::move(new_coords);
-
-        // Clear indices (now implicit triangles)
-        m_index_buffer.clear();
-
-        // Recompute bounding box (important!)
-        ComputeBoundingBox();
-    }
-
-    void Mesh::ComputeBoundingBox()
-    {
-        if (!m_vertices_buffer.empty())
-        {
-            glm::vec3 min = m_vertices_buffer[0];
-            glm::vec3 max = m_vertices_buffer[0];
-
-            for (const auto& v : m_vertices_buffer)
-            {
-                min = glm::min(min, v);
-                max = glm::max(max, v);
-            }
-
-            m_boundingBox = BBox(min, max);
-        }
-        else
-        {
-            m_boundingBox.MakeEmpty();
+            m_area += m_triangles[i].area;
         }
     }
 
