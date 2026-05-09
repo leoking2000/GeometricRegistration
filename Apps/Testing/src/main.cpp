@@ -1484,7 +1484,7 @@ TEST(MeshTest, ConstructionStoresDataCorrectly)
     EXPECT_EQ(mesh.TriangleCount(), 1);
 }
 
-TEST(Mesh, TriangleAreaCorrectness)
+TEST(MeshTest, TriangleAreaCorrectness)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1501,7 +1501,7 @@ TEST(Mesh, TriangleAreaCorrectness)
     EXPECT_NEAR(tri.area, 0.5f, 1e-6f);
 }
 
-TEST(Mesh, FaceNormalCorrectness)
+TEST(MeshTest, FaceNormalCorrectness)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1522,7 +1522,7 @@ TEST(Mesh, FaceNormalCorrectness)
     EXPECT_NEAR(tri.faceNormal.z, expected.z, 1e-6f);
 }
 
-TEST(Mesh, BoundingBoxCorrectness)
+TEST(MeshTest, BoundingBoxCorrectness)
 {
     std::vector<glm::vec3> points = {
         {-1,-2,-3},
@@ -1542,7 +1542,7 @@ TEST(Mesh, BoundingBoxCorrectness)
     EXPECT_EQ(bbox.Max(), glm::vec3(4, 5, 6));
 }
 
-TEST(Mesh, SurfaceAreaConsistency)
+TEST(MeshTest, SurfaceAreaConsistency)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1554,12 +1554,12 @@ TEST(Mesh, SurfaceAreaConsistency)
 
     geo::Mesh mesh("area", points, triangles, {});
 
-    float area = mesh.SurfaceArea();
+    geo::f64 area = mesh.SurfaceArea();
 
     EXPECT_NEAR(area, 0.5f, 1e-6f);
 }
 
-TEST(Mesh, VertexNormalsFlatSurface)
+TEST(MeshTest, VertexNormalsFlatSurface)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1580,7 +1580,7 @@ TEST(Mesh, VertexNormalsFlatSurface)
     EXPECT_NEAR(glm::dot(n1, n2), 1.0f, 1e-6f);
 }
 
-TEST(Mesh, SamplePointsStayOnSurface)
+TEST(MeshTest, SamplePointsStayOnSurface)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1601,7 +1601,7 @@ TEST(Mesh, SamplePointsStayOnSurface)
     }
 }
 
-TEST(Mesh, SamplingDeterministic)
+TEST(MeshTest, SamplingDeterministic)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {1,0,0}, {0,1,0}
@@ -1627,7 +1627,7 @@ TEST(Mesh, SamplingDeterministic)
     }
 }
 
-TEST(Mesh, DegenerateTriangleHandling)
+TEST(MeshTest, DegenerateTriangleHandling)
 {
     std::vector<glm::vec3> points = {
         {0,0,0}, {0,0,0}, {0,0,0}
@@ -1637,9 +1637,7 @@ TEST(Mesh, DegenerateTriangleHandling)
         {0,1,2}
     };
 
-    EXPECT_NO_THROW({
-        geo::Mesh mesh("deg", points, triangles, {});
-        });
+    EXPECT_NO_THROW({geo::Mesh mesh("deg", points, triangles, {});});
 }
 
 // KDTreeTest
