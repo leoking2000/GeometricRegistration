@@ -2,6 +2,8 @@
 #include "geometry/PointCloud3D.h"
 #include "geometry/Mesh.h"
 
+#include "io/IOUtils.h"
+
 #include "math/BBox.h"
 #include "math/RigidTransform.h"
 #include "math/Stats.h"

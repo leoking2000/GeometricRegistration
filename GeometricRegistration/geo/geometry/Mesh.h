@@ -48,6 +48,10 @@ namespace geo
 		// @param tri    Triangle index
 		// @param corner Corner index (0..2)
 		inline const glm::vec3& TriangleVertex(index_t tri, index_t corner) const { return m_vertices[m_triangles[tri][corner]]; };
+		// Returns normal of a specific corner of a triangle
+		// @param tri    Triangle index
+		// @param corner Corner index (0..2)
+		inline const glm::vec3& TriangleVertexNormal(index_t tri, index_t corner) const { return m_normals[m_triangles[tri][corner]]; };
 	public:
 		// Number of vertices in the mesh
 		inline index_t VertexCount() const { return (index_t)m_vertices.size(); }
@@ -62,7 +66,7 @@ namespace geo
 		// Optionally includes interpolated normals
 		PointCloud3D SamplePointsUniform(u32 n, Random& rng, bool includeNormals = false) const;
 		// Converts mesh vertices (and normals) into a point cloud representation
-		PointCloud3D GetPointCloud() const { return PointCloud3D(m_vertices, m_normals); }
+		PointCloud3D ToPointCloud() const { return PointCloud3D(m_vertices, m_normals); }
 		// Flattens mesh data into a triangle soup
 		void Flatten();
 	public:

@@ -6,18 +6,18 @@ namespace geo
 {
     enum class LogLevel : u8
     {
-        NONE    = 0u,
-        FATAL   = 1u,
-        ERROR   = 2u,
-        WARN    = 3u,
-        INFO    = 4u,
-        DEBUG   = 5u,
-        VERBOSE = 6u
+        LOG_NONE    = 0u,
+        LOG_FATAL   = 1u,
+        LOG_ERROR   = 2u,
+        LOG_WARN    = 3u,
+        LOG_INFO    = 4u,
+        LOG_DEBUG   = 5u,
+        LOG_VERBOSE = 6u
     };
 
     constexpr inline bool IsLevelActive(LogLevel level, LogLevel current)
     {
-        if (current == LogLevel::NONE) return false;
+        if (current == LogLevel::LOG_NONE) return false;
         return static_cast<u8>(level) <= static_cast<u8>(current);
     }
 
@@ -26,13 +26,13 @@ namespace geo
     {
         switch (level)
         {
-            case LogLevel::VERBOSE: return "[Verbose]  ";
-            case LogLevel::DEBUG:   return "[Debug]    ";
-            case LogLevel::INFO:    return "[Info]     ";
-            case LogLevel::WARN:    return "[Warning]  ";
-            case LogLevel::ERROR:   return "[Error]    ";
-            case LogLevel::FATAL:   return "[Fatal]    ";
-            case LogLevel::NONE:    return "[None]     ";
+            case LogLevel::LOG_VERBOSE: return "[Verbose]  ";
+            case LogLevel::LOG_DEBUG:   return "[Debug]    ";
+            case LogLevel::LOG_INFO:    return "[Info]     ";
+            case LogLevel::LOG_WARN:    return "[Warning]  ";
+            case LogLevel::LOG_ERROR:   return "[Error]    ";
+            case LogLevel::LOG_FATAL:   return "[Fatal]    ";
+            case LogLevel::LOG_NONE:    return "[None]     ";
             default:                return "[Unknown]  ";
         }
     }

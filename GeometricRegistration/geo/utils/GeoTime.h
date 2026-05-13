@@ -31,7 +31,7 @@ namespace geo
     {
     public:
         explicit ScopedTimer(TimingStat* stat);
-        explicit ScopedTimer(const std::string& name, TimingStat* stat, LogLevel level = LogLevel::NONE);
+        explicit ScopedTimer(const std::string& name, TimingStat* stat, LogLevel level = LogLevel::LOG_NONE);
 
         ScopedTimer(const ScopedTimer&) = delete;
         ScopedTimer& operator=(const ScopedTimer&) = delete;
@@ -41,7 +41,7 @@ namespace geo
         std::string m_name  = "";
         TimePoint m_start   = Clock::now();
         TimingStat* m_stat  = nullptr;
-        LogLevel m_logLevel = LogLevel::NONE;
+        LogLevel m_logLevel = LogLevel::LOG_NONE;
     };
 
     // Stopwatch is edge-triggered: ElapsedMs() and StopMs() return 0 when not running.

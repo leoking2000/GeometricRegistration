@@ -4,7 +4,7 @@
 
 namespace geo
 {
-    static LogLevel g_logLevel = LogLevel::INFO;
+    static LogLevel g_logLevel = LogLevel::LOG_INFO;
     static std::mutex g_logMutex;
 
     void SetLogLevel(LogLevel level)

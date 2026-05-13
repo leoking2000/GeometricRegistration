@@ -79,7 +79,7 @@ namespace geo
             m_stat->AddSample(elapsedMs);
         }
 
-        if (!m_name.empty() && m_logLevel != LogLevel::NONE)
+        if (!m_name.empty() && m_logLevel != LogLevel::LOG_NONE)
         {
             GEOLOGLEVEL(m_logLevel, m_name << " took " << elapsedMs << " ms");
         }
