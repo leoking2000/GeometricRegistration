@@ -8,15 +8,13 @@ namespace geo
 {
     bool closestPointToTriangle(
         glm::vec3& out_closestPoint,  f32& out_distance,
-        const glm::vec3& query,
+        const glm::vec3& p,
         const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
-        const glm::vec3& an, const glm::vec3& bn, const glm::vec3& cn,
-        const glm::vec3& face_normal,
         f32 maxDist = F32_MAX);
 
     bool closestPointToTriangleByIndex(
         glm::vec3& out_closestPoint, f32& out_distance,
-        const glm::vec3& query,
+        const glm::vec3& p,
         index_t tri, const Mesh& mesh,
         f32 maxDist);
 
@@ -28,14 +26,14 @@ namespace geo
         DFCell(const glm::vec3& center, const glm::ivec3& coord, const Mesh* mesh)
             : 
             m_center(center), m_coord(coord), m_mesh(mesh),
-            m_distance(F32_MAX), m_sing(1.0f), m_tri(INVALID_INDEX)
+            m_distance(F32_MAX), m_tri(INVALID_INDEX), m_sign(1.0f)
         {}
     public:
-        f32 operator()(const glm::vec3& q) const;
         void addTriangle(index_t tri);
     public:
         inline bool IsOccupied() const { return m_mesh != nullptr && m_tri != INVALID_INDEX && m_tri < m_mesh->TriangleCount(); };
-        inline f32 Distance() const { return m_distance * m_sing; };
+        inline f32 Distance() const { return m_distance * m_sign; };
+        inline f32 SetSign(bool isPossitive) { m_sign = (isPossitive) ? 1.0f : -1.0f; }
         inline const glm::vec3& Center() const { return m_center; };
         inline const glm::ivec3& Coord() const { return m_coord; };
         inline const index_t& ClosestTriangleIndex() const { return m_tri; }
@@ -43,7 +41,7 @@ namespace geo
         glm::vec3 m_center = glm::vec3(0.0f);
         glm::ivec3 m_coord = glm::ivec3(0);
         f32 m_distance = F32_MAX;
-        f32 m_sing = 1.0f;
+        f32 m_sign = 1.0f;
     private:
         index_t m_tri = INVALID_INDEX;
         const Mesh* m_mesh = nullptr;
@@ -73,12 +71,11 @@ namespace geo
         DistanceField(const DistanceFieldParameters& params);
     
     public:
-        void Build(const Mesh& mesh, bool compact);
+        void Build(const Mesh& mesh);
     public:
         f32 operator()(const glm::vec3& q) const;
     private:
         void Expand(const Mesh& mesh);
-        void Check();
         void Compact();
     private:
         // Convert 3D coordinate to hash key
@@ -96,8 +93,6 @@ namespace geo
     private:
         f32 m_max_dist;
         std::unordered_map<u64, DFCell, U64Hash> m_cells;
-    private:
-        bool isCompact = false;
         std::unordered_map<u64, f32, U64Hash> m_compact_cells;
     };
 }

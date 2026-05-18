@@ -5,29 +5,28 @@
 namespace geo
 {
     bool closestPointToTriangle(glm::vec3& out_closestPoint, f32& out_distance,
-        const glm::vec3& query, 
-        const glm::vec3& a, const glm::vec3& b, const glm::vec3& c, 
-        const glm::vec3& an, const glm::vec3& bn, const glm::vec3& cn,
-        const glm::vec3& faceNormal,
+        const glm::vec3& p, 
+        const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
         f32 maxDist)
     {
+        glm::vec3 ab = b - a;
+        glm::vec3 ac = c - a;
+        glm::vec3 ap = p - a;
+
         // 1. Calculate distance from the triangle plane and Early Exit
-        float distToPlane = glm::dot(query - a, faceNormal);
-        if (std::fabs(distToPlane) >= maxDist)
+        glm::vec3 faceNormal = glm::normalize(glm::cross(ab, ac));
+        f32 distToPlane = glm::dot(p - a, faceNormal);
+        if (glm::abs(distToPlane) >= maxDist)
         {
             return false;
         }
 
-        glm::vec3 ab = b - a;
-        glm::vec3 ac = c - a;
-        glm::vec3 ap = query - a;
-
         // 2. Vertex Region A
-        float d1 = glm::dot(ab, ap);
-        float d2 = glm::dot(ac, ap);
+        f32 d1 = glm::dot(ab, ap);
+        f32 d2 = glm::dot(ac, ap);
         if (d1 <= 0.0f && d2 <= 0.0f) 
         {
-            float d = glm::distance(query, a);
+            f32 d = glm::distance(p, a);
 
             if (d >= maxDist) {
                 return false;
@@ -39,12 +38,12 @@ namespace geo
         }
 
         // 3. Vertex Region B
-        glm::vec3 bp = query - b;
-        float d3 = glm::dot(ab, bp);
-        float d4 = glm::dot(ac, bp);
+        glm::vec3 bp = p - b;
+        f32 d3 = glm::dot(ab, bp);
+        f32 d4 = glm::dot(ac, bp);
         if (d3 >= 0.0f && d4 <= d3) {
 
-            float d = glm::distance(query, b);
+            float d = glm::distance(p, b);
 
             if (d >= maxDist) {
                 return false;
@@ -56,11 +55,11 @@ namespace geo
         }
 
         // 4. Edge Region AB
-        float vc = d1 * d4 - d3 * d2;
+        f32 vc = d1 * d4 - d3 * d2;
         if (vc <= 0.0f && d1 >= 0.0f && d3 <= 0.0f) {
-            float v = d1 / (d1 - d3);
+            f32 v = d1 / (d1 - d3);
             glm::vec3 closest = a + v * ab;
-            float d = glm::distance(query, closest);
+            float d = glm::distance(p, closest);
 
             if (d >= maxDist) {
                 return false;
@@ -72,11 +71,11 @@ namespace geo
         }
 
         // 5. Vertex Region C
-        glm::vec3 cp = query - c;
-        float d5 = glm::dot(ab, cp);
-        float d6 = glm::dot(ac, cp);
+        glm::vec3 cp = p - c;
+        f32 d5 = glm::dot(ab, cp);
+        f32 d6 = glm::dot(ac, cp);
         if (d6 >= 0.0f && d5 <= d6) {
-            float d = glm::distance(query, c);
+            f32 d = glm::distance(p, c);
 
             if (d >= maxDist) {
                 return false;
@@ -88,11 +87,11 @@ namespace geo
         }
 
         // 6. Edge Region AC
-        float vb = d5 * d2 - d1 * d6;
+        f32 vb = d5 * d2 - d1 * d6;
         if (vb <= 0.0f && d2 >= 0.0f && d6 <= 0.0f) {
-            float w = d2 / (d2 - d6);
+            f32 w = d2 / (d2 - d6);
             glm::vec3 closest = a + w * ac;
-            float d = glm::distance(query, closest);
+            f32 d = glm::distance(p, closest);
 
             if (d >= maxDist) {
                 return false;
@@ -104,11 +103,11 @@ namespace geo
         }
 
         // 7. Edge Region BC
-        float va = d3 * d6 - d5 * d4;
+        f32 va = d3 * d6 - d5 * d4;
         if (va <= 0.0f && (d4 - d3) >= 0.0f && (d5 - d6) >= 0.0f) {
-            float w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
+            f32 w = (d4 - d3) / ((d4 - d3) + (d5 - d6));
             glm::vec3 closest = b + w * (c - b);
-            float d = glm::distance(query, closest);
+            float d = glm::distance(p, closest);
 
             if (d >= maxDist) {
                 return false;
@@ -120,51 +119,27 @@ namespace geo
         }
 
         // 8. Face Region
-        float denom = 1.0f / (va + vb + vc);
-        float v = vb * denom;
-        float w = vc * denom;
+        f32 denom = 1.0f / (va + vb + vc);
+        f32 v = vb * denom;
+        f32 w = vc * denom;
         glm::vec3 closest = a + ab * v + ac * w;
 
         out_closestPoint = closest;
-        out_distance = std::fabs(distToPlane);
+        out_distance = glm::abs(distToPlane);
         return true;
     }
 
     bool closestPointToTriangleByIndex(
         glm::vec3& out_closestPoint, f32& out_distance,
-        const glm::vec3& query,
+        const glm::vec3& p,
         index_t tri, const Mesh& mesh,
         f32 maxDist)
     {
-        if (tri >= mesh.TriangleCount()) {
-            GEOLOGERROR("triagnle index is invaild!!!");
-            assert(false && "invalid triangle index");
-            return false;
-        }
-
         const glm::vec3& a  = mesh.TriangleVertex(tri, 0);
         const glm::vec3& b  = mesh.TriangleVertex(tri, 1);
         const glm::vec3& c  = mesh.TriangleVertex(tri, 2);
-        const glm::vec3& an = mesh.TriangleVertexNormal(tri, 0);
-        const glm::vec3& bn = mesh.TriangleVertexNormal(tri, 1);
-        const glm::vec3& cn = mesh.TriangleVertexNormal(tri, 2);
 
-        const glm::vec3& fn = mesh.Triangle(tri).faceNormal;
-
-        return closestPointToTriangle(out_closestPoint, out_distance, query, a, b, c, an, bn, cn, fn, maxDist);
-    }
-
-    f32 DFCell::operator()(const glm::vec3& q) const
-    {
-        glm::vec3 cp;
-        f32 dist;
-
-        if (closestPointToTriangleByIndex(cp, dist, q, m_tri, *m_mesh, F32_MAX))
-        {
-            return dist * m_sing;
-        }
-
-        return m_distance * m_sing; // this should not hit becouse max_dist=F32_MAX
+        return closestPointToTriangle(out_closestPoint, out_distance, p, a, b, c, maxDist);
     }
 
     void DFCell::addTriangle(index_t tri)
@@ -172,15 +147,19 @@ namespace geo
         glm::vec3 cp;
         f32 dist;
 
-        const glm::vec3& fn = m_mesh->Triangle(tri).faceNormal;
-
         if (closestPointToTriangleByIndex(cp, dist, m_center, tri, *m_mesh, IsOccupied() ? m_distance : FLT_MAX))
         {
-            if (m_distance > dist)
+            if (m_distance > glm::abs(dist))
             {
                 m_tri = tri;
-                m_distance = dist;
-                m_sing = glm::dot(fn, m_center - cp) >= 0.0f ? 1.0f : -1.0f;
+                m_distance = glm::abs(dist);
+
+                const glm::vec3& a = m_mesh->TriangleVertex(tri, 0);
+                const glm::vec3& b = m_mesh->TriangleVertex(tri, 1);
+                const glm::vec3& c = m_mesh->TriangleVertex(tri, 2);
+
+                glm::vec3 faceNormal = glm::normalize(glm::cross(a - b, a - c));
+                m_sign = glm::dot(m_center - cp, faceNormal) >= 0.0f ? 1.0f : -1.0f;
             }      
         }
     }
@@ -200,11 +179,11 @@ namespace geo
         glm::vec3 offset_high(0.0f);
         for (u32 i = 0; i < 3; i++)
         {
-            u32 dim = std::ceilf(m_box.Size()[i] / m_cellSize);
+            i32 dim = (i32)glm::ceil(m_box.Size()[i] / m_cellSize);
             f32 expansion = m_cellSize * dim - m_box.Size()[i];
             offset_low[i] -= expansion / 2;
             offset_high[i] += expansion / 2;
-            m_dims[i] = (i32)dim;
+            m_dims[i] = dim;
         }
         m_box.Set(m_box.Min() + offset_low, m_box.Max() + offset_high);
 
@@ -212,7 +191,7 @@ namespace geo
         m_cells.rehash(2048);
     }
 
-    void DistanceField::Build(const Mesh& mesh, bool compact)
+    void DistanceField::Build(const Mesh& mesh)
     {
         // loop through every triagnle
         for (index_t t = 0; t < mesh.TriangleCount(); t++)
@@ -228,16 +207,15 @@ namespace geo
             trb.ExpandBy(tri[1]);
             trb.ExpandBy(tri[2]);
 
+            const f32 expand = m_cellSize * 0.51f;
 
-            const f32 expand = m_cellSize * 0.866f; // half diagonal of a cube face, conservative
+            i32 i_start = (i32)std::floor((trb.Min().x - expand - m_box.Min().x) / m_cellSize);
+            i32 j_start = (i32)std::floor((trb.Min().y - expand - m_box.Min().y) / m_cellSize);
+            i32 k_start = (i32)std::floor((trb.Min().z - expand - m_box.Min().z) / m_cellSize);
 
-            i32 i_start = (i32)std::floorf((trb.Min().x - expand - m_box.Min().x) / m_cellSize);
-            i32 j_start = (i32)std::floorf((trb.Min().y - expand - m_box.Min().y) / m_cellSize);
-            i32 k_start = (i32)std::floorf((trb.Min().z - expand - m_box.Min().z) / m_cellSize);
-
-            i32 i_stop = (i32)std::floorf((trb.Max().x + expand - m_box.Min().x) / m_cellSize);
-            i32 j_stop = (i32)std::floorf((trb.Max().y + expand - m_box.Min().y) / m_cellSize);
-            i32 k_stop = (i32)std::floorf((trb.Max().z + expand - m_box.Min().z) / m_cellSize);
+            i32 i_stop = (i32)std::floor((trb.Max().x + expand - m_box.Min().x) / m_cellSize);
+            i32 j_stop = (i32)std::floor((trb.Max().y + expand - m_box.Min().y) / m_cellSize);
+            i32 k_stop = (i32)std::floor((trb.Max().z + expand - m_box.Min().z) / m_cellSize);
 
             i_start = glm::clamp(i_start, 0, m_dims.x - 1); i_stop = glm::clamp(i_stop, 0, m_dims.x - 1);
             j_start = glm::clamp(j_start, 0, m_dims.y - 1); j_stop = glm::clamp(j_stop, 0, m_dims.y - 1);
@@ -249,13 +227,13 @@ namespace geo
                 {
                     for (i32 i = i_start; i <= i_stop; i++)
                     {
-                        glm::uvec3 coords(i, j, k);
+                        glm::uvec3 coords((u32)i, (u32)j, (u32)k);
 
                         u64 key = Hash(coords);
                         if (m_cells.find(key) == m_cells.end())
                         {
-                            glm::vec3 center = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
-                            m_cells[key] = DFCell(center, coords, &mesh);
+                            m_cells[key] = 
+                                DFCell(m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f), coords, &mesh);
                         }
                         m_cells[key].addTriangle(t);
                     }
@@ -274,14 +252,7 @@ namespace geo
         m_cells = std::move(clean);
 
         Expand(mesh);
-
-        if (IS_LEVEL_ACTIVE(LogLevel::LOG_DEBUG)) {
-            Check();
-        }
-
-        if (compact) {
-            Compact();
-        }
+        Compact();
     }
 
     f32 DistanceField::operator()(const glm::vec3& q) const
@@ -294,23 +265,11 @@ namespace geo
             return m_max_dist;
 
         u64 key = Hash(coord);
+        auto cellp = m_compact_cells.find(key);
+        if (cellp == m_compact_cells.end())
+            return m_max_dist;
 
-        if (isCompact) 
-        {
-            auto cellp = m_compact_cells.find(key);
-            if (cellp == m_compact_cells.end())
-                return m_max_dist;
-
-            return cellp->second;
-        }
-        else 
-        {
-            auto cellp = m_cells.find(key);
-            if (cellp == m_cells.end())
-                return m_max_dist;
-
-            return cellp->second(q);
-        }
+        return cellp->second;
     }
 
     void DistanceField::Expand(const Mesh& mesh)
@@ -339,38 +298,39 @@ namespace geo
                     {
                         for (i32 i = i_low; i <= i_high; i++)
                         {
-                            u64 key = Hash({ i, j, k });
+                            glm::uvec3 coords((u32)i, (u32)j, (u32)k);
+                            u64 key = Hash(coords);
 
                             if (key == c.first)
                                 continue;
+
                             if (m_cells.find(key) != m_cells.end())
                                 continue;
+
+                            glm::vec3 pos = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
+                            DFCell newCell = DFCell(pos, coords, &mesh);
 
                             auto iter = frontier.find(key);
                             if (iter == frontier.end()) // the cell does not exits 
                             {
-                                glm::vec3 pos = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
-                                DFCell newCell = DFCell(pos, { i, j, k }, &mesh);
-
                                 newCell.addTriangle(c.second.ClosestTriangleIndex());
 
-                                if (std::fabs(newCell.Distance()) > m_max_dist)
+                                if (glm::abs(newCell.Distance()) > m_max_dist)
+                                {
                                     continue;
+                                }
 
                                 frontier[key] = newCell;
                             }
                             else // the cell already exits
                             {
-                                glm::vec3 pos = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
-
                                 glm::vec3 cp;
-                                f32 dist = F32_MAX;
+                                f32 dist = FLT_MAX;
 
                                 closestPointToTriangleByIndex(cp, dist, pos, c.second.ClosestTriangleIndex(), mesh, F32_MAX);
 
-                                if (dist < std::fabs(iter->second.Distance()) && dist < m_max_dist)
+                                if (glm::abs(dist) < glm::abs(iter->second.Distance()) && glm::abs(dist) < m_max_dist)
                                 {
-                                    DFCell newCell = DFCell(pos, { i, j, k }, &mesh);
                                     newCell.addTriangle(c.second.ClosestTriangleIndex());
                                     frontier[key] = newCell;
                                 }
@@ -380,71 +340,16 @@ namespace geo
                 }
             }
 
-            m_cells.insert(frontier.begin(), frontier.end());
+            for (auto& p : frontier)
+            {
+                m_cells[p.first] = p.second;
+            }
+
             changed = frontier.size() > 0;
             boundary = std::move(frontier);
 
             frontier.clear();
         } while (changed);
-    }
-
-    void DistanceField::Check()
-    {
-        u32 error_counter = 0;
-
-        for (auto& cell : m_cells)
-        {
-            f32 cell_dist = std::fabs(cell.second.Distance());
-
-            i32 i_low = std::max(0, cell.second.Coord().x - 1);
-            i32 i_high = std::min(m_dims.x - 1, cell.second.Coord().x + 1);
-            i32 j_low = std::max(0, cell.second.Coord().y - 1);
-            i32 j_high = std::min(m_dims.y - 1, cell.second.Coord().y + 1);
-            i32 k_low = std::max(0, cell.second.Coord().z - 1);
-            i32 k_high = std::min(m_dims.z - 1, cell.second.Coord().z + 1);
-
-            for (i32 k = k_low; k <= k_high; k++) 
-            {
-                for (i32 j = j_low; j <= j_high; j++) 
-                {
-                    for (i32 i = i_low; i <= i_high; i++)
-                    {
-                        u64 key = Hash({ u32(i), u32(j), u32(k) });
-
-                        if (key == cell.first)
-                            continue;
-
-                        auto neighbor = m_cells.find(key);
-                        if (neighbor != m_cells.end())
-                        {
-                            f32 neighbor_dist = std::fabs(neighbor->second.Distance());
-                            f32 diff = std::fabs(cell_dist - neighbor_dist);
-
-                            // Lipschitz condition: |d(a) - d(b)| <= dist(a, b)
-                            glm::vec3 neighborCenter = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
-                            f32 centerDist = glm::distance(cell.second.Center(), neighborCenter);
-
-                            if (diff > centerDist + 1e-4f)
-                            {
-                                error_counter++;
-                                GEOLOGDEBUG("Lipschitz violation between ("
-                                    << cell.second.Coord().x << "," << cell.second.Coord().y << "," << cell.second.Coord().z
-                                    << ") and (" << i << "," << j << "," << k << ")"
-                                    << " diff=" << diff << " maxAllowed=" << centerDist);
-                            }
-                        }
-                        else if (cell_dist < m_max_dist - m_cellSize)
-                        {
-                            // This cell is inside the narrow band but its neighbor is missing
-                            error_counter++;
-                            GEOLOGDEBUG("Missing neighbor at (" << i << "," << j << "," << k << ")");
-                        }
-                    }
-                }
-            }
-        }
-
-        GEOLOGDEBUG("Found " << error_counter << " problems out of " << m_cells.size() << " cells");
     }
 
     void DistanceField::Compact()
@@ -457,6 +362,5 @@ namespace geo
         }
 
         m_cells.clear();
-        isCompact = true;
     }
 }

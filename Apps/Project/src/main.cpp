@@ -106,9 +106,11 @@ static void TestDF()
     // 1. Create input data
     std::cout << "Loading Mesh.................\n";
 
-    geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
+    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
     //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
-    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
+    geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
+
+    //mesh.Flatten();
 
     std::cout << "Done\n";
 
@@ -116,7 +118,7 @@ static void TestDF()
 
     geo::DistanceFieldParameters params;
     params.bounding_box = mesh.BoundingBox();
-    params.resolution = 64;
+    params.resolution = 256;
     // set the maximum radius to be 1/4 the diagonal of the mesh
     params.max_distance = 0.25f * glm::length(params.bounding_box.Max() - params.bounding_box.Min());
 
@@ -126,10 +128,11 @@ static void TestDF()
     geo::TimingStat buildTime;
 
     geo::TimePoint startBuild = geo::Clock::now();
-    df.Build(mesh, true);
+    df.Build(mesh);
     geo::TimePoint endBuild = geo::Clock::now();
     std::cout << "Done\n\n";
 
+    std::cout << "Mesh Name: " << mesh.FileName() << "\n";
     std::cout << "Number of Points: " << mesh.VertexCount()  << "\n";
     std::cout << "Number of Triangles: " << mesh.TriangleCount() << "\n";
     std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
