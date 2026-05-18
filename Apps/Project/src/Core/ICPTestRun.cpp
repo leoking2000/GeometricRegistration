@@ -127,7 +127,7 @@ namespace test
 
         geo::KDTree nn(test.target.GetPoints());
 
-        auto result = geo::EfficientICP(test.target, sourceCopy, nn, test.df, params);
+        //auto result = geo::EfficientICP(test.target, sourceCopy, nn, test.df, params);
 
         geo::RigidTransform gtInv = test.groundTruth.ComputeInverse();
 
@@ -135,10 +135,10 @@ namespace test
         out.methodName = "EfficientICP PointToPlane";
         out.testName = test.name;
 
-        out.result = result;
+        //out.result = result;
 
-        out.rotationError = RotationError(result.transform.rotation, gtInv.rotation);
-        out.translationError = TranslationError(result.transform.translation, gtInv.translation);
+        //out.rotationError = RotationError(result.transform.rotation, gtInv.rotation);
+        //out.translationError = TranslationError(result.transform.translation, gtInv.translation);
 
         out.sourceCount = test.source.Size();
         out.targetCount = test.target.Size();

@@ -52,7 +52,7 @@ namespace geo
             count += 1;
         }
 
-        return (count > 0) ? cost / (float)count : df.m_grid.GetDefaultValue();
+        return cost / (float)count;
     }
      
     ICPResult EfficientICP(const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn,

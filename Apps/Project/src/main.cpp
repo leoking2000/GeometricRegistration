@@ -100,43 +100,42 @@ static void TestICP()
 
 static void TestDF()
 {
-    geo::SetLogLevel(geo::LogLevel::LOG_INFO);
+    geo::SetLogLevel(geo::LogLevel::LOG_DEBUG);
     std::cout << "==== DistanceField Test ====\n";
 
     // 1. Create input data
-    //geo::PointCloud3D cloud = geo::GenerateRandomPointCloudRect(glm::vec3(0.0f), 10.0f, 10.0f, 10.0f, 10000, rng, true);
+    std::cout << "Loading Mesh.................\n";
 
-    //geo::Mesh bunny = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
-    //geo::PointCloud3D cloud = bunny.ToPointCloud();
+    geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
+    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
+    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
 
-    //geo::Mesh fox = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
-    //geo::PointCloud3D cloud = fox.ToPointCloud();
-
-    geo::Mesh dora_3_med = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
-    geo::PointCloud3D cloud = dora_3_med.ToPointCloud();
+    std::cout << "Done\n";
 
     // 2. Build DF
-    //geo::DistanceField df;
 
-    const geo::u32 resolution = 128;
-    const geo::f32 dTrunc  = 1.0f;
-    const geo::f32 padding = 1.1f;
+    geo::DistanceFieldParameters params;
+    params.bounding_box = mesh.BoundingBox();
+    params.resolution = 64;
+    // set the maximum radius to be 1/4 the diagonal of the mesh
+    params.max_distance = 0.25f * glm::length(params.bounding_box.Max() - params.bounding_box.Min());
 
+    geo::DistanceField df(params);
+
+    std::cout << "Building Distance Field.................";
     geo::TimingStat buildTime;
 
     geo::TimePoint startBuild = geo::Clock::now();
-    //df.Build(cloud, resolution, dTrunc, padding);
+    df.Build(mesh, true);
     geo::TimePoint endBuild = geo::Clock::now();
+    std::cout << "Done\n\n";
 
-    std::cout << "Number of Points: " << cloud.Size()  << "\n";
-    std::cout << "Number of Triangles: " << dora_3_med.TriangleCount() << "\n";
-    std::cout << "Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
+    std::cout << "Number of Points: " << mesh.VertexCount()  << "\n";
+    std::cout << "Number of Triangles: " << mesh.TriangleCount() << "\n";
+    std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
 
     // 3. Query test (1M samples)
     const geo::u32 NUM_QUERIES = 1000000u;
-
-    geo::BBox bbox = cloud.ComputeBoundingBox();
-    bbox.ExpandByFactor(padding);
 
     geo::TimingStat queryStat;
     geo::f32 sum = 0.0f;
@@ -144,20 +143,20 @@ static void TestDF()
     for (int i = 0; i < NUM_QUERIES; ++i)
     {
         // random point in bbox
-        glm::vec3 q(rng.Float(bbox.Min().x, bbox.Max().x), 
-                    rng.Float(bbox.Min().y, bbox.Max().y), 
-                    rng.Float(bbox.Min().z, bbox.Max().z));
+        glm::vec3 q(rng.Float(params.bounding_box.Min().x, params.bounding_box.Max().x),
+                    rng.Float(params.bounding_box.Min().y, params.bounding_box.Max().y),
+                    rng.Float(params.bounding_box.Min().z, params.bounding_box.Max().z));
 
         geo::ScopedTimer scope(&queryStat);
-        //sum += df(q);
+        sum += df(q);
     }
 
     std::cout << "Query Time (1M): " << queryStat.ToString() << "\n";
 
     // 4. Sanity check
-    //std::cout << "Zero-ish test: " << df(cloud.GetPoints()[0]) << "\n";
+    std::cout << "Zero-ish test: " << df(mesh.Vertex(0)) << "\n";
 
-    //std::cout << "Far test: " << df(glm::vec3(100, 100, 100)) << "\n";
+    std::cout << "Far test: " << df(glm::vec3(100, 100, 100)) << "\n";
     std::cout << "Accumulated Value (ignore): " << sum << "\n";
 
     std::cout << "================================\n";
@@ -165,8 +164,8 @@ static void TestDF()
 
 int main()
 {
-    TestICP();
-    //TestDF();
+    //TestICP();
+    TestDF();
 
 
     return 0;
