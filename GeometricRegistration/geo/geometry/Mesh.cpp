@@ -50,11 +50,9 @@ namespace geo
             const glm::vec3& p3 = m_vertices[tri.z];
 
             glm::vec3 cross = glm::cross(p2 - p1, p3 - p1);
-            const float crossLength = glm::length(cross);
-            // in case the points do not form a triangle
-            data.faceNormal = (crossLength > eps) ? cross / crossLength : glm::vec3(1.0f, 0.0f, 0.0f);
 
-            data.area = 0.5f * crossLength;
+            data.faceNormal = glm::normalize(cross);
+            data.area = 0.5f * glm::length(cross);
 
             m_triangles[i] = data;
         }
@@ -63,8 +61,6 @@ namespace geo
     // runs if no normals were given
     void Mesh::ComputeVertexNormals()
     {   
-        constexpr f32 eps = std::numeric_limits<float>::epsilon();
-
         m_normals.clear();
         m_normals.resize(m_vertices.size(), glm::vec3(0.0f));
     
@@ -72,26 +68,16 @@ namespace geo
         {
             const TriangleData& tri = m_triangles[i];
 
-            m_normals[tri[0]] += tri.faceNormal;
-            m_normals[tri[1]] += tri.faceNormal;
-            m_normals[tri[2]] += tri.faceNormal;
+            m_normals[tri[0]] += tri.faceNormal * tri.area;
+            m_normals[tri[1]] += tri.faceNormal * tri.area;
+            m_normals[tri[2]] += tri.faceNormal * tri.area;
         }
 
         // Normalize
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < (int)m_normals.size(); ++i)
         {
-            const f32 len = glm::length(m_normals[i]);
-
-            if (len > eps)
-            {
-                m_normals[i] /= len;
-            }
-            else
-            {
-                // fallback normal
-                m_normals[i] = glm::vec3(1.0f, 0.0f, 0.0f);
-            }
+            m_normals[i] = glm::normalize(m_normals[i]);
         }
     }
 
@@ -107,7 +93,7 @@ namespace geo
 
     void Mesh::ComputeSurfaceArea()
     {
-        m_area = 0.0f;
+        m_area = 0.0;
         f64 totalArea = 0.0;
 
         #pragma omp parallel for reduction(+:totalArea)
@@ -121,8 +107,6 @@ namespace geo
 
     void Mesh::Flatten()
     {
-        // TODO: parallelize this?
-
         std::vector<glm::vec3> flatVertices;
         std::vector<glm::vec3> flatNormals;
         std::vector<TriangleData> flatTriangles;
@@ -192,6 +176,7 @@ namespace geo
             float r = rng.Float(0.0f, totalArea);
     
             auto it = std::lower_bound(cdf.begin(), cdf.end(), r);
+            if (it == cdf.end()) --it;  // clamp to last triangle
             index_t triIndex = static_cast<index_t>(std::distance(cdf.begin(), it));
     
             const TriangleData& tri = m_triangles[triIndex];

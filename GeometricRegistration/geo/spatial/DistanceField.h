@@ -33,7 +33,7 @@ namespace geo
     public:
         inline bool IsOccupied() const { return m_mesh != nullptr && m_tri != INVALID_INDEX && m_tri < m_mesh->TriangleCount(); };
         inline f32 Distance() const { return m_distance * m_sign; };
-        inline f32 SetSign(bool isPossitive) { m_sign = (isPossitive) ? 1.0f : -1.0f; }
+        inline void SetSign(bool isPossitive) { m_sign = (isPossitive) ? 1.0f : -1.0f; }
         inline const glm::vec3& Center() const { return m_center; };
         inline const glm::ivec3& Coord() const { return m_coord; };
         inline const index_t& ClosestTriangleIndex() const { return m_tri; }

@@ -44,6 +44,7 @@ namespace geo::io
 	std::string GetFileName(const std::filesystem::path& path);
 
 	GeometryDumpData LoadOBJ(const std::filesystem::path& path);
+	GeometryDumpData LoadPLY(const std::filesystem::path& path);
 	GeometryDumpData LoadGeometry(const std::filesystem::path& path);
 
 	bool SaveOBJ(const std::filesystem::path& path, const GeometryDumpData& data);

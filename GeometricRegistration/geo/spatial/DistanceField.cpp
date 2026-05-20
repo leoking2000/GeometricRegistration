@@ -119,13 +119,15 @@ namespace geo
         }
 
         // 8. Face Region
-        f32 denom = 1.0f / (va + vb + vc);
+        f32 sum = va + vb + vc;
+        if (glm::abs(sum) < 1e-12f) return false;
+        f32 denom = 1.0f / sum;
         f32 v = vb * denom;
         f32 w = vc * denom;
         glm::vec3 closest = a + ab * v + ac * w;
 
         out_closestPoint = closest;
-        out_distance = glm::abs(distToPlane);
+        out_distance = glm::distance(p, closest);
         return true;
     }
 
@@ -158,7 +160,7 @@ namespace geo
                 const glm::vec3& b = m_mesh->TriangleVertex(tri, 1);
                 const glm::vec3& c = m_mesh->TriangleVertex(tri, 2);
 
-                glm::vec3 faceNormal = glm::normalize(glm::cross(a - b, a - c));
+                glm::vec3 faceNormal = glm::normalize(glm::cross(b - a, c - a));
                 m_sign = glm::dot(m_center - cp, faceNormal) >= 0.0f ? 1.0f : -1.0f;
             }      
         }

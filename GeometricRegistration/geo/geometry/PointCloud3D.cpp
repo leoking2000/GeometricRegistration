@@ -89,7 +89,7 @@ namespace geo
 
 	void PointCloud3D::RecalculateCentroid()
 	{
-		glm::vec3 c(0.0f);
+		glm::dvec3 c(0.0);
 
 		// Handle empty point cloud
 		if (m_points.empty()) {
@@ -104,7 +104,7 @@ namespace geo
 		}
 
 		// Compute average (centroid)
-		m_centroid = c / f32(m_points.size());
+		m_centroid = c / f64(m_points.size());
 	}
 }
 
