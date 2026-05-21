@@ -1,11 +1,12 @@
 #include <filesystem>
 #include <fstream>
-#include <thread>
 #include <gtest/gtest.h>
 #include <glm/glm.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/epsilon.hpp>
 #include <geo/GeometricRegistration.h>
+
+#include "IOUtilsTests.h"
 
 static inline void ExpectMat3Near(
     const glm::mat3& A,
@@ -1472,7 +1473,6 @@ TEST(closestPointToTriangleTest, FaceRegion)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1500,7 +1500,6 @@ TEST(closestPointToTriangleTest, VertexRegionA)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1528,7 +1527,6 @@ TEST(closestPointToTriangleTest, VertexRegionB)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1556,7 +1554,6 @@ TEST(closestPointToTriangleTest, VertexRegionC)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1584,7 +1581,6 @@ TEST(closestPointToTriangleTest, EdgeRegionAB)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1612,7 +1608,6 @@ TEST(closestPointToTriangleTest, EdgeRegionAC)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1640,7 +1635,6 @@ TEST(closestPointToTriangleTest, EdgeRegionBC)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 
@@ -1668,7 +1662,6 @@ TEST(closestPointToTriangleTest, MaxDistanceReject)
         dist,
         query,
         a, b, c,
-        n,
         1.0f
     );
 
@@ -1693,7 +1686,6 @@ TEST(closestPointToTriangleTest, PointOnTriangle)
         dist,
         query,
         a, b, c,
-        n,
         100.0f
     );
 

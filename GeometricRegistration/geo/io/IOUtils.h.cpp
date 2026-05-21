@@ -67,6 +67,11 @@ namespace geo::io
         return path.filename().string();
     }
 
+    std::filesystem::path GetParentFolder(const std::filesystem::path& filePath)
+    {
+        return filePath.parent_path();
+    }
+
     // ============================================================
     // OBJ Loader
     // ============================================================
@@ -821,6 +826,132 @@ namespace geo::io
         return true;
     }
 
+    bool SavePLY(const std::filesystem::path& path, const GeometryDumpData& data)
+    {
+        if (data.points.empty())
+        {
+            GEOLOGERROR("SavePLY: no points to write");
+            return false;
+        }
+
+        // Binary mode is required — text mode on Windows would corrupt binary data
+        // by translating \n to \r\n inside the data section
+        std::ofstream file(path, std::ios::binary);
+        if (!file.is_open())
+        {
+            GEOLOGERROR("SavePLY: failed to open file for writing: " << path);
+            return false;
+        }
+
+        const bool hasNormals = data.HasNormals();
+        const bool hasFaces = data.HasIndices();
+
+        // --------------------------------------------------------
+        // 1. Write ASCII header
+        //
+        // The header is always ASCII text even in binary PLY files.
+        // It must exactly match the binary layout that follows —
+        // declared properties, declared order, declared types.
+        // --------------------------------------------------------
+
+        file << "ply\n";
+        file << "format binary_little_endian 1.0\n";
+        file << "comment Created by geo\n";
+        file << "element vertex " << data.points.size() << "\n";
+        file << "property float x\n";
+        file << "property float y\n";
+        file << "property float z\n";
+
+        if (hasNormals)
+        {
+            file << "property float nx\n";
+            file << "property float ny\n";
+            file << "property float nz\n";
+        }
+
+        if (hasFaces)
+        {
+            file << "element face " << data.indexBuffer.size() << "\n";
+            // uchar count (always 3 for triangles) + uint per index
+            file << "property list uchar uint vertex_indices\n";
+        }
+
+        file << "end_header\n";
+
+        // --------------------------------------------------------
+        // 2. Pack vertex data into a contiguous buffer
+        //
+        // One large write is far faster than per-vertex or per-float writes.
+        // We use memcpy to move float bytes — avoids strict-aliasing UB.
+        //
+        // NOTE: This writes floats in native byte order. We declare
+        // binary_little_endian in the header, which is correct on x86/x64.
+        // On a big-endian host you would need to byte-swap each value.
+        // --------------------------------------------------------
+
+        {
+            const size_t floatsPerVertex = hasNormals ? 6 : 3;
+            const size_t vertexBytes = data.points.size() * floatsPerVertex * sizeof(float);
+
+            std::vector<u8> buf(vertexBytes);
+            u8* ptr = buf.data();
+
+            for (size_t i = 0; i < data.points.size(); i++)
+            {
+                const glm::vec3& p = data.points[i];
+                std::memcpy(ptr, &p.x, 4); ptr += 4;
+                std::memcpy(ptr, &p.y, 4); ptr += 4;
+                std::memcpy(ptr, &p.z, 4); ptr += 4;
+
+                if (hasNormals)
+                {
+                    const glm::vec3& n = data.normals[i];
+                    std::memcpy(ptr, &n.x, 4); ptr += 4;
+                    std::memcpy(ptr, &n.y, 4); ptr += 4;
+                    std::memcpy(ptr, &n.z, 4); ptr += 4;
+                }
+            }
+
+            file.write(reinterpret_cast<const char*>(buf.data()), (std::streamsize)buf.size());
+        }
+
+        // --------------------------------------------------------
+        // 3. Pack face data into a contiguous buffer
+        //
+        // Each triangle on disk: [03][i0][i1][i2]
+        //   1 byte  — vertex count as uchar (always 3)
+        //  12 bytes — three u32 indices
+        //  = 13 bytes per face
+        // --------------------------------------------------------
+
+        if (hasFaces)
+        {
+            constexpr size_t bytesPerFace = 1 + 3 * sizeof(u32); // = 13
+            const size_t faceBytes = data.indexBuffer.size() * bytesPerFace;
+
+            std::vector<u8> buf(faceBytes);
+            u8* ptr = buf.data();
+
+            for (const glm::uvec3& tri : data.indexBuffer)
+            {
+                *ptr++ = 3; // vertex count — uchar, always 3 for triangles
+                std::memcpy(ptr, &tri.x, 4); ptr += 4;
+                std::memcpy(ptr, &tri.y, 4); ptr += 4;
+                std::memcpy(ptr, &tri.z, 4); ptr += 4;
+            }
+
+            file.write(reinterpret_cast<const char*>(buf.data()), (std::streamsize)buf.size());
+        }
+
+        if (!file.good())
+        {
+            GEOLOGERROR("SavePLY: write error for: " << path);
+            return false;
+        }
+
+        return true;
+    }
+
     void SaveGeometry(const std::filesystem::path& path, const GeometryDumpData& data)
     {
         const FileType type = GetFileType(path);
@@ -829,12 +960,16 @@ namespace geo::io
         {
             case FileType::OBJ:
             {
-                SaveOBJ(path, data);
+                if (!SaveOBJ(path, data)) {
+                    GEOLOGERROR("SaveGeometry failed to save OBJ file: " << path);
+                }
                 return;
             }
             case FileType::PLY:
             {
-                GEOLOGERROR("PLY saving not implemented yet");
+                if (!SavePLY(path, data)) {
+                    GEOLOGERROR("SaveGeometry failed to save PLY file: " << path);
+                }
                 return;
             }
             default:

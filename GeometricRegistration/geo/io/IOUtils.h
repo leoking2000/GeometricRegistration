@@ -42,11 +42,13 @@ namespace geo::io
 	bool FileExists(const std::filesystem::path& path);
 	FileType GetFileType(const std::filesystem::path& path);
 	std::string GetFileName(const std::filesystem::path& path);
+	std::filesystem::path GetParentFolder(const std::filesystem::path& filePath);
 
 	GeometryDumpData LoadOBJ(const std::filesystem::path& path);
 	GeometryDumpData LoadPLY(const std::filesystem::path& path);
 	GeometryDumpData LoadGeometry(const std::filesystem::path& path);
 
 	bool SaveOBJ(const std::filesystem::path& path, const GeometryDumpData& data);
+	bool SavePLY(const std::filesystem::path& path, const GeometryDumpData& data);
 	void SaveGeometry(const std::filesystem::path& path, const GeometryDumpData& data);
 }
