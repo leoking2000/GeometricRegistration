@@ -104,7 +104,7 @@ static void TestDF()
     std::cout << "==== DistanceField Test ====\n";
 
     // 1. Create input data
-    std::cout << "Loading Mesh.................\n";
+    std::cout << "Loading Mesh...\n";
 
     //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
     //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
@@ -124,7 +124,7 @@ static void TestDF()
 
     geo::DistanceField df(params);
 
-    std::cout << "Building Distance Field.................";
+    std::cout << "Building Distance Field......";
     geo::TimingStat buildTime;
 
     geo::TimePoint startBuild = geo::Clock::now();
@@ -135,7 +135,9 @@ static void TestDF()
     std::cout << "Mesh Name: " << mesh.FileName() << "\n";
     std::cout << "Number of Points: " << mesh.VertexCount()  << "\n";
     std::cout << "Number of Triangles: " << mesh.TriangleCount() << "\n";
-    std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n";
+    std::cout << "DF Resolution: " << params.resolution << "\n";
+    std::cout << "DF Max Distance: " << params.max_distance << "\n";
+    std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
 
     // 3. Query test (1M samples)
     const geo::u32 NUM_QUERIES = 1000000u;
@@ -157,7 +159,7 @@ static void TestDF()
     std::cout << "Query Time (1M): " << queryStat.ToString() << "\n";
 
     // 4. Sanity check
-    std::cout << "Zero-ish test: " << df(mesh.Vertex(0)) << "\n";
+    std::cout << "Zero-ish test: " << df(mesh.Vertex(0) + 0.1f * mesh.Normal(0)) << "\n";
 
     std::cout << "Far test: " << df(glm::vec3(100, 100, 100)) << "\n";
     std::cout << "Accumulated Value (ignore): " << sum << "\n";

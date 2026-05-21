@@ -20,7 +20,7 @@ namespace test
     ICPTestCase PartialOverlap(const geo::PointCloud3D& target, const geo::RigidTransform& T,
         std::function<bool(const glm::vec3&)> keep, const std::string& name)
     {
-        assert(keepRatio > 0.0f && keepRatio <= 1.0f);
+        //assert(keepRatio > 0.0f && keepRatio <= 1.0f);
 
         geo::PointCloud3D source = target;
         source.Transform(T);

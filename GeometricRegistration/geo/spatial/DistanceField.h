@@ -10,6 +10,7 @@ namespace geo
         glm::vec3& out_closestPoint,  f32& out_distance,
         const glm::vec3& p,
         const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
+        const glm::vec3& faceNormal,
         f32 maxDist = F32_MAX);
 
     bool closestPointToTriangleByIndex(
@@ -68,15 +69,15 @@ namespace geo
     class DistanceField
     {
     public:
+        DistanceField() = default;
         DistanceField(const DistanceFieldParameters& params);
-    
     public:
         void Build(const Mesh& mesh);
     public:
         f32 operator()(const glm::vec3& q) const;
     private:
         void Expand(const Mesh& mesh);
-        void Compact();
+        void computeSignAndCompact(const Mesh& mesh);
     private:
         // Convert 3D coordinate to hash key
         // Pack 3D coordinate into a 64-bit key

@@ -7,6 +7,7 @@ namespace geo
     bool closestPointToTriangle(glm::vec3& out_closestPoint, f32& out_distance,
         const glm::vec3& p, 
         const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
+        const glm::vec3& faceNormal,
         f32 maxDist)
     {
         glm::vec3 ab = b - a;
@@ -14,7 +15,6 @@ namespace geo
         glm::vec3 ap = p - a;
 
         // 1. Calculate distance from the triangle plane and Early Exit
-        glm::vec3 faceNormal = glm::normalize(glm::cross(ab, ac));
         f32 distToPlane = glm::dot(p - a, faceNormal);
         if (glm::abs(distToPlane) >= maxDist)
         {
@@ -120,7 +120,6 @@ namespace geo
 
         // 8. Face Region
         f32 sum = va + vb + vc;
-        if (glm::abs(sum) < 1e-12f) return false;
         f32 denom = 1.0f / sum;
         f32 v = vb * denom;
         f32 w = vc * denom;
@@ -141,27 +140,22 @@ namespace geo
         const glm::vec3& b  = mesh.TriangleVertex(tri, 1);
         const glm::vec3& c  = mesh.TriangleVertex(tri, 2);
 
-        return closestPointToTriangle(out_closestPoint, out_distance, p, a, b, c, maxDist);
+        const glm::vec3& fn = mesh.Triangle(tri).faceNormal;
+
+        return closestPointToTriangle(out_closestPoint, out_distance, p, a, b, c, fn, maxDist);
     }
 
     void DFCell::addTriangle(index_t tri)
     {
         glm::vec3 cp;
-        f32 dist;
+        f32 dist = F32_MAX;
 
         if (closestPointToTriangleByIndex(cp, dist, m_center, tri, *m_mesh, IsOccupied() ? m_distance : FLT_MAX))
         {
-            if (m_distance > glm::abs(dist))
+            if (m_distance > dist)
             {
                 m_tri = tri;
-                m_distance = glm::abs(dist);
-
-                const glm::vec3& a = m_mesh->TriangleVertex(tri, 0);
-                const glm::vec3& b = m_mesh->TriangleVertex(tri, 1);
-                const glm::vec3& c = m_mesh->TriangleVertex(tri, 2);
-
-                glm::vec3 faceNormal = glm::normalize(glm::cross(b - a, c - a));
-                m_sign = glm::dot(m_center - cp, faceNormal) >= 0.0f ? 1.0f : -1.0f;
+                m_distance = dist;
             }      
         }
     }
@@ -209,7 +203,9 @@ namespace geo
             trb.ExpandBy(tri[1]);
             trb.ExpandBy(tri[2]);
 
-            const f32 expand = m_cellSize * 0.51f;
+            // 1.866 ~ worst-case distance from a voxel center to any point influencing a triangle (vertex/edge/face cases).
+            // Derived from the maximal voxel-to-triangle feature coverage bound in a unit cube (ensures full narrow-band inclusion without missing candidates).
+            const f32 expand = m_cellSize * 1.866f;
 
             i32 i_start = (i32)std::floor((trb.Min().x - expand - m_box.Min().x) / m_cellSize);
             i32 j_start = (i32)std::floor((trb.Min().y - expand - m_box.Min().y) / m_cellSize);
@@ -243,7 +239,6 @@ namespace geo
             }
         }
 
-        glm::vec3 q;
         std::unordered_map<u64, DFCell, U64Hash> clean;
         for (auto& p : m_cells)
         {
@@ -254,24 +249,24 @@ namespace geo
         m_cells = std::move(clean);
 
         Expand(mesh);
-        Compact();
+        computeSignAndCompact(mesh);
     }
 
     f32 DistanceField::operator()(const glm::vec3& q) const
     {
-        glm::vec3 a = (q - m_box.Min()) / m_cellSize;
-        if (a.x < 0 || a.y < 0 || a.z < 0) return m_max_dist;
+        glm::vec3 grid = (q - m_box.Min()) / m_cellSize;
+        glm::ivec3 coord = glm::floor(grid);
 
-        glm::uvec3 coord(u32(a.x), u32(a.y), u32(a.z));
-        if (coord.x >= u32(m_dims.x) || coord.y >= u32(m_dims.y) || coord.z >= u32(m_dims.z))
-            return m_max_dist;
+        if (coord.x < 0 || coord.y < 0 || coord.z < 0) return m_max_dist;
 
-        u64 key = Hash(coord);
-        auto cellp = m_compact_cells.find(key);
-        if (cellp == m_compact_cells.end())
-            return m_max_dist;
+        if (coord.x >= m_dims.x || coord.y >= m_dims.y || coord.z >= m_dims.z) return m_max_dist;
 
-        return cellp->second;
+        u64 key = Hash(glm::uvec3(coord));
+        auto it = m_compact_cells.find(key);
+
+        if (it != m_compact_cells.end()) return it->second;
+
+        return m_max_dist;
     }
 
     void DistanceField::Expand(const Mesh& mesh)
@@ -285,13 +280,13 @@ namespace geo
         {
             for (auto& c : boundary)
             {
-                i32 i_low  = std::max(0           , c.second.Coord().x - 1);
+                i32 i_low = std::max(0, c.second.Coord().x - 1);
                 i32 i_high = std::min(m_dims.x - 1, c.second.Coord().x + 1);
 
-                i32 j_low  = std::max(0          , c.second.Coord().y - 1);
+                i32 j_low = std::max(0, c.second.Coord().y - 1);
                 i32 j_high = std::min(m_dims.y - 1, c.second.Coord().y + 1);
 
-                i32 k_low  = std::max(0           , c.second.Coord().z - 1);
+                i32 k_low = std::max(0, c.second.Coord().z - 1);
                 i32 k_high = std::min(m_dims.z - 1, c.second.Coord().z + 1);
 
                 for (i32 k = k_low; k <= k_high; k++)
@@ -328,9 +323,9 @@ namespace geo
                             {
                                 glm::vec3 cp;
                                 f32 dist = FLT_MAX;
-
+                                
                                 closestPointToTriangleByIndex(cp, dist, pos, c.second.ClosestTriangleIndex(), mesh, F32_MAX);
-
+                                
                                 if (glm::abs(dist) < glm::abs(iter->second.Distance()) && glm::abs(dist) < m_max_dist)
                                 {
                                     newCell.addTriangle(c.second.ClosestTriangleIndex());
@@ -354,13 +349,18 @@ namespace geo
         } while (changed);
     }
 
-    void DistanceField::Compact()
+    void DistanceField::computeSignAndCompact(const Mesh& mesh)
     {
         for (auto& cell : m_cells)
         {
+            glm::vec3 cp;
             f32 dist;
-            dist = cell.second.Distance();
-            m_compact_cells[cell.first] = dist;
+            closestPointToTriangleByIndex(cp, dist, cell.second.Center(), cell.second.ClosestTriangleIndex(), mesh, F32_MAX);
+
+            const glm::vec3& faceNormal = mesh.Triangle(cell.second.ClosestTriangleIndex()).faceNormal;
+            f32 sign = (glm::dot(faceNormal, cell.second.Center() - cp) >= 0.0f) ? 1.0f : -1.0f;
+
+            m_compact_cells[cell.first] = dist * sign;
         }
 
         m_cells.clear();
