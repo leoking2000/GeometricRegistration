@@ -139,6 +139,9 @@ static void TestDF()
     std::cout << "DF Max Distance: " << params.max_distance << "\n";
     std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
 
+    df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
+    geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
+
     // 3. Query test (1M samples)
     const geo::u32 NUM_QUERIES = 1000000u;
 

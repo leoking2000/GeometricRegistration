@@ -1,4 +1,5 @@
 #pragma once
+#include <filesystem>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <geo/geometry/Mesh.h>
@@ -17,7 +18,7 @@ namespace geo
         glm::vec3& out_closestPoint, f32& out_distance,
         const glm::vec3& p,
         index_t tri, const Mesh& mesh,
-        f32 maxDist);
+        f32 maxDist = F32_MAX);
 
     // Structure to hold the data of the DF cell during DF estimation.
     class DFCell
@@ -27,14 +28,13 @@ namespace geo
         DFCell(const glm::vec3& center, const glm::ivec3& coord, const Mesh* mesh)
             : 
             m_center(center), m_coord(coord), m_mesh(mesh),
-            m_distance(F32_MAX), m_tri(INVALID_INDEX), m_sign(1.0f)
+            m_distance(F32_MAX), m_tri(INVALID_INDEX)
         {}
     public:
         void addTriangle(index_t tri);
     public:
         inline bool IsOccupied() const { return m_mesh != nullptr && m_tri != INVALID_INDEX && m_tri < m_mesh->TriangleCount(); };
-        inline f32 Distance() const { return m_distance * m_sign; };
-        inline void SetSign(bool isPossitive) { m_sign = (isPossitive) ? 1.0f : -1.0f; }
+        inline f32 Distance() const { return m_distance; };
         inline const glm::vec3& Center() const { return m_center; };
         inline const glm::ivec3& Coord() const { return m_coord; };
         inline const index_t& ClosestTriangleIndex() const { return m_tri; }
@@ -42,7 +42,6 @@ namespace geo
         glm::vec3 m_center = glm::vec3(0.0f);
         glm::ivec3 m_coord = glm::ivec3(0);
         f32 m_distance = F32_MAX;
-        f32 m_sign = 1.0f;
     private:
         index_t m_tri = INVALID_INDEX;
         const Mesh* m_mesh = nullptr;
@@ -73,8 +72,12 @@ namespace geo
         DistanceField(const DistanceFieldParameters& params);
     public:
         void Build(const Mesh& mesh);
-    public:
         f32 operator()(const glm::vec3& q) const;
+    public:
+        // Saves the built SDF to a compact binary file for fast reloading.
+        bool Save(const std::filesystem::path& path) const;
+        // Loads a previously saved SDF binary. Returns false if file is invalid.
+        static bool Load(const std::filesystem::path& path, DistanceField& out);
     private:
         void Expand(const Mesh& mesh);
         void computeSignAndCompact(const Mesh& mesh);
@@ -88,11 +91,11 @@ namespace geo
         }
     private:
         BBox m_box;
-        glm::ivec3 m_dims;
-        u32 m_resolution;
-        f32 m_cellSize;
+        glm::ivec3 m_dims{0};
+        u32 m_resolution = 0u;
+        f32 m_cellSize = 0.0f;
     private:
-        f32 m_max_dist;
+        f32 m_max_dist = F32_MAX;
         std::unordered_map<u64, DFCell, U64Hash> m_cells;
         std::unordered_map<u64, f32, U64Hash> m_compact_cells;
     };

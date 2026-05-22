@@ -1,5 +1,7 @@
 #include <cassert>
+#include <fstream>
 #include <geo/utils/logging/LogMacros.h>
+#include <geo/io/IOUtils.h>
 #include "DistanceField.h"
 
 namespace geo
@@ -185,10 +187,14 @@ namespace geo
 
         // rehash map
         m_cells.rehash(2048);
+        m_compact_cells.rehash(2048);
     }
 
     void DistanceField::Build(const Mesh& mesh)
     {
+        m_cells.clear();
+        m_compact_cells.clear();
+
         // loop through every triagnle
         for (index_t t = 0; t < mesh.TriangleCount(); t++)
         {
@@ -203,8 +209,9 @@ namespace geo
             trb.ExpandBy(tri[1]);
             trb.ExpandBy(tri[2]);
 
-            // 1.866 ~ worst-case distance from a voxel center to any point influencing a triangle (vertex/edge/face cases).
-            // Derived from the maximal voxel-to-triangle feature coverage bound in a unit cube (ensures full narrow-band inclusion without missing candidates).
+            // 1.866 ~ worst-case distance from a voxel center to any point influencing a triangle
+            // Derived from the maximal voxel-to-triangle feature coverage bound in a unit cube
+            // half cell diagonal — conservative
             const f32 expand = m_cellSize * 1.866f;
 
             i32 i_start = (i32)std::floor((trb.Min().x - expand - m_box.Min().x) / m_cellSize);
@@ -269,6 +276,7 @@ namespace geo
         return m_max_dist;
     }
 
+
     void DistanceField::Expand(const Mesh& mesh)
     {
         std::unordered_map<u64, DFCell, U64Hash> boundary = m_cells; // TODO: just have a std::vector<u64> for the boundary???
@@ -312,7 +320,7 @@ namespace geo
                             {
                                 newCell.addTriangle(c.second.ClosestTriangleIndex());
 
-                                if (glm::abs(newCell.Distance()) > m_max_dist)
+                                if (newCell.Distance() > m_max_dist)
                                 {
                                     continue;
                                 }
@@ -326,7 +334,7 @@ namespace geo
                                 
                                 closestPointToTriangleByIndex(cp, dist, pos, c.second.ClosestTriangleIndex(), mesh, F32_MAX);
                                 
-                                if (glm::abs(dist) < glm::abs(iter->second.Distance()) && glm::abs(dist) < m_max_dist)
+                                if (dist < iter->second.Distance() && dist < m_max_dist)
                                 {
                                     newCell.addTriangle(c.second.ClosestTriangleIndex());
                                     frontier[key] = newCell;
@@ -364,5 +372,152 @@ namespace geo
         }
 
         m_cells.clear();
+    }
+
+    // ============================================================
+    // Binary serialization
+    //
+    // Format:
+    //   [4]  magic "GSDF"
+    //   [4]  version = 1
+    //   [12] box min (3 × f32)
+    //   [12] box max (3 × f32)
+    //   [12] dims    (3 × i32)
+    //   [4]  resolution (u32)
+    //   [4]  cellSize   (f32)
+    //   [4]  max_dist   (f32)
+    //   [8]  cell count (u64)
+    //   [N × 12] cells: u64 key + f32 distance
+    // ============================================================
+
+    static constexpr u32 SDF_MAGIC = 0x46445347; // "GSDF"
+    static constexpr u32 SDF_VERSION = 1;
+
+    bool DistanceField::Save(const std::filesystem::path& path) const
+    {
+        if (m_compact_cells.empty())
+        {
+            GEOLOGERROR("Save: SDF not built yet (no compact cells)");
+            return false;
+        }
+
+        std::ofstream file(path, std::ios::binary);
+        if (!file.is_open())
+        {
+            GEOLOGERROR("Save: failed to open: " << path);
+            return false;
+        }
+
+
+        // Header
+        file.write(reinterpret_cast<const char*>(&SDF_MAGIC), 4);
+        file.write(reinterpret_cast<const char*>(&SDF_VERSION), 4);
+
+        glm::vec3 bmin = m_box.Min();
+        glm::vec3 bmax = m_box.Max();
+        file.write(reinterpret_cast<const char*>(&bmin), 12);
+        file.write(reinterpret_cast<const char*>(&bmax), 12);
+        file.write(reinterpret_cast<const char*>(&m_dims), 12);
+        file.write(reinterpret_cast<const char*>(&m_resolution), 4);
+        file.write(reinterpret_cast<const char*>(&m_cellSize), 4);
+        file.write(reinterpret_cast<const char*>(&m_max_dist), 4);
+
+        // Cells
+        u64 count = m_compact_cells.size();
+        file.write(reinterpret_cast<const char*>(&count), 8);
+
+        // Pack all cells into one buffer
+        const size_t bytesPerCell = sizeof(u64) + sizeof(f32);
+        std::vector<u8> buf(count * bytesPerCell);
+        u8* ptr = buf.data();
+
+        for (const auto& [key, dist] : m_compact_cells)
+        {
+            std::memcpy(ptr, &key, 8); ptr += 8;
+            std::memcpy(ptr, &dist, 4); ptr += 4;
+        }
+
+        file.write(reinterpret_cast<const char*>(buf.data()), (std::streamsize)buf.size());
+
+        if (!file.good())
+        {
+            GEOLOGERROR("Save: write error for: " << path);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool DistanceField::Load(const std::filesystem::path& path, DistanceField& out)
+    {
+        std::ifstream file(path, std::ios::binary);
+        if (!file.is_open())
+        {
+            GEOLOGERROR("Load: failed to open: " << path);
+            return false;
+        }
+
+        // Validate magic and version
+        u32 magic = 0, version = 0;
+        file.read(reinterpret_cast<char*>(&magic), 4);
+        file.read(reinterpret_cast<char*>(&version), 4);
+
+        if (magic != SDF_MAGIC)
+        {
+            GEOLOGERROR("Load: not a valid SDF file (bad magic)");
+            return false;
+        }
+        if (version != SDF_VERSION)
+        {
+            GEOLOGERROR("Load: unsupported SDF version " << version);
+            return false;
+        }
+
+        // Read grid parameters
+        out = DistanceField();  // default construct
+
+        glm::vec3 bmin, bmax;
+        file.read(reinterpret_cast<char*>(&bmin), 12);
+        file.read(reinterpret_cast<char*>(&bmax), 12);
+        file.read(reinterpret_cast<char*>(&out.m_dims), 12);
+        file.read(reinterpret_cast<char*>(&out.m_resolution), 4);
+        file.read(reinterpret_cast<char*>(&out.m_cellSize), 4);
+        file.read(reinterpret_cast<char*>(&out.m_max_dist), 4);
+
+        out.m_box = BBox(bmin, bmax);
+
+        // Read cells
+        u64 count = 0;
+        file.read(reinterpret_cast<char*>(&count), 8);
+
+        if (!file.good())
+        {
+            GEOLOGERROR("Load: read error in header");
+            return false;
+        }
+
+        const size_t bytesPerCell = sizeof(u64) + sizeof(f32);
+        std::vector<u8> buf(count * bytesPerCell);
+        file.read(reinterpret_cast<char*>(buf.data()), (std::streamsize)buf.size());
+
+        if (!file.good())
+        {
+            GEOLOGERROR("Load: read error in cell data");
+            return false;
+        }
+
+        out.m_compact_cells.rehash(2048);
+        out.m_compact_cells.reserve(count);
+
+        const u8* ptr = buf.data();
+        for (u64 i = 0; i < count; i++)
+        {
+            u64 key;  f32 dist;
+            std::memcpy(&key, ptr, 8); ptr += 8;
+            std::memcpy(&dist, ptr, 4); ptr += 4;
+            out.m_compact_cells.emplace(key, dist);
+        }
+
+        return true;
     }
 }

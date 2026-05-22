@@ -137,4 +137,17 @@ namespace geo
 
 		return std::acos(cos_theta);
 	}
+
+	// Returns the geodesic distance between two transforms in SE(3).
+	// Rotation component: angle of relative rotation (radians)
+	// Translation component: Euclidean distance between translations
+	inline void Distance(const RigidTransform& A, const RigidTransform& B,
+		f32& out_rotAngle, f32& out_transDist)
+	{
+		// Relative rotation: R_rel = A.R^T * B.R
+		// If A == B, R_rel == I and angle == 0
+		glm::mat3 R_rel = glm::transpose(A.rotation) * B.rotation;
+		out_rotAngle = RotationAngle(R_rel);
+		out_transDist = glm::distance(A.translation, B.translation);
+	}
 }
