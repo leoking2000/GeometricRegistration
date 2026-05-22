@@ -100,7 +100,7 @@ static void TestICP()
 
 static void TestDF()
 {
-    geo::SetLogLevel(geo::LogLevel::LOG_DEBUG);
+    geo::SetLogLevel(geo::LogLevel::LOG_VERBOSE);
     std::cout << "==== DistanceField Test ====\n";
 
     // 1. Create input data
@@ -118,13 +118,16 @@ static void TestDF()
 
     geo::DistanceFieldParameters params;
     params.bounding_box = mesh.BoundingBox();
-    params.resolution = 256;
+    params.resolution = 128;
     // set the maximum radius to be 1/4 the diagonal of the mesh
     params.max_distance = 0.25f * glm::length(params.bounding_box.Max() - params.bounding_box.Min());
 
+    //geo::f32 cellSize = mesh.BoundingBox().MaxSize() / params.resolution;
+    //params.max_distance = cellSize * 5.0f;
+
     geo::DistanceField df(params);
 
-    std::cout << "Building Distance Field......";
+    std::cout << "Building Distance Field......\n";
     geo::TimingStat buildTime;
 
     geo::TimePoint startBuild = geo::Clock::now();
@@ -139,8 +142,8 @@ static void TestDF()
     std::cout << "DF Max Distance: " << params.max_distance << "\n";
     std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
 
-    df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
-    geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
+    //df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
+    //geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
 
     // 3. Query test (1M samples)
     const geo::u32 NUM_QUERIES = 1000000u;

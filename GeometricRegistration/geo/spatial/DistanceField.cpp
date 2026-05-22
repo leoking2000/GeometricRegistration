@@ -1,8 +1,15 @@
 #include <cassert>
 #include <fstream>
 #include <geo/utils/logging/LogMacros.h>
+#include <geo/utils/GeoTime.h>
 #include <geo/io/IOUtils.h>
 #include "DistanceField.h"
+
+
+#ifdef DF_PARALLEL_BUILD
+#pragma warning( disable : 6993 )
+#include <omp.h>
+#endif
 
 namespace geo
 {
@@ -147,6 +154,15 @@ namespace geo
         return closestPointToTriangle(out_closestPoint, out_distance, p, a, b, c, fn, maxDist);
     }
 
+    void DFCell::SetResult(index_t tri, f32 dist)
+    {
+        if (dist < m_distance)
+        {
+            m_tri = tri;
+            m_distance = dist;
+        }
+    }
+
     void DFCell::addTriangle(index_t tri)
     {
         glm::vec3 cp;
@@ -194,6 +210,92 @@ namespace geo
     {
         m_cells.clear();
         m_compact_cells.clear();
+
+#ifdef DF_PARALLEL_BUILD
+
+        TimePoint TriangleStart = Clock::now();
+
+        // Each thread owns its own cell map — no sharing, no locks
+        const int numThreads = omp_get_max_threads();
+        std::vector<std::unordered_map<u64, DFCell, U64Hash>> threadMaps(numThreads);
+        for (auto& m : threadMaps) {
+            m.rehash(2048);
+        }
+
+        const f32 expand = m_cellSize * 1.866f; // half cell diagonal — conservative
+
+        // paralize over every triagnle
+        #pragma omp parallel for schedule(dynamic, 64)
+        for (int t = 0; t < (int)mesh.TriangleCount(); t++)
+        {
+            const int tid = omp_get_thread_num();
+            auto& localMap = threadMaps[tid];
+
+            const glm::vec3& v0 = mesh.TriangleVertex(t, 0);
+            const glm::vec3& v1 = mesh.TriangleVertex(t, 1);
+            const glm::vec3& v2 = mesh.TriangleVertex(t, 2);
+
+            BBox trb;
+            trb.ExpandBy(v0);
+            trb.ExpandBy(v1);
+            trb.ExpandBy(v2);
+
+            i32 i_start = (i32)std::floor((trb.Min().x - expand - m_box.Min().x) / m_cellSize);
+            i32 j_start = (i32)std::floor((trb.Min().y - expand - m_box.Min().y) / m_cellSize);
+            i32 k_start = (i32)std::floor((trb.Min().z - expand - m_box.Min().z) / m_cellSize);
+
+            i32 i_stop = (i32)std::floor((trb.Max().x + expand - m_box.Min().x) / m_cellSize);
+            i32 j_stop = (i32)std::floor((trb.Max().y + expand - m_box.Min().y) / m_cellSize);
+            i32 k_stop = (i32)std::floor((trb.Max().z + expand - m_box.Min().z) / m_cellSize);
+
+            i_start = glm::clamp(i_start, 0, m_dims.x - 1); i_stop = glm::clamp(i_stop, 0, m_dims.x - 1);
+            j_start = glm::clamp(j_start, 0, m_dims.y - 1); j_stop = glm::clamp(j_stop, 0, m_dims.y - 1);
+            k_start = glm::clamp(k_start, 0, m_dims.z - 1); k_stop = glm::clamp(k_stop, 0, m_dims.z - 1);
+
+            for (i32 k = k_start; k <= k_stop; k++)
+            {
+                for (i32 j = j_start; j <= j_stop; j++)
+                {
+                    for (i32 i = i_start; i <= i_stop; i++)
+                    {
+                        glm::uvec3 coords((u32)i, (u32)j, (u32)k);
+                        u64 key = Hash(coords);
+
+                        auto it = localMap.find(key);
+                        if (it == localMap.end())
+                        {
+                            glm::vec3 center = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
+                            it = localMap.emplace(key, DFCell(center, coords, &mesh)).first;
+                        }
+                        it->second.addTriangle(t);
+                    }
+                }
+            }
+        }
+
+        // Serial merge — take minimum distance across all thread maps
+        for (auto& localMap : threadMaps)
+        {
+            for (auto& [key, cell] : localMap)
+            {
+                auto it = m_cells.find(key);
+                if (it == m_cells.end())
+                {
+                    m_cells.emplace(key, std::move(cell));
+                }
+                else if (std::fabs(cell.Distance()) < std::fabs(it->second.Distance()))
+                {
+                    it->second = std::move(cell);
+                }
+            }
+        }
+
+        TimePoint TriangleEnd = Clock::now();
+        GEOLOGVERBOSE("Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
+
+        ExpandSeiral(mesh);
+#else
+        TimePoint TriangleStart = Clock::now();
 
         // loop through every triagnle
         for (index_t t = 0; t < mesh.TriangleCount(); t++)
@@ -255,7 +357,12 @@ namespace geo
         }
         m_cells = std::move(clean);
 
-        Expand(mesh);
+        TimePoint TriangleEnd = Clock::now();
+        GEOLOGVERBOSE("Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
+
+        ExpandSeiral(mesh);
+#endif
+
         computeSignAndCompact(mesh);
     }
 
@@ -276,26 +383,40 @@ namespace geo
         return m_max_dist;
     }
 
-
-    void DistanceField::Expand(const Mesh& mesh)
+    void DistanceField::ExpandSeiral(const Mesh& mesh)
     {
-        std::unordered_map<u64, DFCell, U64Hash> boundary = m_cells; // TODO: just have a std::vector<u64> for the boundary???
+        TimingStat expandTime;
+
+        TimePoint start = Clock::now();
+
+        std::vector<u64> boundary;
         std::unordered_map<u64, DFCell, U64Hash> frontier;
+
+        boundary.reserve(m_cells.size());
+        for (auto& p : m_cells) {
+            boundary.push_back(p.first);  
+        }
 
         bool changed = false;
 
         do
         {
-            for (auto& c : boundary)
+            TimePoint start_loop = Clock::now();
+
+            for (u64 bkey : boundary)
             {
-                i32 i_low = std::max(0, c.second.Coord().x - 1);
-                i32 i_high = std::min(m_dims.x - 1, c.second.Coord().x + 1);
+                const DFCell& bc        = m_cells.at(bkey);
+                const glm::ivec3& coord = bc.Coord();
+                const index_t     btri  = bc.ClosestTriangleIndex();
 
-                i32 j_low = std::max(0, c.second.Coord().y - 1);
-                i32 j_high = std::min(m_dims.y - 1, c.second.Coord().y + 1);
+                i32 i_low  = std::max(0           , coord.x - 1);
+                i32 i_high = std::min(m_dims.x - 1, coord.x + 1);
 
-                i32 k_low = std::max(0, c.second.Coord().z - 1);
-                i32 k_high = std::min(m_dims.z - 1, c.second.Coord().z + 1);
+                i32 j_low  = std::max(0           , coord.y - 1);
+                i32 j_high = std::min(m_dims.y - 1, coord.y + 1);
+
+                i32 k_low  = std::max(0           , coord.z - 1);
+                i32 k_high = std::min(m_dims.z - 1, coord.z + 1);
 
                 for (i32 k = k_low; k <= k_high; k++)
                 {
@@ -306,39 +427,34 @@ namespace geo
                             glm::uvec3 coords((u32)i, (u32)j, (u32)k);
                             u64 key = Hash(coords);
 
-                            if (key == c.first)
+                            // we skip ourselfs
+                            if (key == bkey) {
                                 continue;
+                            }
 
-                            if (m_cells.find(key) != m_cells.end())
+                            // we skip already processed cells
+                            if (m_cells.find(key) != m_cells.end()) {
                                 continue;
+                            }
 
                             glm::vec3 pos = m_box.Min() + m_cellSize * glm::vec3(i + 0.5f, j + 0.5f, k + 0.5f);
-                            DFCell newCell = DFCell(pos, coords, &mesh);
+
+                            glm::vec3 cp;
+                            f32 dist = FLT_MAX;
+                            if (!closestPointToTriangleByIndex(cp, dist, pos, btri, mesh, m_max_dist)) {
+                                continue;
+                            }
 
                             auto iter = frontier.find(key);
                             if (iter == frontier.end()) // the cell does not exits 
                             {
-                                newCell.addTriangle(c.second.ClosestTriangleIndex());
-
-                                if (newCell.Distance() > m_max_dist)
-                                {
-                                    continue;
-                                }
-
-                                frontier[key] = newCell;
+                                DFCell newCell(pos, coords, &mesh);
+                                newCell.SetResult(btri, dist);
+                                frontier.emplace(key, std::move(newCell));
                             }
                             else // the cell already exits
                             {
-                                glm::vec3 cp;
-                                f32 dist = FLT_MAX;
-                                
-                                closestPointToTriangleByIndex(cp, dist, pos, c.second.ClosestTriangleIndex(), mesh, F32_MAX);
-                                
-                                if (dist < iter->second.Distance() && dist < m_max_dist)
-                                {
-                                    newCell.addTriangle(c.second.ClosestTriangleIndex());
-                                    frontier[key] = newCell;
-                                }
+                                iter->second.SetResult(btri, dist);
                             }
                         }
                     }
@@ -349,12 +465,26 @@ namespace geo
             {
                 m_cells[p.first] = p.second;
             }
-
             changed = frontier.size() > 0;
-            boundary = std::move(frontier);
+
+            boundary.clear();
+            for (auto& p : frontier) {
+                boundary.push_back(p.first);
+            }
 
             frontier.clear();
+
+            expandTime.AddSample(TimeDifferenceMs(Clock::now(), start_loop));
+
         } while (changed);
+
+        TimePoint end = Clock::now();
+        GEOLOGVERBOSE("Total Time of Expand(): " << TimeDifferenceMs(end, start) << "ms\n" << expandTime.ToString());
+    }
+
+    void DistanceField::ExpandParaller(const Mesh& mesh)
+    {
+
     }
 
     void DistanceField::computeSignAndCompact(const Mesh& mesh)

@@ -4,6 +4,7 @@
 #include <glm/glm.hpp>
 #include <geo/geometry/Mesh.h>
 
+#define DF_PARALLEL_BUILD
 
 namespace geo
 {
@@ -32,6 +33,7 @@ namespace geo
         {}
     public:
         void addTriangle(index_t tri);
+        void SetResult(index_t tri, f32 dist);
     public:
         inline bool IsOccupied() const { return m_mesh != nullptr && m_tri != INVALID_INDEX && m_tri < m_mesh->TriangleCount(); };
         inline f32 Distance() const { return m_distance; };
@@ -79,7 +81,8 @@ namespace geo
         // Loads a previously saved SDF binary. Returns false if file is invalid.
         static bool Load(const std::filesystem::path& path, DistanceField& out);
     private:
-        void Expand(const Mesh& mesh);
+        void ExpandSeiral(const Mesh& mesh);
+        void ExpandParaller(const Mesh& mesh);
         void computeSignAndCompact(const Mesh& mesh);
     private:
         // Convert 3D coordinate to hash key
