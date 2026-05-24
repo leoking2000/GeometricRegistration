@@ -29,5 +29,4 @@ namespace geo
 
     inline constexpr f32 F32_MAX = std::numeric_limits<f32>::max();
     inline constexpr f64 F64_MAX = std::numeric_limits<f64>::max();
-
 }

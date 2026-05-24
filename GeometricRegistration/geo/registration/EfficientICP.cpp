@@ -121,33 +121,33 @@ namespace geo
 
             TimePoint startESA = Clock::now();
 
-            float cost = EnhancedSimulatedAnnealingPlus(
-                6,                   // the dimensionality of the search space. 
-                1,                   // the dimensionality of the partitioning subspace (subdim <= dim).
-                NULL,                // x_init, random initial starting point.
-                x_candidate,         // the returned variable vector.
-                x_min,               // the minimum x values vector.
-                x_max,               // the maximum x values vector. 
-                step_fraction,       // a vector defining the maximum ( normalized ) jump for each variable.
-                wraparound,          // a flag vector, ( 1=wrap, 0=truncate )
-                ESACostFunction,     // pointer the cost function to be minimized.
-                // pointer a monitoring function.
-                [](float* x, float e) {  
-                    GEOLOGVERBOSE("cost: " << e << " [" << x[0] << ", " << x[1] << ", " << x[2] << ", " << 
-                                                           x[3] << ", " << x[4] << ", " << x[5] << ", ");
-                },             
-                params.esaIterations // maximum itaerations.
-            );
+            //float cost = EnhancedSimulatedAnnealingPlus(
+            //    6,                   // the dimensionality of the search space. 
+            //    1,                   // the dimensionality of the partitioning subspace (subdim <= dim).
+            //    NULL,                // x_init, random initial starting point.
+            //    x_candidate,         // the returned variable vector.
+            //    x_min,               // the minimum x values vector.
+            //    x_max,               // the maximum x values vector. 
+            //    step_fraction,       // a vector defining the maximum ( normalized ) jump for each variable.
+            //    wraparound,          // a flag vector, ( 1=wrap, 0=truncate )
+            //    ESACostFunction,     // pointer the cost function to be minimized.
+            //    // pointer a monitoring function.
+            //    [](float* x, float e) {  
+            //        GEOLOGVERBOSE("cost: " << e << " [" << x[0] << ", " << x[1] << ", " << x[2] << ", " << 
+            //                                               x[3] << ", " << x[4] << ", " << x[5] << ", ");
+            //    },             
+            //    params.esaIterations // maximum itaerations.
+            //);
 
             TimePoint endESA = Clock::now();
 
             totalESATime.AddSample(TimeDifferenceMs(endESA, startESA));
 
-            if (cost < bestCost)
-            {
-                bestCost = cost;
-                memcpy(x_best, x_candidate, sizeof(float) * 6);
-            }
+            //if (cost < bestCost)
+            //{
+            //    bestCost = cost;
+            //    memcpy(x_best, x_candidate, sizeof(float) * 6);
+            //}
         }
 
         // 3. Convert x → transform T0
