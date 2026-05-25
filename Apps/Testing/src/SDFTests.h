@@ -322,3 +322,78 @@ TEST(ClosestPointToTriangle, DegenerateTriangleReturnsFalse)
     (void)hit;
     SUCCEED();  // just testing it doesn't crash
 }
+
+// ESATest
+
+TEST(ESATest, RecoverKnownTransform)
+{
+    // 1. Load or build a mesh
+    geo::Mesh mesh = MakeSphereMesh(1.0f, 32, 32);
+
+    // 2. Build SDF on the target
+    geo::DistanceFieldParameters dfParams;
+    dfParams.bounding_box = mesh.BoundingBox();
+    dfParams.bounding_box.ExpandByAbsolute(1.0f);
+
+    geo::f32 cellSize = mesh.BoundingBox().MaxSize() / 64.0f;
+
+    dfParams.resolution = 64;
+    dfParams.max_distance = cellSize * 30.0f;
+
+    geo::DistanceField df(dfParams);
+    df.Build(mesh);
+
+    // 3. Sample source points from the same mesh
+    geo::Random rng(42);
+    geo::PointCloud3D src = mesh.SamplePointsUniform(512, rng, false);
+
+    // 4. Apply a known small transform to the source
+    glm::vec3 knownTranslation(-1.9f, -1.25f, 1.15f);
+    geo::f32  knownRotation = glm::radians(30.0f);  // small rotation around Y
+
+    glm::mat4 Ry = glm::rotate(glm::mat4(1.0f), knownRotation, glm::vec3(0, 1, 0));
+    geo::RigidTransform knownT{ glm::mat3(Ry), knownTranslation };
+    src.Transform(knownT);
+
+    // 5. Run ESA to recover the transform
+    // Search space covers the known perturbation with margin
+    geo::ESAParameters params;
+
+    params.seed = 42;
+    params.subDim = 1;
+    params.maxIterations = 5000;
+
+    params.searchSpace.translationMin = dfParams.bounding_box.Min();
+    params.searchSpace.translationMax = dfParams.bounding_box.Max();
+    //params.searchSpace.rotationMin = glm::vec3(-glm::radians(60.0f));
+    //params.searchSpace.rotationMax = glm::vec3(glm::radians(60.0f));
+
+    //geo::ESAResult result = MultiStartESA(params, src, df, 3);
+    geo::ESAResult result = RunESA(params, src, df);
+
+    // 6. The recovered transform should bring src back close to the surface
+    // We verify by transforming src points with the result and checking
+    // average SDF value is near zero
+    geo::f32 avgDist = 0.0f;
+    geo::u32 count = 0;
+    for (geo::index_t i = 0; i < src.Size(); i++)
+    {
+        glm::vec3 tp = result.transform.TransformPoint(src.Point(i));
+        geo::f32 d = df(tp);
+        if (glm::abs(d) < df.GetMaxDist())
+        {
+            avgDist += glm::abs(d);
+            count++;
+        }
+    }
+
+    ASSERT_GT(count, 0u) << "No points landed inside the narrow band";
+    avgDist /= count;
+
+    // Average distance to surface after alignment should be small
+    // relative to cell size — within 2 cells is a good threshold
+    EXPECT_LT(avgDist, cellSize * 2.0f) << "ESA did not recover the transform - avg surface distance too large";
+
+    // RMSE should be small
+    EXPECT_LT(result.rmse, cellSize * 2.0f) << "RMSE is too large";
+}

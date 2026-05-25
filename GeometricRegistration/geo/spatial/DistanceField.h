@@ -75,6 +75,7 @@ namespace geo
     public:
         void Build(const Mesh& mesh);
         f32 operator()(const glm::vec3& q) const;
+        inline f32 GetMaxDist() const { return m_max_dist; }
     public:
         // Saves the built SDF to a compact binary file for fast reloading.
         bool Save(const std::filesystem::path& path) const;

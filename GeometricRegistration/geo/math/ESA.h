@@ -46,33 +46,49 @@ namespace geo
         RigidTransform transform = {};
         f32  rmse = 0.0;
 
-        f64 totalTime = 0.0f;
+        f64 totalTime = 0.0;
     };
 
     struct ESASearchSpace
     {
-        glm::vec3 translationMin;         // the minimum of the translation vector.
-        glm::vec3 translationMax;         // the maximum of the translation vector.
+        glm::vec3 translationMin{};         // the minimum of the translation vector.
+        glm::vec3 translationMax{};         // the maximum of the translation vector.
 
-        // the minimum of the rotation vector.
+        // Euler angle limits (radians) in ZYX convention.
+        // Z is half-range [-pi/2, pi/2] to avoid gimbal singularity at poles.
         glm::vec3 rotationMin = { -glm::pi<f32>(), -glm::pi<f32>(), -glm::half_pi<f32>() };
-
-        // the maximum of the rotation vector.
         glm::vec3 rotationMax = { glm::pi<f32>(),  glm::pi<f32>(),  glm::half_pi<f32>() };
 
-        f32 translationStep = 0.1f;       // defining the maximum ( normalized ) jump for translation
-        f32 rotationStep = 0.05f;         // defining the maximum ( normalized ) jump for rotation
+        // Normalized step size: fraction of the search range perturbed per move.
+        // Translation and rotation are tuned separately.
+        f32 translationStep = 0.1f;
+        f32 rotationStep = 0.05f;
+
+        // Full rotation search — use when you have no prior on orientation
+        static ESASearchSpace FullRotation(const BBox& meshBBox)
+        {
+            ESASearchSpace s;
+            glm::vec3 size = meshBBox.Size();
+            s.translationMin = -size;
+            s.translationMax = size;
+            // rotationMin/Max already default to full range
+            return s;
+        }
     };
 
     struct ESAParameters
     {        
-        u32 seed          = 0u;           // the Random seed used
-        u8  subDim        = 1u;           // the dimensionality of the partitioning subspace (subDim <= 6).
-        u32 maxIterations = 2000;         // maximum itaerations.
+        u32 seed          = 2026u;                  // RNG seed — change for multi-run experiments
+        u8  subDim        = 1u;                     // the dimensionality of the partitioning subspace (subDim <= 6).
+        u32 maxIterations = 2000;                   // maximum itaerations.
 
-        ESARigidTransform init{0.0f};     // initial starting point.
-        ESASearchSpace searchSpace;       // the search space.
+        ESARigidTransform initialTransform{0.0f};   // initial starting point/transform — identity by default.
+        ESASearchSpace searchSpace;                 // the search space.
     };
 
-    ESAResult RunESA(ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df);
+    // Runs ESA global optimization to align src points onto the target mesh
+    // represented by df. Returns the best rigid transform found.
+    ESAResult RunESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df);
+    ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, const PointCloud3D& src, const DistanceField& df);
+    ESAResult MultiStartESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df, u32 numRuns);
 }
