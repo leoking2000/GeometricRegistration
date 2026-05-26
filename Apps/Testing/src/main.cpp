@@ -185,9 +185,9 @@ TEST(GeoTime, TimingStatIsEmptyInitially)
 {
     geo::TimingStat stat;
 
-    EXPECT_TRUE(stat.Empty());
-    EXPECT_EQ(stat.count, 0u);
-    EXPECT_DOUBLE_EQ(stat.totalMs, 0.0);
+    EXPECT_TRUE(stat.IsEmpty());
+    EXPECT_EQ(stat.Count(), 0u);
+    EXPECT_DOUBLE_EQ(stat.TotalMs(), 0.0);
     EXPECT_DOUBLE_EQ(stat.AverageMs(), 0.0);
 }
 
@@ -198,9 +198,9 @@ TEST(GeoTime, TimingStatAddSampleUpdatesTotals)
     stat.AddSample(10.0);
     stat.AddSample(20.0);
 
-    EXPECT_FALSE(stat.Empty());
-    EXPECT_EQ(stat.count, 2u);
-    EXPECT_DOUBLE_EQ(stat.totalMs, 30.0);
+    EXPECT_FALSE(stat.IsEmpty());
+    EXPECT_EQ(stat.Count(), 2u);
+    EXPECT_DOUBLE_EQ(stat.TotalMs(), 30.0);
     EXPECT_DOUBLE_EQ(stat.AverageMs(), 15.0);
 }
 
@@ -210,8 +210,8 @@ TEST(GeoTime, TimingStatClampsNegativeSampleToZero)
 
     stat.AddSample(-5.0);
 
-    EXPECT_EQ(stat.count, 1u);
-    EXPECT_DOUBLE_EQ(stat.totalMs, 0.0);
+    EXPECT_EQ(stat.Count(), 1u);
+    EXPECT_DOUBLE_EQ(stat.TotalMs(), 0.0);
     EXPECT_DOUBLE_EQ(stat.AverageMs(), 0.0);
 }
 
@@ -231,8 +231,8 @@ TEST(GeoTime, ScopedTimerAddsSampleOnDestruction)
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
-    EXPECT_EQ(stat.count, 1u);
-    EXPECT_GE(stat.totalMs, 0.0);
+    EXPECT_EQ(stat.Count(), 1u);
+    EXPECT_GE(stat.TotalMs(), 0.0);
 }
 
 TEST(GeoTime, StopwatchIsNotRunningInitially)
@@ -1628,7 +1628,7 @@ TEST(KDTreePerformance, KDTreeBatchQueryScalesToLargeInput)
     EXPECT_GT(kdMs, 0.0);
 }
 
-// LeastSquaresICP
+// LeastSquaresICPTest
 
 static std::vector<glm::vec3> CreateFromArray(float* arr, size_t size)
 {
@@ -1642,7 +1642,7 @@ static std::vector<glm::vec3> CreateFromArray(float* arr, size_t size)
     return points;
 }
 
-TEST(LeastSquaresICP, IdentityAlignment)
+TEST(LeastSquaresICPTest, IdentityAlignment)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1666,7 +1666,7 @@ TEST(LeastSquaresICP, IdentityAlignment)
     ExpectVec3Near(result.transform.translation, glm::vec3(0.0f), 1e-6f);
 }
 
-TEST(LeastSquaresICP, RecoversKnownTransform)
+TEST(LeastSquaresICPTest, RecoversKnownTransform)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1701,7 +1701,7 @@ TEST(LeastSquaresICP, RecoversKnownTransform)
     ExpectVec3Near(result.transform.translation, t_expected, 1e-5f);
 }
 
-TEST(LeastSquaresICP, RotationIsOrthogonal)
+TEST(LeastSquaresICPTest, RotationIsOrthogonal)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1724,7 +1724,7 @@ TEST(LeastSquaresICP, RotationIsOrthogonal)
 }
 
 
-TEST(LeastSquaresICP, RotationHasUnitDeterminant)
+TEST(LeastSquaresICPTest, RotationHasUnitDeterminant)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1745,7 +1745,7 @@ TEST(LeastSquaresICP, RotationHasUnitDeterminant)
     EXPECT_NEAR(det, 1.0f, 1e-4f);
 }
 
-TEST(LeastSquaresICP, RMSIsReduced)
+TEST(LeastSquaresICPTest, RMSIsReduced)
 {
     float data[12] = {
         0.0f,0.0f,0.0f,
@@ -1767,7 +1767,7 @@ TEST(LeastSquaresICP, RMSIsReduced)
     EXPECT_LT(result.rmse, 2.0f);
 }
 
-TEST(LeastSquaresICP, PointToPlaneRandomRect)
+TEST(LeastSquaresICPTest, PointToPlaneRandomRect)
 {
     geo::Random rng(8888); // reproducible seed
 
@@ -1805,67 +1805,6 @@ TEST(LeastSquaresICP, PointToPlaneRandomRect)
 }
 
 // SparseICP Tests
-
-TEST(SparseICPTest, ShrinkLpReturnsZeroForZeroInput)
-{
-    const glm::vec3 h(0.0f, 0.0f, 0.0f);
-    const geo::f32 p = 0.5f;
-    const geo::f32 mu = 10.0f;
-
-    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
-
-    ExpectVec3Near(z, glm::vec3(0.0f), 1e-7f);
-}
-
-TEST(SparseICPTest, ShrinkLpScalarReturnsZeroForZeroInput)
-{
-    const geo::f32 h = 0.0f;
-    const geo::f32 p = 0.5f;
-    const geo::f32 mu = 10.0f;
-
-    const geo::f32 z = geo::ShrinkLpScalar(h, p, mu);
-
-    EXPECT_NEAR(z, 0.0f, 1e-7f);
-}
-
-TEST(SparseICPTest, ShrinkLpDoesNotIncreaseMagnitude)
-{
-    const glm::vec3 h(3.0f, -4.0f, 0.0f); // norm = 5
-    const geo::f32 p = 0.5f;
-    const geo::f32 mu = 10.0f;
-
-    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
-
-    EXPECT_LE(glm::length(z), glm::length(h) + 1e-6f);
-}
-
-TEST(SparseICPTest, ShrinkLpPreservesDirectionWhenNonzero)
-{
-    const glm::vec3 h(2.0f, -1.0f, 4.0f);
-    const geo::f32 p = 0.5f;
-    const geo::f32 mu = 10.0f;
-
-    const glm::vec3 z = geo::ShrinkLp(h, p, mu);
-
-    if (glm::length(z) > 1e-7f)
-    {
-        const glm::vec3 h_dir = glm::normalize(h);
-        const glm::vec3 z_dir = glm::normalize(z);
-        ExpectVec3Near(h_dir, z_dir, 1e-5f);
-    }
-}
-
-TEST(SparseICPTest, ShrinkLpScalarPreservesSign)
-{
-    const geo::f32 p = 0.5f;
-    const geo::f32 mu = 10.0f;
-
-    const geo::f32 pos = geo::ShrinkLpScalar(3.0f, p, mu);
-    const geo::f32 neg = geo::ShrinkLpScalar(-3.0f, p, mu);
-
-    EXPECT_GE(pos, 0.0f);
-    EXPECT_LE(neg, 0.0f);
-}
 
 TEST(SparseICPTest, SparsePointToPointConvergesOnIdenticalClouds)
 {

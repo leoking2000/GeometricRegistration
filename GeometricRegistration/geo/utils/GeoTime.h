@@ -36,7 +36,7 @@ namespace geo
         // Number of samples recorded.
         u32 Count() const { return m_count; }
         // Returns true if no samples have been recorded.
-        bool IsEmpty() const { m_count == 0; };
+        bool IsEmpty() const { return m_count == 0; };
         // Produces a human-readable summary string of timing statistics.
         // Format:
         // count=<N> total=<X>ms avg=<Y>ms

@@ -6,13 +6,20 @@
 
 namespace geo
 {   
-    ICPResult EfficientICP(const PointCloud3D& target, PointCloud3D& source, const PointCloud3D& subSource, 
+    ICPResult EfficientICP(const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource, 
         const INearestNeighbor& nn,
         const DistanceField& df, const EfficientICPParams& params)
     {
+        // Create mutable working copy of source cloud.
+        // ICP progressively transforms this cloud toward the target.
+        PointCloud3D src = source;
+
         TimePoint startTotal = Clock::now();
 
-        // 1. Create the ESAParameters
+        // ------------------------------------------------------------
+        // 1. Configure ESA global optimization parameters
+        // ------------------------------------------------------------
+
         ESAParameters esa_parames = {};
 
         esa_parames.maxIterations = params.esaIterations;
@@ -20,7 +27,9 @@ namespace geo
 
         esa_parames.searchSpace = ESASearchSpace::FullRotation(target.ComputeBoundingBox());
 
-        // 2. Run ESA of the subsample of source
+        // ------------------------------------------------------------
+        // 2. Run ESA on a subsampled source cloud
+        // ------------------------------------------------------------
         ESAResult esa_result = MultiStartESA(esa_parames, 
             [&](float* e) -> float {
             
@@ -30,6 +39,8 @@ namespace geo
             	f64 cost = 0.0;
             	u32 count = 0;
             
+                // We use subSource instead of full source to reduce cost of
+                // expensive distance-field evaluations during global search.
             	for (index_t i = 0; i < subSource.Size(); i++)
             	{
             		glm::vec3 tp = T.TransformPoint(subSource.Point(i));
@@ -50,19 +61,30 @@ namespace geo
             }
             , params.esaRestarts);
         
-        // 3. Apply ESA found transform to source
-        source.Transform(esa_result.transform);
+        // ------------------------------------------------------------
+        // 3. Apply ESA result as initial alignment
+        // ------------------------------------------------------------
 
-        // 4. Run Sparse ICP starting from the ESA found point
-        ICPResult result = geo::SparseICPPointToPlane(target, source, nn, params.icpParams);
+        src.Transform(esa_result.transform);
 
-        // 5. Combine results
+        // ------------------------------------------------------------
+        // 4. Local refinement using Sparse ICP
+        // ------------------------------------------------------------
+
+        ICPResult result = geo::SparseICPPointToPlane(target, src, nn, params.icpParams);
+
+        // ------------------------------------------------------------
+        // 5. Combine global + local transforms
+        // ------------------------------------------------------------
+
         result.transform = RigidTransform::Compose(result.transform, esa_result.transform);
 
-        // 4. Return result
+        // ------------------------------------------------------------
+        // 6. Total timing
+        // ------------------------------------------------------------
+
         TimePoint endTotal = Clock::now();
-        result.totalTime = TimeDifferenceMs(endTotal, startTotal);
-        //result.totalESATime = esa_result.totalTime;
+        result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
 
         return result;
     }

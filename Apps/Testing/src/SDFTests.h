@@ -368,8 +368,31 @@ TEST(ESATest, RecoverKnownTransform)
     //params.searchSpace.rotationMin = glm::vec3(-glm::radians(60.0f));
     //params.searchSpace.rotationMax = glm::vec3(glm::radians(60.0f));
 
-    //geo::ESAResult result = MultiStartESA(params, src, df, 3);
-    geo::ESAResult result = RunESA(params, src, df);
+    geo::ESAResult result = RunESA(params, [&df, &src](float* e) -> float {
+       const geo::RigidTransform T = geo::ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5] });
+       const geo::f32 maxDist = df.GetMaxDist();
+       
+       geo::f64 cost = 0.0;
+       geo::u32 count = 0;
+       
+       for (geo::index_t i = 0; i < src.Size(); i++)
+       {
+           glm::vec3 tp = T.TransformPoint(src.Point(i));
+           geo::f32 d = df(tp);
+       
+           if (glm::abs(d) < maxDist)
+           {
+               cost += d * d;
+               count++;
+           }
+       }
+       
+       if (count == 0) {
+           return maxDist * maxDist;
+       }
+
+        return float(cost / (geo::f64)count);
+    });
 
     // 6. The recovered transform should bring src back close to the surface
     // We verify by transforming src points with the result and checking
@@ -395,5 +418,5 @@ TEST(ESATest, RecoverKnownTransform)
     EXPECT_LT(avgDist, cellSize * 2.0f) << "ESA did not recover the transform - avg surface distance too large";
 
     // RMSE should be small
-    EXPECT_LT(result.rmse, cellSize * 2.0f) << "RMSE is too large";
+    EXPECT_LT(result.cost, cellSize * 2.0f) << "RMSE is too large";
 }

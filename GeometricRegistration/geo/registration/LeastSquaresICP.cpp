@@ -1,47 +1,62 @@
 #include <geo/utils/logging/LogMacros.h>
-#include "math/Solvers.h"
-#include "math/Stats.h"
+#include <geo/math/Solvers.h>
+#include <geo/math/Stats.h>
 #include "LeastSquaresICP.h"
 
 namespace geo
 {
 	ICPResult LeastSquaresICP(
-		const PointCloud3D& target, PointCloud3D& source, const INearestNeighbor& nn, const LeastSquaresICPParameters& params)
+		const PointCloud3D& target, const PointCloud3D& source, 
+		const INearestNeighbor& nn, const LeastSquaresICPParameters& params)
 	{
-		assert(source.Size() >= 3);
+		// Create mutable working copy of source cloud.
+		// ICP progressively transforms this cloud toward the target.
+		PointCloud3D src = source;
+
+		// Basic parameter validation.
+		assert(src.Size() >= 3);
 		assert(target.Size() == nn.Size());
 		assert(params.maxIterations >= 1);
 		assert(params.tolerance > 0.0f);
+
+		// Point-to-plane ICP requires target normals.
 		assert((params.useNormals && target.HasNormals()) || !params.useNormals);
 
 		TimePoint startTotal = Clock::now();
 
-		const bool usePointToPlane = params.useNormals && target.HasNormals();
+		const bool usePointToPlane = params.useNormals && target.HasNormals(); // Select ICP variant.
 
-		const index_t numberOfPoints = source.Size();
+		const index_t numberOfPoints = src.Size();
 
 		ICPResult result;
 		result.transform = RigidTransform::Identity();
 
-		f32 prevError = F32_MAX;
+		f32 prevError = F32_MAX; // Previous iteration error used for convergence test.
 
+		// Correspondence index buffer:
+		// correspondences[i] = nearest target point for source point i.
 		std::vector<index_t> correspondences(numberOfPoints, 0);
 
+		// Target correspondence positions.
 		std::vector<glm::vec3> targets(numberOfPoints, { 0.0f, 0.0f, 0.0f });
-		std::vector<glm::vec3> normals;
+		std::vector<glm::vec3> normals; // Target normals used only for point-to-plane ICP.
 
 		if (usePointToPlane) {
 			normals.resize(numberOfPoints, { 1.0f, 0.0f, 0.0f });
 		}
 
+		// Main ICP iteration loop.
 		for (u32 iter = 0; iter < params.maxIterations; iter++)
 		{
 			TimePoint startTime = Clock::now();
 
-			// Find correspondences 
+			// ------------------------------------------------------------
+			// 1. Find nearest-neighbor correspondences
+			// ------------------------------------------------------------
+
 			TimePoint startCorrTime = Clock::now();
 
-			nn.QueryBatch(source.GetPoints(), correspondences);
+			nn.QueryBatch(src.GetPoints(), correspondences);
 
 			TimePoint endCorrTime = Clock::now();
 			result.correspondenceSearchTime.AddSample(TimeDifferenceMs(endCorrTime, startCorrTime));
@@ -54,46 +69,63 @@ namespace geo
 					normals[t] = target.Normal(correspondences[t]);
 				}
 			}
-			
-			// Solve System
+
+			// ------------------------------------------------------------
+			// 2. Solve rigid alignment
+			// ------------------------------------------------------------
+
 			TimePoint startSolveTime = Clock::now();
 
 			RigidTransform localTransform = RigidTransform::Identity();
-
 			if(usePointToPlane)
 			{
-				localTransform = SolveRigidPointToPlane(source.GetPoints(), targets, normals);
+				// Point-to-plane least squares solve.
+				localTransform = SolveRigidPointToPlane(src.GetPoints(), targets, normals);
 			}
 			else
 			{
-				localTransform = SolveRigidPointToPoint(source.GetPoints(), targets);
+				// Classic point-to-point SVD solve.
+				localTransform = SolveRigidPointToPoint(src.GetPoints(), targets);
 			}
 
 			TimePoint endSolveTime = Clock::now();
 			result.alignmentSolveTime.AddSample(TimeDifferenceMs(endSolveTime, startSolveTime));
 
 
-			// Apply transform
-			source.Transform(localTransform);
+			// ------------------------------------------------------------
+			// 3. Apply incremental transform
+			// ------------------------------------------------------------
+
+			src.Transform(localTransform);
+			// Accumulate total transform:
+			// new_total = local * previous_total
 			result.transform = RigidTransform::Compose(localTransform, result.transform);
 
-			// Compute RMS
+			// ------------------------------------------------------------
+			// 4. Compute current registration error
+			// ------------------------------------------------------------
+
 			if (usePointToPlane)
 			{
-				result.rmse = PointToPlaneRMSE(source.GetPoints(), targets, normals);
+				result.rmse = PointToPlaneRMSE(src.GetPoints(), targets, normals);
 			}
 			else
 			{
-				result.rmse = PointToPointRMSE(source.GetPoints(), targets);
+				result.rmse = PointToPointRMSE(src.GetPoints(), targets);
 			}
 
-			// converged check
+			// ------------------------------------------------------------
+			// 5. Convergence checks
+			// ------------------------------------------------------------
 			
-			// Compute motion magnitude
+			// Magnitude of incremental translation update.
 			const f32 transNorm = glm::length(localTransform.translation);
+			// Magnitude of incremental rotational update.
 			const f32 rotAngle = RotationAngle(localTransform.rotation);
 
+			// Converged if transform update is very small.
 			const bool smallMotion = (transNorm < params.transTolerance) && (rotAngle < params.rotTolerance);
+			// Converged if RMSE improvement becomes negligible.
 			const bool smallErrorChange = std::abs(prevError - result.rmse) < params.tolerance;
 
 			prevError = result.rmse;
@@ -102,11 +134,13 @@ namespace geo
 			TimePoint endTime = Clock::now();
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-			GEOLOGDEBUG("iter: " << iter + 1
+			// VERBOSE iteration statistics.
+			GEOLOGVERBOSE("iter: " << iter + 1
 					 << " rmse: " << result.rmse
 				     << " trans: " << transNorm
 				     << " rot: " << rotAngle << "\n");
 
+			// Stop once both geometric motion and error change are small.
 			if (smallMotion && smallErrorChange)
 			{
 				result.converged = true;
@@ -115,7 +149,7 @@ namespace geo
 		}
 
 		TimePoint endTotal = Clock::now();
-		result.totalTime = TimeDifferenceMs(endTotal, startTotal);
+		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal); // Final total ICP runtime in milliseconds.
 
 		return result;
 	}
