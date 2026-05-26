@@ -1,12 +1,16 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
-#include <utils/GeoTypes.h>
+#include <geo/utils/GeoTypes.h>
 
 namespace geo
 {
-    // Indexes an external point array by reference.
-    // The referenced points must outlive this object.
+    // Abstract interface for nearest-neighbor search structures.
+    //
+    // This class operates over an *externally owned* point set:
+    // - It does NOT store or own the point data.
+    // - It assumes the referenced point array remains valid for the lifetime
+    //   of the implementation.
     class INearestNeighbor
     {
     public:

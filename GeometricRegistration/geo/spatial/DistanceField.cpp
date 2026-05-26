@@ -482,10 +482,10 @@ namespace geo
         GEOLOGVERBOSE("Total Time of Expand(): " << TimeDifferenceMs(end, start) << "ms\n" << expandTime.ToString());
     }
 
-    void DistanceField::ExpandParaller(const Mesh& mesh)
-    {
-
-    }
+    //void DistanceField::ExpandParaller(const Mesh& mesh)
+    //{
+    //
+    //}
 
     void DistanceField::computeSignAndCompact(const Mesh& mesh)
     {
