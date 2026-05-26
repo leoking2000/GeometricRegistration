@@ -7,12 +7,18 @@
 
 #pragma warning( disable : 6993 4244 4305)
 
+// Utility macros for min/max (kept local to avoid std dependency in legacy ESA code)
 #define mymin(a,b) (((a)<=(b))?(a):(b))
 #define mymax(a,b) (((a)>=(b))?(a):(b))
 
+// Random float helper using injected RNG instance
 #define frand() rng.Float(0.0f, 1.0f)
 
-// Partitioning procedure for the ESA algorithm
+// ------------------------------------------------------------
+// Partitioning procedure for ESA
+// Selects a subset of variables (subdim out of dim) to perturb
+// while maintaining balanced exploration across dimensions.
+// ------------------------------------------------------------
 static void Partitioning(long n, long p, long* p_index, long* p_accum, geo::Random& rng)
 {
 	long i;
@@ -53,6 +59,11 @@ static void Partitioning(long n, long p, long* p_index, long* p_accum, geo::Rand
 	}
 }
 
+// ------------------------------------------------------------
+// Enhanced Simulated Annealing Plus (ESA+)
+// Core optimization routine operating on a bounded continuous
+// search space with adaptive temperature and step control.
+// ------------------------------------------------------------
 float EnhancedSimulatedAnnealingPlus
 (long dim, long subdim, float* x_init, float* x_best,
 	float* x_min, float* x_max, float* step_fraction,
@@ -441,7 +452,7 @@ namespace geo
 
 		// 3. Return Result
 		result.transform = ConvertToRigidTransform(x_best);
-		result.rmse = glm::sqrt(cost);
+		result.cost = glm::sqrt(cost);
 		result.totalTime = TimeDifferenceMs(Clock::now(), start);
 
         return result;
@@ -459,7 +470,7 @@ namespace geo
 		}
 
 		auto best = std::min_element(results.begin(), results.end(),
-			[](const ESAResult& a, const ESAResult& b) { return a.rmse < b.rmse; });
+			[](const ESAResult& a, const ESAResult& b) { return a.cost < b.cost; });
 
 		ESAResult winner = *best;
 		winner.totalTime = TimeDifferenceMs(Clock::now(), start);

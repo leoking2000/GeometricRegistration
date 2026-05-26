@@ -36,11 +36,15 @@ float EnhancedSimulatedAnnealingPlus
 
 namespace geo
 {
-    // the RigidTransform define as [0..2]:translation | [3..5]:euler angles radians
+    // Layout:
+    // x[0..2] = translation
+    // x[3..5] = Euler angles (radians)
     using ESARigidTransform = std::array<f32, 6>;
 
+    // Converts 6D ESA parameter vector into a rigid transform
     RigidTransform ConvertToRigidTransform(const ESARigidTransform& x);
 
+    // Search space definition for ESA optimization
     struct ESASearchSpace
     {
         glm::vec3 translationMin{};         // the minimum of the translation vector.
@@ -57,10 +61,10 @@ namespace geo
         f32 rotationStep = 0.05f;
 
         // Full rotation search — use when you have no prior on orientation
-        static ESASearchSpace FullRotation(const BBox& meshBBox)
+        static ESASearchSpace FullRotation(const BBox& box)
         {
             ESASearchSpace s;
-            glm::vec3 size = meshBBox.Size();
+            glm::vec3 size = box.Size();
             s.translationMin = -size;
             s.translationMax = size;
             // rotationMin/Max already default to full range
@@ -68,6 +72,7 @@ namespace geo
         }
     };
 
+    // ESA configuration parameters
     struct ESAParameters
     {        
         u32 seed          = 2026u;                  // RNG seed — change for multi-run experiments
@@ -78,19 +83,21 @@ namespace geo
         ESASearchSpace searchSpace;                 // the search space.
     };
 
+    // ESA result container
     struct ESAResult
     {
         RigidTransform transform = {};
-        f32  rmse = 0.0;
+        f32 cost = 0.0;
 
-        f64 totalTime;
+        f64 totalTime = 0.0;
     };
 
-    // Runs ESA global optimization to align src points onto the target mesh
-    // represented by df. Returns the best rigid transform found.
-    ESAResult RunESA(const ESAParameters& params, std::function<float(float*)> cost);
+    // Runs ESA optimization for rigid transform estimation
+    ESAResult RunESA(const ESAParameters& params, std::function<float(float*)> costfn);
 
-    ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, std::function<float(float*)> cost);
+    // Runs multiple ESA configurations in parallel and selects best result
+    ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, std::function<float(float*)> costdf);
 
-    ESAResult MultiStartESA(const ESAParameters& params, std::function<float(float*)> cost, u32 numRuns);
+    // Multi-start ESA with randomized seeds
+    ESAResult MultiStartESA(const ESAParameters& params, std::function<float(float*)> costfn, u32 numRuns);
 }

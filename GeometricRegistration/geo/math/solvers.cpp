@@ -6,6 +6,8 @@ namespace geo
 {
     namespace detail
     {
+        // Converts Eigen 3x3 matrix (column-major) to glm::mat3.
+        // Note: Explicit index mapping is required due to differing conventions.
         static inline glm::mat3 EigenToGlm(const Eigen::Matrix3f& m)
         {
             glm::mat3 result(0.0f);
@@ -16,6 +18,7 @@ namespace geo
             return result;
         }
 
+        // Converts glm::mat3 (column-major storage) to Eigen 3x3 matrix.
         static inline Eigen::Matrix3f GlmToEigen(const glm::mat3& m)
         {
             Eigen::Matrix3f result;
@@ -26,7 +29,6 @@ namespace geo
             return result;
         }
     }
-
 
     SVDResult SVD(const glm::mat3& A)
     {
@@ -177,6 +179,8 @@ namespace geo
         return result;
     }
 
+    // Converts a vector into its corresponding skew-symmetric matrix.
+    // Used for cross product representation: Skew(v) * x = v × x
     static inline glm::mat3 Skew(const glm::vec3& v)
     {
         return glm::mat3{
@@ -186,6 +190,10 @@ namespace geo
         };
     }
 
+    // Rodrigues rotation formula for converting axis-angle vector to rotation matrix.
+    //
+    // omega = axis * angle
+    // Handles small-angle approximation for numerical stability.
     static inline glm::mat3 Rodrigues(const glm::vec3& omega)
     {
         float theta = glm::length(omega);
