@@ -1,4 +1,5 @@
 #include <cassert>
+#include <geo/io/IOUtils.h>
 #include "PointCloud3D.h"
 
 namespace geo
@@ -179,6 +180,48 @@ namespace geo
 				glm::vec3 avgNormal = glm::normalize(voxel.normal);
 				normals.push_back(avgNormal);
 			}
+		}
+
+		return PointCloud3D(std::move(points), std::move(normals));
+	}
+
+	// Converts this point cloud into a generic dump structure for serialization.
+	static io::GeometryDumpData ToDump(const PointCloud3D& pc)
+	{
+		io::GeometryDumpData data;
+
+		data.geometryType = io::GeometryType::POINT_CLOUD;
+		data.fileType = io::FileType::PLY;
+
+		data.points = pc.GetPoints();
+		data.normals = pc.HasNormals() ? pc.GetNormals() : std::vector<glm::vec3>{};
+
+		// Point clouds do not use indices
+		data.indexBuffer.clear();
+
+		return data;
+	}
+
+	void PointCloud3D::Save(const std::filesystem::path& path) const
+	{
+		io::GeometryDumpData data = ToDump(*this);
+
+		data.filePath = path;
+
+		// Delegate actual writing to IO layer (format chosen by extension)
+		io::SavePLY(path, data);
+	}
+
+	PointCloud3D PointCloud3D::Load(const std::filesystem::path & path)
+	{
+		io::GeometryDumpData data = io::LoadGeometry(path);
+
+		std::vector<glm::vec3> points = std::move(data.points);
+		std::vector<glm::vec3> normals;
+
+		if (data.HasNormals())
+		{
+			normals = std::move(data.normals);
 		}
 
 		return PointCloud3D(std::move(points), std::move(normals));

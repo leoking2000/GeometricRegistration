@@ -1,5 +1,6 @@
 #pragma once
 #include <vector>
+#include <filesystem>
 #include <utils/GeoTypes.h>
 #include <math/RigidTransform.h>
 #include <math/BBox.h>
@@ -47,6 +48,13 @@ namespace geo
 	public:
 		// voxel-grid subsampling
 		PointCloud3D PointCloud3D::UniformSubsample(f32 voxelSize) const;
+	public:
+		// Saves the point cloud to disk in a PLY file.
+		void Save(const std::filesystem::path& path) const;
+
+		// Loads a point cloud from disk.
+		// If the file contains triangle data, it will be ignored (point cloud only).
+		static PointCloud3D Load(const std::filesystem::path& path);
 	public:
 		// Iterator support for range-based for loops (read-only)
 		auto begin() const { return m_points.cbegin(); }
