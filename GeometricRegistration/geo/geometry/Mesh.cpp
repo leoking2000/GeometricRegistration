@@ -2,7 +2,10 @@
 #include <cassert>
 #include <limits>
 #include <geo/utils/logging/LogMacros.h>
+#include <geo/io/IOUtils.h>
 #include "Mesh.h"
+
+#pragma warning( disable : 6993)
 
 namespace geo
 {
@@ -140,6 +143,70 @@ namespace geo
         m_vertices = std::move(flatVertices);
         m_normals = std::move(flatNormals);
         m_triangles = std::move(flatTriangles);
+    }
+
+    // Converts Mesh → generic IO container
+    static io::GeometryDumpData ToDump(const Mesh& mesh)
+    {
+        io::GeometryDumpData data;
+
+        data.geometryType = io::GeometryType::TRIANGLE_MESH;
+
+        data.points = mesh.GetVertices();
+
+        if (mesh.GetNormals().size() == mesh.GetVertices().size())
+        {
+            data.normals = mesh.GetNormals();
+        }
+
+        // Reconstruct index buffer from triangles
+        data.indexBuffer.reserve(mesh.TriangleCount());
+
+        for (index_t i = 0; i < mesh.TriangleCount(); ++i)
+        {
+            const TriangleData& tri = mesh.Triangle(i);
+
+            data.indexBuffer.emplace_back(
+                tri.vertexIndices.x,
+                tri.vertexIndices.y,
+                tri.vertexIndices.z
+            );
+        }
+
+        return data;
+    }
+
+    void Mesh::Save(const std::filesystem::path& path) const
+    {
+        io::GeometryDumpData data = ToDump(*this);
+        data.filePath = path;
+        io::SaveGeometry(path, data);
+    }
+
+    Mesh Mesh::Load(const std::filesystem::path& path)
+    {
+        io::GeometryDumpData data = io::LoadGeometry(path);
+
+        // If file contains point cloud only, promote to degenerate mesh
+        if (!data.HasIndices())
+        {
+            GEOLOGERROR("Mesh::Load - file has no index buffer (non-triangle geometry): " << path.string());
+
+            std::vector<glm::uvec3> emptyIndices;
+            return Mesh(
+                data.filePath.string(),
+                std::move(data.points),
+                std::move(emptyIndices),
+                std::move(data.normals)
+            );
+        }
+
+        return Mesh(
+            data.filePath.string(),
+            std::move(data.points),
+            std::move(data.indexBuffer),
+            std::move(data.normals)
+        );
     }
 
     PointCloud3D Mesh::SamplePointsUniform(u32 n, Random& rng, bool includeNormals) const

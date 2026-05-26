@@ -72,7 +72,13 @@ namespace geo
 	public:
 		// Source filename associated with mesh
 		inline const std::string& FileName() const { return m_filename; }
-													   
+
+		// Saves mesh to disk using geo::io system (OBJ / PLY depending on extension)
+		void Save(const std::filesystem::path& path) const;
+
+		// Loads mesh from disk (recomputes derived data internally)
+		static Mesh Load(const std::filesystem::path& path);
+	public:
 		// Vertex positions
 		inline const std::vector<glm::vec3>& GetVertices() const { return m_vertices; }
 		// Vertex normals
@@ -94,6 +100,9 @@ namespace geo
 		std::vector<glm::vec3> m_vertices; // Vertex position buffer
 		std::vector<glm::vec3> m_normals; // Vertex normal buffer
 		std::vector<TriangleData> m_triangles; // Triangle index buffer + cached geometric properties
+
+		// TODO: Add Material data and Trasformation Data
+
 	protected:
 		BBox m_bounding_box; // Cached bounding box of the mesh
 		f64 m_area = 0.0; // Cached total surface area of the mesh
