@@ -35,9 +35,9 @@ namespace test
 
         std::cout << "Total Time: " << r.result.totalTime << "ms\n\n";
 
-        if (r.result.totalESATime.count != 0) {
-            std::cout << "ESA Time: " << r.result.totalESATime.ToString() << "ms\n";
-        }
+        //if (r.result.totalESATime != 0) {
+            //std::cout << "ESA Time: " << r.result.totalESATime << "ms\n";
+        //}
 
         std::cout << "Total ICP Time [" << r.result.totalIterationTime.ToString() << "]\n";
         std::cout << "Correspondence Search Time [" << r.result.correspondenceSearchTime.ToString() << "]\n";

@@ -42,8 +42,7 @@ namespace geo
         if (min == max)
             return min;
 
-        std::uniform_real_distribution<f32> dist(min, max);
-        return dist(m_Rng);
+        return min + m_unit(m_Rng) * (max - min);
     }
 
     glm::vec2 Random::Float2(f32 min, f32 max)
@@ -75,6 +74,7 @@ namespace geo
         f32 z = Float(-1.0f, 1.0f);
         f32 theta = Float(0.0f, glm::two_pi<f32>());
 
+        // Guard: floating point can produce slightly negative values when z = ±1
         f32 r = glm::sqrt(glm::max(0.0f, 1.0f - z * z));
 
         return {

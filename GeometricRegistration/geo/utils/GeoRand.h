@@ -7,6 +7,7 @@ namespace geo
 {
 	/// <summary>
 	/// uses the std::mt19937 engine.
+	/// NOTE: not thread-safe. Each thread must own its own Random instance.
 	/// </summary>
 	class Random final
 	{
@@ -42,5 +43,6 @@ namespace geo
 		glm::vec3 Dir3D(f32 length = 1.0f);
 	private:
 		std::mt19937 m_Rng;
+		std::uniform_real_distribution<f32> m_unit{ 0.0f, 1.0f };
 	};
 }

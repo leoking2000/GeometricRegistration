@@ -45,6 +45,9 @@ namespace geo
 		// - Any previously built spatial acceleration structures (e.g., KD-trees) become invalid.
 		void Transform(const RigidTransform& transform);
 	public:
+		// voxel-grid subsampling
+		PointCloud3D PointCloud3D::UniformSubsample(f32 voxelSize) const;
+	public:
 		// Iterator support for range-based for loops (read-only)
 		auto begin() const { return m_points.cbegin(); }
 		auto end() const { return m_points.cend(); }

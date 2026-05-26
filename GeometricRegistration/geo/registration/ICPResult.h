@@ -19,8 +19,5 @@ namespace geo
         TimingStat totalIterationTime;
         TimingStat correspondenceSearchTime;
         TimingStat alignmentSolveTime;
-
-        //ESA
-        TimingStat totalESATime;
     };
 }

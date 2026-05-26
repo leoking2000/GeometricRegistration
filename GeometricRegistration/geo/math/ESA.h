@@ -41,14 +41,6 @@ namespace geo
 
     RigidTransform ConvertToRigidTransform(const ESARigidTransform& x);
 
-    struct ESAResult
-    {
-        RigidTransform transform = {};
-        f32  rmse = 0.0;
-
-        f64 totalTime = 0.0;
-    };
-
     struct ESASearchSpace
     {
         glm::vec3 translationMin{};         // the minimum of the translation vector.
@@ -86,9 +78,19 @@ namespace geo
         ESASearchSpace searchSpace;                 // the search space.
     };
 
+    struct ESAResult
+    {
+        RigidTransform transform = {};
+        f32  rmse = 0.0;
+
+        f64 totalTime;
+    };
+
     // Runs ESA global optimization to align src points onto the target mesh
     // represented by df. Returns the best rigid transform found.
-    ESAResult RunESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df);
-    ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, const PointCloud3D& src, const DistanceField& df);
-    ESAResult MultiStartESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df, u32 numRuns);
+    ESAResult RunESA(const ESAParameters& params, std::function<float(float*)> cost);
+
+    ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, std::function<float(float*)> cost);
+
+    ESAResult MultiStartESA(const ESAParameters& params, std::function<float(float*)> cost, u32 numRuns);
 }

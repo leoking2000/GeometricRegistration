@@ -4,24 +4,33 @@
 
 namespace geo
 {
+    // Log severity levels used to filter and categorize runtime messages.
+    // Higher numeric value = more verbose output.
     enum class LogLevel : u8
     {
-        LOG_NONE    = 0u,
-        LOG_FATAL   = 1u,
-        LOG_ERROR   = 2u,
-        LOG_WARN    = 3u,
-        LOG_INFO    = 4u,
-        LOG_DEBUG   = 5u,
-        LOG_VERBOSE = 6u
+        LOG_NONE    = 0u,  // No logging output
+        LOG_FATAL   = 1u,  // Critical errors that likely terminate execution
+        LOG_ERROR   = 2u,  // Errors that indicate failure of an operation
+        LOG_WARN    = 3u,  // Potential issues or non-fatal problems
+        LOG_INFO    = 4u,  // General runtime information
+        LOG_DEBUG   = 5u,  // Debugging details for development
+        LOG_VERBOSE = 6u   // Highly detailed trace-level output
     };
 
+    // Returns true if a log message of a given level should be emitted
+    // given the current global log level.
+    //
+    // Behavior:
+    // - LOG_NONE disables all output
+    // - Messages are allowed if level <= current verbosity level
     constexpr inline bool IsLevelActive(LogLevel level, LogLevel current)
     {
         if (current == LogLevel::LOG_NONE) return false;
         return static_cast<u8>(level) <= static_cast<u8>(current);
     }
 
-    // Fixed-width labels for aligned console output
+    // Returns a fixed-width human-readable label for each log level.
+    // These strings are formatted with padding to support aligned console output.
     constexpr inline std::string_view GetLogLevelName(LogLevel level)
     {
         switch (level)

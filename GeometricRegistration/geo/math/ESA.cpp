@@ -373,7 +373,7 @@ namespace geo
         return { glm::mat3(R), t };
     }
 
-	ESAResult RunESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df)
+	ESAResult RunESA(const ESAParameters& params, std::function<float(float*)> costfn)
     {
 		ESAResult result{};
 
@@ -432,32 +432,7 @@ namespace geo
 			step_fraction,        // a vector defining the maximum ( normalized ) jump for each variable.
 			wraparound,           // a flag vector, ( 1=wrap, 0=truncate )
 			// pointer the cost function to be minimized.
-			[&src, &df](float* e) -> float {
-
-				const RigidTransform T = ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5]});
-				const f32 maxDist = df.GetMaxDist();
-
-				f64 cost = 0.0;
-				u32 count = 0;
-
-				for (index_t i = 0; i < src.Size(); i++)
-				{
-					glm::vec3 tp = T.TransformPoint(src.Point(i));
-					f32 d = df(tp);
-
-					if (glm::abs(d) < maxDist)
-					{
-						cost += f64(d) * f64(d);
-						count++;
-					}
-				}
-
-				if (count == 0) {
-					return maxDist * maxDist;
-				}
-
-				return float(cost / (f64)count);
-			},               
+			costfn,              
 			// pointer a monitoring function.
 			NULL,
 			params.maxIterations, // maximum itaerations.
@@ -472,7 +447,7 @@ namespace geo
         return result;
     }
 
-	ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, const PointCloud3D& src, const DistanceField& df)
+	ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, std::function<float(float*)> costfn)
 	{
 		TimePoint start = Clock::now();
 		std::vector<ESAResult> results(configs.size(), {});
@@ -480,7 +455,7 @@ namespace geo
 		#pragma omp parallel for schedule(dynamic)
 		for (int i = 0; i < (int)configs.size(); i++)
 		{
-			results[i] = RunESA(configs[i], src, df);
+			results[i] = RunESA(configs[i], costfn);
 		}
 
 		auto best = std::min_element(results.begin(), results.end(),
@@ -492,7 +467,7 @@ namespace geo
 		return winner;
 	}
 
-	ESAResult MultiStartESA(const ESAParameters& params, const PointCloud3D& src, const geo::DistanceField& df, u32 numRuns)
+	ESAResult MultiStartESA(const ESAParameters& params, std::function<float(float*)> costfn, u32 numRuns)
 	{
 		std::vector<ESAParameters> configs(numRuns, {});
 		for (u32 i = 0; i < numRuns; i++)
@@ -500,7 +475,7 @@ namespace geo
 			configs[i] = params;
 			configs[i].seed = params.seed ^ (i * 2654435761u);
 		}
-		return MultiConfigESA(configs, src, df);
+		return MultiConfigESA(configs, costfn);
 	}
 }
 

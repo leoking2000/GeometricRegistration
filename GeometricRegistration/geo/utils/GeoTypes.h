@@ -27,6 +27,8 @@ namespace geo
     // INVALID_INDEX is a sentinel for APIs that need to report "no valid index".
     inline constexpr index_t INVALID_INDEX = std::numeric_limits<index_t>::max();
 
+    // Numeric limits exposed for convenience and consistency.
+    // Useful in geometry initialization (e.g., bounding boxes, reductions).
     inline constexpr f32 F32_MAX = std::numeric_limits<f32>::max();
     inline constexpr f64 F64_MAX = std::numeric_limits<f64>::max();
 }
