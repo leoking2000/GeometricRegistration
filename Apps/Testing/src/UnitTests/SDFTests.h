@@ -69,7 +69,7 @@ static geo::DistanceField BuildDF(const geo::Mesh& mesh, geo::u32 resolution, ge
 class DistanceFieldTest : public ::testing::Test
 {
 protected:
-    void SetUp() override
+    static void SetUpTestSuite()
     {
         // A sphere with radius 1, centered at origin
         // Analytical SDF: dist(p) = length(p) - 1.0
@@ -79,14 +79,15 @@ protected:
 
         // Tolerance: queries are approximate to within one cell size
         geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
-        m_tol = cellSize * 2.0f;
+        m_tol = cellSize * 1.866f;
     }
 
-    geo::f32   m_radius;
-    geo::Mesh  m_mesh;
-    geo::DistanceField m_df;
-    geo::f32   m_tol;
+    static inline geo::f32           m_radius;
+    static inline geo::Mesh          m_mesh;
+    static inline geo::DistanceField m_df;
+    static inline geo::f32           m_tol;
 };
+
 
 // ============================================================
 // 1. Surface points have distance ~ 0

@@ -10,6 +10,7 @@ namespace geo
     class KDTree : public INearestNeighbor
     {
     public:
+        KDTree() = default;
         explicit KDTree(const std::vector<glm::vec3>& points);
     public:
         // Disable copy

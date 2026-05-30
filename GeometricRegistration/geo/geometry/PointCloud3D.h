@@ -12,6 +12,7 @@ namespace geo
 	class PointCloud3D final
 	{
 	public:
+		PointCloud3D() = default;
 		// Constructor
 		// @param points   Vector of 3D positions (required)
 		// @param normals  Optional vector of normals (must match points size if provided)

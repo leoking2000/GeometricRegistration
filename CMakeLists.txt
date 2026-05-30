@@ -15,13 +15,7 @@ add_subdirectory(thirdparty/tiny_obj_loader) # obj loader
 
 add_subdirectory(thirdparty/googletest)     # unit tests
 
-add_subdirectory(thirdparty/raylib)         # rendering/ui library for Visualization
-
-
-
-
 ##################################
 
 add_subdirectory(GeometricRegistration)
-add_subdirectory(Apps/Project)
 add_subdirectory(Apps/Testing)
