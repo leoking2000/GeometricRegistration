@@ -11,12 +11,14 @@ namespace tests
 	public:
 		TestSuitePSA() = default;
 	public:
+		// Access
+		std::vector<TestCase>& Cases() { return m_cases; }
 		std::size_t Size() const { return m_cases.size(); }
 	public:
 		void Add(const std::string& name, Model* target, geo::RigidTransform groundTruth, 
 			// sampleRatio * vertex_coint = points to sample from the target mesh to build the the synthetic source scan.
 			// sampleRatio = -1 -> use the target point cloud as is, it does not sample the mesh.
-			geo::f32 sampleRatio = 1.0f, 
+			geo::f32 sampleRatio = -1.0f, 
 			geo::f32 overlapRatio = 1.0f, geo::f32 outlierRatio = 0.0f, geo::f32 noiseStdDev = 0.0f,
 			geo::u32 seed = 2026);
 	public:

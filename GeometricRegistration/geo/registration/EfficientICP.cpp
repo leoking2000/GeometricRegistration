@@ -6,7 +6,7 @@
 
 namespace geo
 {   
-    ICPResult EfficientICP(const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource, 
+    EfficientICPResult EfficientICP(const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource,
         const INearestNeighbor& nn,
         const DistanceField& df, const EfficientICPParams& params)
     {
@@ -77,7 +77,7 @@ namespace geo
         // 5. Combine global + local transforms
         // ------------------------------------------------------------
 
-        result.transform = RigidTransform::Compose(result.transform, esa_result.transform);
+        geo::RigidTransform transform = RigidTransform::Compose(result.transform, esa_result.transform);
 
         // ------------------------------------------------------------
         // 6. Total timing
@@ -86,7 +86,7 @@ namespace geo
         TimePoint endTotal = Clock::now();
         result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
 
-        return result;
+        return { transform, result, esa_result };
     }
 
 }

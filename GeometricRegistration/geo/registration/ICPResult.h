@@ -10,13 +10,13 @@ namespace geo
         // Maps source geometry into target space.
         RigidTransform transform = {};
 
-        f64 totalTimeMs = 0.0f;  // Total wall-clock execution time in milliseconds.
+        f64 totalTimeMs = 0.0;  // Total wall-clock execution time in milliseconds.
 
         // --- ICP convergence results ---
 
-        u32  iterations = 0;      // Number of ICP iterations executed.
-        bool converged  = false;  // True if convergence criterion was satisfied.
-        f32  rmse       = 0.0;    // Final registration RMSE after optimization.
+        u32  iterations = 0;       // Number of ICP iterations executed.
+        bool converged  = false;   // True if convergence criterion was satisfied.
+        f32  rmse       = 0.0f;    // Final registration RMSE after optimization.
 
         // --- Timing breakdown statistics ---
 

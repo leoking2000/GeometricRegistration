@@ -21,6 +21,13 @@ namespace geo
         SparseICPParameters icpParams; // Parameters forwarded directly to Sparse ICP solver.
     };
 
+    struct EfficientICPResult
+    {
+        geo::RigidTransform transform;
+        ICPResult icp_result;
+        ESAResult esa_result;
+    };
+
     // Runs a hybrid global-to-local registration pipeline:
     //
     // 1. Uses ESA (Enhanced Simulated Annealing) to explore the SE(3) space
@@ -39,10 +46,7 @@ namespace geo
     //  - nn: nearest neighbor structure for correspondence search
     //  - df: distance field for fast spatial queries / cost evaluation
     //  - params: configuration for ESA + ICP stages
-    //
-    // Output:
-    //  - ICPResult containing final transform, RMSE, convergence info,
-    //    and timing statistics for each stage.
-    ICPResult EfficientICP(const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource, 
+    EfficientICPResult EfficientICP(
+        const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource,
         const INearestNeighbor& nn, const DistanceField& df, const EfficientICPParams& params = {});
 }

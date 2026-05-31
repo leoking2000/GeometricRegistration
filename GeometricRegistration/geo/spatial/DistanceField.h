@@ -97,6 +97,7 @@ namespace geo
         void Build(const Mesh& mesh); // Builds the distance field from a triangle mesh.
         f32 operator()(const glm::vec3& q) const; // Evaluates signed distance at query point q.
         inline f32 GetMaxDist() const { return m_max_dist; } // Returns maximum truncation distance used during construction.
+        inline f32 GetCellSize() const { return m_cellSize; } // Returns the cellSize
     public:
         // Saves the built SDF to a compact binary file for fast reloading.
         bool Save(const std::filesystem::path& path) const;

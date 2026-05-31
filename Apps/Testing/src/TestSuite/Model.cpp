@@ -20,6 +20,14 @@ namespace tests
         sdf.Build(mesh);
     }
 
+    Model::Model(const std::string& n, geo::PointCloud3D c)
+        :
+        name(n),
+        cloud(std::move(c)),
+        kdTree(cloud.GetPoints())
+    {
+    }
+
     Model CreateModelFromOBJ(const std::filesystem::path& filePath, geo::u32 dfResolution)
     {
         std::string name = geo::io::GetFileName(filePath);
