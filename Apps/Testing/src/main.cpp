@@ -1,3 +1,4 @@
+#include <omp.h>
 #include "UnitTests/UnitTests.h"
 #include "TestSuite/TestSuitePSA.h"
 
@@ -8,7 +9,7 @@ static constexpr u32 SEED = 2026;
 #define RUN_PartialScans
 
 //#define RUN_LeastSquaresICP
-//#define RUN_SparseICP
+#define RUN_SparseICP
 #define RUN_EfficientICP
 
 //#define PartialOverlap_Tests
@@ -22,17 +23,17 @@ static void RunPartialScansAlignmentTests()
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
-	Model bunny = CreateModelFromOBJ(RESOURCES_PATH"models/bunny/bunny.obj", 64);
-	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 64);
+	Model bunny = CreateModelFromOBJ(RESOURCES_PATH"models/bunny/bunny.obj", 128);
+	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
 	std::cout << "Models Loaded\n";
 
 	std::cout << "Creating Test Suite...";
 
-	glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
-	glm::vec3 translation(-1.0f, 0.0f, 1.0f);
-
-	//glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
+	//glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
 	//glm::vec3 translation(-1.0f, 0.0f, 1.0f);
+
+	glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
+	glm::vec3 translation(0.0f, 0.0f, 0.0f);
 
 	glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
 		glm::radians(eulerRot.x),
@@ -53,11 +54,41 @@ static void RunPartialScansAlignmentTests()
 
 	std::cout << "Done\n";
 
+#ifdef RUN_SparseICP
+	geo::SparseICPParameters p_spa;
+	p_spa.maxIterations = 100;
+	p_spa.p = 0.4f;
+	TestResult result_spa = RunSparseICPPointToPlane(suite.Cases()[0], p_spa);
+
+	LogTestResult(result_spa);
+#endif // RUN_SparseICP
+
+	std::cout << "=======================================================\n";
+
+#ifdef RUN_EfficientICP
+	geo::EfficientICPParams p_eff;
+	p_eff.esaIterations = 1000;
+	p_eff.icpParams.maxIterations = 100;
+	p_eff.icpParams.p = 0.4f;
+	TestResult result_eff = RunEfficientICPPointToPlane(suite.Cases()[0], p_eff);
+
+	LogTestResult(result_eff);
+#endif // RUN_EfficientICP
+
 	std::cout << "\n";
 }
 
 int main(int argc, char** argv)
 {
+//#pragma omp parallel
+//	{
+//		int id = omp_get_thread_num();
+//#pragma omp critical
+//		{
+//			std::cout << "Thread " << id << std::endl;
+//		}
+//	}
+
 	int r = 0;
 
 #ifdef RUN_PartialScans

@@ -6,7 +6,7 @@ set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreadedDebug$<$<CONFIG:Debug>:Debug>")
 set(CMAKE_MSVC_RUNTIME_LIBRARY "MultiThreaded$<$<CONFIG:Release>:Release>")
 set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization 
 
-# Define MY_SOURCES to be a list of all the source files for my Egnine 
+# Define MY_SOURCES to be a list of all the source files for my Library 
 file(GLOB_RECURSE MY_SOURCES CONFIGURE_DEPENDS "${CMAKE_CURRENT_SOURCE_DIR}/geo/*")
 add_library("${PROJECT_NAME}" STATIC ${MY_SOURCES})
 set_property(TARGET "${PROJECT_NAME}" PROPERTY CXX_STANDARD 17)
@@ -41,13 +41,13 @@ target_include_directories("${PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}
 target_include_directories("${PROJECT_NAME}" PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}/geo")
 
 if(OpenMP_CXX_FOUND)
-    target_link_libraries("${PROJECT_NAME}" PRIVATE OpenMP::OpenMP_CXX)
+    target_link_libraries("${PROJECT_NAME}" PUBLIC  OpenMP::OpenMP_CXX)
 else()
     message(WARNING "OpenMP not found, building without it")
 endif()
 
 if(MSVC)
-    target_compile_options("${PROJECT_NAME}" PRIVATE /openmp)
+    target_compile_options("${PROJECT_NAME}" PUBLIC /openmp)
 endif()
 
 ############ link libraries ############
