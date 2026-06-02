@@ -88,7 +88,7 @@ namespace geo
                 euler.z         // rz
             };
 
-            p.seed = baseParams.seed + static_cast<u32>(i);
+            p.seed = baseParams.seed ^ (i * 2654435761u);
 
             configs.push_back(p);
         }
@@ -135,11 +135,11 @@ namespace geo
             	for (index_t i = 0; i < subSource.Size(); i++)
             	{
             		glm::vec3 tp = T.TransformPoint(subSource.Point(i));
-            		f32 d = df(tp);
+            		f32 d = glm::abs(df(tp));
             
-            		if (glm::abs(d) < maxDist)
+            		if (d < maxDist)
             		{
-            			cost += d * d;
+            			cost += glm::pow(d, params.icpParams.p);
             			count++;
             		}
             	}

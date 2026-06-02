@@ -8,12 +8,8 @@ static constexpr u32 SEED = 2026;
 
 #define RUN_PartialScans
 
-//#define RUN_LeastSquaresICP
-#define RUN_SparseICP
+//#define RUN_SparseICP
 #define RUN_EfficientICP
-
-//#define PartialOverlap_Tests
-//#define Outliers_Tests
 
 //#define RUN_UnitTests
 
@@ -23,17 +19,14 @@ static void RunPartialScansAlignmentTests()
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
-	Model bunny = CreateModelFromOBJ(RESOURCES_PATH"models/bunny/bunny.obj", 128);
+	//Model bunny = CreateModelFromOBJ(RESOURCES_PATH"models/bunny/bunny.obj", 128);
 	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
 	std::cout << "Models Loaded\n";
 
 	std::cout << "Creating Test Suite...";
 
-	//glm::vec3 eulerRot(10.0f, 5.0f, 2.5f);
-	//glm::vec3 translation(-1.0f, 0.0f, 1.0f);
-
 	glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
-	glm::vec3 translation(0.0f, 0.0f, 0.0f);
+	glm::vec3 translation(-1.0f, 3.0f, 1.0f);
 
 	glm::mat4 Rx = glm::rotate(glm::mat4(1.0f),
 		glm::radians(eulerRot.x),
@@ -50,30 +43,40 @@ static void RunPartialScansAlignmentTests()
 
 	TestSuitePSA suite;
 
-	suite.AddHalfOverlap(&bunny, gt, SEED);
+	suite.AddFullOverlap(&dora_1, gt, SEED);
+	suite.AddHalfOverlap(&dora_1, gt, SEED);
+	suite.AddQuarterOverlap(&dora_1, gt, SEED);
+	suite.AddWithOutliers(&dora_1, 0.1f, gt, SEED);
+	suite.AddWithNoise(&dora_1, 0.001f, gt, SEED);
+	suite.AddHard(&dora_1, gt, SEED);
 
 	std::cout << "Done\n";
 
+	for (auto& test : suite)
+	{
 #ifdef RUN_SparseICP
-	geo::SparseICPParameters p_spa;
-	p_spa.maxIterations = 100;
-	p_spa.p = 0.4f;
-	TestResult result_spa = RunSparseICPPointToPlane(suite.Cases()[0], p_spa);
+		geo::SparseICPParameters p_spa;
+		p_spa.maxIterations = 100;
+		p_spa.p = 0.4f;
+		TestResult result_spa = RunSparseICPPointToPlane(test, p_spa);
 
-	LogTestResult(result_spa);
+		LogTestResult(result_spa);
 #endif // RUN_SparseICP
 
 	std::cout << "=======================================================\n";
 
 #ifdef RUN_EfficientICP
-	geo::EfficientICPParams p_eff;
-	p_eff.esaIterations = 1000;
-	p_eff.icpParams.maxIterations = 100;
-	p_eff.icpParams.p = 0.4f;
-	TestResult result_eff = RunEfficientICPPointToPlane(suite.Cases()[0], p_eff);
+		geo::EfficientICPParams p_eff;
+		p_eff.esaIterations = 5000;
+		p_eff.icpParams.maxIterations = 100;
+		p_eff.icpParams.p = 0.4f;
+		p_eff.seed = SEED;
+		TestResult result_eff = RunEfficientICPPointToPlane(test, p_eff);
 
-	LogTestResult(result_eff);
+		LogTestResult(result_eff);
 #endif // RUN_EfficientICP
+	}
+
 
 	std::cout << "\n";
 }

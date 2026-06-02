@@ -37,7 +37,8 @@ namespace tests
 		std::string methodName = "ESA+SparseICP PointToPlane (p=" + std::to_string(params.icpParams.p) + ")";
 		geo::EfficientICPResult result = 
 			geo::EfficientICP(test.target->cloud, test.source->cloud, 
-				test.source->cloud.UniformSubsample(test.target->sdf.GetCellSize() * 10.0f),
+				test.source->cloud.UniformSubsample(
+					geo::u32(glm::ceil(0.1f * test.source->cloud.Size())), params.seed),
 				test.target->kdTree, test.target->sdf, params);
 
 		return { test, result.transform, methodName, result.icp_result, true, result.esa_result };

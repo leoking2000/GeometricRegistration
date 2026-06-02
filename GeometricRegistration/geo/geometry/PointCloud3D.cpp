@@ -1,4 +1,5 @@
 #include <cassert>
+#include <numeric>
 #include <geo/io/IOUtils.h>
 #include "PointCloud3D.h"
 
@@ -108,81 +109,23 @@ namespace geo
 		m_centroid = c / f64(m_points.size());
 	}
 
-	PointCloud3D PointCloud3D::UniformSubsample(f32 voxelSize) const
+	PointCloud3D PointCloud3D::UniformSubsample(index_t targetCount, u32 seed) const
 	{
-		assert(voxelSize > 0.0f);
+		std::mt19937 rng(seed);
+		std::vector<size_t> idx(Size());
+		std::iota(idx.begin(), idx.end(), 0);
 
-		struct Accumulator
-		{
-			glm::vec3 position = glm::vec3(0.0f);
-			glm::vec3 normal = glm::vec3(0.0f);
-			u32 count = 0;
-		};
+		std::shuffle(idx.begin(), idx.end(), rng);
+		idx.resize(targetCount);
 
-		struct IVec3Hash
-		{
-			size_t operator()(const glm::ivec3& v) const noexcept
-			{
-				size_t h1 = std::hash<i32>()(v.x);
-				size_t h2 = std::hash<i32>()(v.y);
-				size_t h3 = std::hash<i32>()(v.z);
+		std::vector<glm::vec3> pts;
+		pts.reserve(targetCount);
 
-				return h1 ^ (h2 << 1) ^ (h3 << 2);
-			}
-		};
-
-		std::unordered_map<glm::ivec3, Accumulator, IVec3Hash> voxels;
-		voxels.reserve(Size());
-
-		const bool hasNormals = HasNormals();
-
-		// Accumulate points into voxel cells
-		for (u32 i = 0; i < Size(); i++)
-		{
-			const glm::vec3& p = m_points[i];
-
-			glm::ivec3 coord(
-				(i32)std::floor(p.x / voxelSize),
-				(i32)std::floor(p.y / voxelSize),
-				(i32)std::floor(p.z / voxelSize)
-			);
-
-			auto& voxel = voxels[coord];
-
-			voxel.position += p;
-
-			if (hasNormals)
-			{
-				voxel.normal += m_normals[i];
-			}
-
-			voxel.count++;
+		for (size_t i : idx) {
+			pts.emplace_back(m_points[i]);
 		}
 
-		// Build subsampled cloud
-		std::vector<glm::vec3> points;
-		std::vector<glm::vec3> normals;
-
-		points.reserve(voxels.size());
-
-		if (hasNormals)
-		{
-			normals.reserve(voxels.size());
-		}
-
-		for (const auto& [coord, voxel] : voxels)
-		{
-			glm::vec3 avgPoint = voxel.position / (f32)voxel.count;
-			points.push_back(avgPoint);
-
-			if (hasNormals)
-			{
-				glm::vec3 avgNormal = glm::normalize(voxel.normal);
-				normals.push_back(avgNormal);
-			}
-		}
-
-		return PointCloud3D(std::move(points), std::move(normals));
+		return PointCloud3D(std::move(pts), {});
 	}
 
 	// Converts this point cloud into a generic dump structure for serialization.

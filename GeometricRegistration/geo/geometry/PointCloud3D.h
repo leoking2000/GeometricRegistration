@@ -48,7 +48,7 @@ namespace geo
 		void Transform(const RigidTransform& transform);
 	public:
 		// voxel-grid subsampling
-		PointCloud3D PointCloud3D::UniformSubsample(f32 voxelSize) const;
+		PointCloud3D PointCloud3D::UniformSubsample(index_t targetCount, u32 seed) const;
 	public:
 		// Saves the point cloud to disk in a PLY file.
 		void Save(const std::filesystem::path& path) const;

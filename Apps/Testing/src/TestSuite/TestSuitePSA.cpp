@@ -181,6 +181,6 @@ namespace tests
 
 	void TestSuitePSA::AddHard(Model * target, const geo::RigidTransform & gt, geo::u32 seed)
 	{
-        Add("Hard_sampled_ov25_out20", target, gt, 1.0f, 0.25f, 0.2f, 0.0f, seed);
+        Add("Hard_sampled_ov25_out1", target, gt, 1.0f, 0.25f, 0.01f, 0.005f, seed);
 	}
 }
