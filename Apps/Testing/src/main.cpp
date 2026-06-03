@@ -6,12 +6,12 @@ using namespace tests;
 
 static constexpr u32 SEED = 2026;
 
-//#define RUN_PartialScans
+#define RUN_PartialScans
+//#define RUN_UnitTests
 
-//#define RUN_SparseICP
+#define RUN_SparseICP
 #define RUN_EfficientICP
 
-#define RUN_UnitTests
 
 static void RunPartialScansAlignmentTests()
 {
@@ -19,7 +19,6 @@ static void RunPartialScansAlignmentTests()
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
-	//Model bunny = CreateModelFromOBJ(RESOURCES_PATH"models/bunny/bunny.obj", 128);
 	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
 	std::cout << "Models Loaded\n";
 
@@ -47,8 +46,9 @@ static void RunPartialScansAlignmentTests()
 	suite.AddHalfOverlap(&dora_1, gt, SEED);
 	suite.AddQuarterOverlap(&dora_1, gt, SEED);
 	suite.AddWithOutliers(&dora_1, 0.1f, gt, SEED);
-	suite.AddWithNoise(&dora_1, 0.001f, gt, SEED);
+	suite.AddWithNoise(&dora_1, 0.05f, gt, SEED);
 	suite.AddHard(&dora_1, gt, SEED);
+
 
 	std::cout << "Done\n";
 

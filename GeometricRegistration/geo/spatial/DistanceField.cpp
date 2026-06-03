@@ -225,7 +225,7 @@ namespace geo
         const f32 expand = m_cellSize * 1.866f; // half cell diagonal — conservative
 
         // paralize over every triagnle
-        #pragma omp parallel for schedule(dynamic, 64)
+        #pragma omp parallel for schedule(static)
         for (int t = 0; t < (int)mesh.TriangleCount(); t++)
         {
             const int tid = omp_get_thread_num();

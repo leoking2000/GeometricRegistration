@@ -47,7 +47,7 @@ namespace geo
 		// - Any previously built spatial acceleration structures (e.g., KD-trees) become invalid.
 		void Transform(const RigidTransform& transform);
 	public:
-		// voxel-grid subsampling
+		// Uniform subsampling NOTE: normals are not retured
 		PointCloud3D PointCloud3D::UniformSubsample(index_t targetCount, u32 seed) const;
 	public:
 		// Saves the point cloud to disk in a PLY file.

@@ -14,7 +14,6 @@ namespace geo
     {
         // --- ESA ---
         u32 esaIterations = 5000;  // Maximum number of ESA iterations per run.
-        u32 esaRestarts   = 5;     // Number of independent ESA restarts.
         u32 seed          = 2026;  // Random seed controlling ESA stochastic behavior. 
 
         // --- ICP ---
@@ -26,25 +25,17 @@ namespace geo
         geo::RigidTransform transform;
         ICPResult icp_result;
         ESAResult esa_result;
+
+        f64 totalTime = 0.0;
     };
 
-    // Runs a hybrid global-to-local registration pipeline:
-    //
-    // 1. Uses ESA (Enhanced Simulated Annealing) to explore the SE(3) space
-    //    and find a good initial rigid transformation.
-    //
-    // 2. Refines the best candidate using Sparse ICP, which performs
-    //    robust correspondence-based optimization.
-    //
-    // 3. Uses a sub-sampled source ("subSource") for global search efficiency,
-    //    while full source is used for final ICP refinement.
-    //
+    // Runs a hybrid global-to-local registration pipeline, Runs ESA, then does Sparse ICP
     // Inputs:
     //  - target: full target point cloud (fixed)
     //  - source: full source point cloud (to be aligned)
     //  - subSource: reduced/filtered version of source for ESA speedup
-    //  - nn: nearest neighbor structure for correspondence search
-    //  - df: distance field for fast spatial queries / cost evaluation
+    //  - nn: nearest neighbor structure for correspondence search in ICP
+    //  - df: distance field for fast spatial queries / cost evaluation for ESA
     //  - params: configuration for ESA + ICP stages
     EfficientICPResult EfficientICP(
         const PointCloud3D& target, const PointCloud3D& source, const PointCloud3D& subSource,

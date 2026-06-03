@@ -111,19 +111,25 @@ namespace geo
 
 	PointCloud3D PointCloud3D::UniformSubsample(index_t targetCount, u32 seed) const
 	{
+		assert(targetCount > 0);
+		assert(targetCount <= Size());
+
 		std::mt19937 rng(seed);
-		std::vector<size_t> idx(Size());
+
+		std::vector<index_t> idx(Size());
 		std::iota(idx.begin(), idx.end(), 0);
 
-		std::shuffle(idx.begin(), idx.end(), rng);
-		idx.resize(targetCount);
+		// only shuffles the first targetCount elements
+		for (index_t i = 0; i < targetCount; i++)
+		{
+			std::uniform_int_distribution<index_t> dist(i, Size() - 1);
+			std::swap(idx[i], idx[dist(rng)]);
+		}
 
 		std::vector<glm::vec3> pts;
 		pts.reserve(targetCount);
-
-		for (size_t i : idx) {
-			pts.emplace_back(m_points[i]);
-		}
+		for (index_t i = 0; i < targetCount; i++)
+			pts.emplace_back(m_points[idx[i]]);
 
 		return PointCloud3D(std::move(pts), {});
 	}

@@ -4,7 +4,7 @@
 #include <glm/glm.hpp>
 #include <geo/geometry/Mesh.h>
 
-#define DF_PARALLEL_BUILD
+//#define DF_PARALLEL_BUILD
 
 namespace geo
 {

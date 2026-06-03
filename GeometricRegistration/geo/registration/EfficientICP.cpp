@@ -67,7 +67,7 @@ namespace geo
 
         const glm::vec3 referenceDir(0.0f, 0.0f, 1.0f);
 
-        for (size_t i = 0; i < directions.size(); i++)
+        for (geo::u32 i = 0; i < (geo::u32)directions.size(); i++)
         {
             ESAParameters p = baseParams;
 
@@ -175,7 +175,7 @@ namespace geo
 
         TimePoint endTotal = Clock::now();
 
-        return { transform, icp_result, esa_result };
+        return { transform, icp_result, esa_result, TimeDifferenceMs(endTotal, startTotal)};
     }
 
 }
