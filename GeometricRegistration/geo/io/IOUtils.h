@@ -47,6 +47,8 @@ namespace geo::io
 		PointCloud3D ToPointCloud() const;
 	};
 
+	std::string ReadFile(const std::string& filepath);
+
 	// Checks whether a file exists at the given path.
 	bool FileExists(const std::filesystem::path& path);
 

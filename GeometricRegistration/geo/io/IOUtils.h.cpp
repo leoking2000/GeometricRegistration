@@ -29,6 +29,19 @@ namespace geo::io
     // Utilities
     // ============================================================
 
+    std::string ReadFile(const std::string& filepath)
+    {
+        std::ifstream input_file(filepath, std::ios::binary);
+
+        if (!input_file.is_open())
+        {
+            GEOLOGERROR("Failed to open file at " << filepath.c_str());
+            return std::string();
+        }
+
+        return std::string((std::istreambuf_iterator<char>(input_file)), std::istreambuf_iterator<char>());
+    }
+
     bool FileExists(const std::filesystem::path& path)
     {
         return std::filesystem::exists(path);

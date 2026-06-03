@@ -6,12 +6,12 @@ using namespace tests;
 
 static constexpr u32 SEED = 2026;
 
-#define RUN_PartialScans
+//#define RUN_PartialScans
 
 //#define RUN_SparseICP
 #define RUN_EfficientICP
 
-//#define RUN_UnitTests
+#define RUN_UnitTests
 
 static void RunPartialScansAlignmentTests()
 {
@@ -79,6 +79,83 @@ static void RunPartialScansAlignmentTests()
 
 
 	std::cout << "\n";
+}
+
+static void TestDF()
+{
+    geo::SetLogLevel(geo::LogLevel::LOG_VERBOSE);
+    geo::Random rng{ SEED };
+
+    std::cout << "==== DistanceField Test ====\n";
+
+    // 1. Create input data
+    std::cout << "Loading Mesh...\n";
+
+    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
+    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
+    geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
+
+    //mesh.Flatten();
+
+    std::cout << "Done\n";
+
+    // 2. Build DF
+
+    geo::DistanceFieldParameters params;
+    params.bounding_box = mesh.BoundingBox();
+    params.resolution = 128;
+    // set the maximum radius to be 1/4 the diagonal of the mesh
+    params.max_distance = 0.25f * glm::length(params.bounding_box.Max() - params.bounding_box.Min());
+
+    //geo::f32 cellSize = mesh.BoundingBox().MaxSize() / params.resolution;
+    //params.max_distance = cellSize * 5.0f;
+
+    geo::DistanceField df(params);
+
+    std::cout << "Building Distance Field......\n";
+    geo::TimingStat buildTime;
+
+    geo::TimePoint startBuild = geo::Clock::now();
+    df.Build(mesh);
+    geo::TimePoint endBuild = geo::Clock::now();
+    std::cout << "Done\n\n";
+
+    std::cout << "Mesh Name: " << mesh.FileName() << "\n";
+    std::cout << "Number of Points: " << mesh.VertexCount() << "\n";
+    std::cout << "Number of Triangles: " << mesh.TriangleCount() << "\n";
+    std::cout << "DF Resolution: " << params.resolution << "\n";
+    std::cout << "DF Max Distance: " << params.max_distance << "\n";
+    std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
+
+    //df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
+    //geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
+
+    // 3. Query test (1M samples)
+    const geo::u32 NUM_QUERIES = 1000000u;
+
+    geo::TimingStat queryStat;
+    geo::f32 sum = 0.0f;
+
+    for (int i = 0; i < NUM_QUERIES; ++i)
+    {
+        // random point in bbox
+        glm::vec3 q(rng.Float(params.bounding_box.Min().x, params.bounding_box.Max().x),
+            rng.Float(params.bounding_box.Min().y, params.bounding_box.Max().y),
+            rng.Float(params.bounding_box.Min().z, params.bounding_box.Max().z));
+
+        geo::ScopedTimer scope(&queryStat);
+        sum += df(q);
+    }
+
+    std::cout << "Query Time (1M): " << queryStat.ToString() << "\n";
+
+    // 4. Sanity check
+    std::cout << "Zero-ish test: " << df(mesh.Vertex(0) + 0.1f * mesh.Normal(0)) << "\n";
+
+    std::cout << "Far test: " << df(glm::vec3(100, 100, 100)) << "\n";
+    std::cout << "Accumulated Value (ignore): " << sum << "\n";
+
+    std::cout << "================================\n";
 }
 
 int main(int argc, char** argv)

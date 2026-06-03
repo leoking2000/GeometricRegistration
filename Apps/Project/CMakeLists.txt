@@ -48,6 +48,6 @@ endif()
 
 ############ link libraries ############
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE GeometricRegistration glm raylib)
+target_link_libraries("${PROJECT_NAME}" PRIVATE GeometricRegistration glad glfw glm stb)
 
 ########################################
