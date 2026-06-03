@@ -13,15 +13,15 @@ namespace geo
 
         // RMSE convergence threshold.
         // Optimization stops when the RMSE improvement falls below this value.
-        f32 tolerance = 1e-5f;
+        f32 tolerance = 1e-4f;
 
         // Translation convergence threshold.
         // Measured in world-space units.
-        f32 transTolerance = 1e-5f;
+        f32 transTolerance = 1e-4f;
 
         // Rotation convergence threshold in radians.
         // Used to detect very small rotational updates.
-        f32 rotTolerance = 1e-4f;
+        f32 rotTolerance = 1e-3f;
 
         f32 p = 0.4f;                  // Sparsity exponent.
         f32 mu = 10;                   // ADMM penalty parameter.

@@ -20,6 +20,7 @@ namespace tests
         Model& operator=(Model&&) = default;
 
         std::string        name;   // the name of the model
+
         geo::Mesh          mesh;   // full triangle mesh
         geo::PointCloud3D  cloud;  // all mesh vertices as a point cloud
         geo::DistanceField sdf;    // built from mesh  — for ESA cost

@@ -20,14 +20,14 @@ add_subdirectory(thirdparty/Eigen)           # Eigen linear algebra
 add_subdirectory(thirdparty/nanoflann)       # Nearest Neighbor (NN) search
 add_subdirectory(thirdparty/tiny_obj_loader) # obj loader
 
-add_subdirectory(thirdparty/googletest)     # unit tests
-
-add_subdirectory(thirdparty/glad)           # OpenGL loader
-add_subdirectory(thirdparty/glfw-3.3.2)     # window management
-add_subdirectory(thirdparty/stb)            # texture read-write
+add_subdirectory(thirdparty/googletest)      # unit tests
+                                             
+add_subdirectory(thirdparty/glad)            # OpenGL loader
+add_subdirectory(thirdparty/glfw-3.3.2)      # window management
+add_subdirectory(thirdparty/stb)             # texture read-write
 
 ##################################
 
-add_subdirectory(GeometricRegistration) # static library
-add_subdirectory(Apps/Testing)          # runs tests
-add_subdirectory(Apps/Project)          # Utility program
+add_subdirectory(GeometricRegistration)      # static library
+add_subdirectory(Apps/Testing)               # runs tests
+add_subdirectory(Apps/ViewerApp)             # visualization tool

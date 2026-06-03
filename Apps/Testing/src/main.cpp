@@ -1,4 +1,3 @@
-#include <omp.h>
 #include "UnitTests/UnitTests.h"
 #include "TestSuite/TestSuitePSA.h"
 
@@ -7,19 +6,21 @@ using namespace tests;
 static constexpr u32 SEED = 2026;
 
 #define RUN_PartialScans
-//#define RUN_UnitTests
+#define RUN_UnitTests
+#define RUN_DFTEST
 
-#define RUN_SparseICP
+//#define RUN_SparseICP
 #define RUN_EfficientICP
 
 
 static void RunPartialScansAlignmentTests()
 {
-	geo::SetLogLevel(geo::LogLevel::LOG_ERROR);
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
 	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
+    //Model fox    = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 128);
+    //Model dora_3 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 128);
 	std::cout << "Models Loaded\n";
 
 	std::cout << "Creating Test Suite...";
@@ -67,10 +68,11 @@ static void RunPartialScansAlignmentTests()
 
 #ifdef RUN_EfficientICP
 		geo::EfficientICPParams p_eff;
-		p_eff.esaIterations = 5000;
-		p_eff.icpParams.maxIterations = 100;
-		p_eff.icpParams.p = 0.4f;
 		p_eff.seed = SEED;
+		p_eff.esaIterations = 5000;
+
+		p_eff.icpParams.maxIterations = 25;
+		p_eff.icpParams.p = 0.4f;
 		TestResult result_eff = RunEfficientICPPointToPlane(test, p_eff);
 
 		LogTestResult(result_eff);
@@ -83,7 +85,6 @@ static void RunPartialScansAlignmentTests()
 
 static void TestDF()
 {
-    geo::SetLogLevel(geo::LogLevel::LOG_VERBOSE);
     geo::Random rng{ SEED };
 
     std::cout << "==== DistanceField Test ====\n";
@@ -127,8 +128,8 @@ static void TestDF()
     std::cout << "DF Max Distance: " << params.max_distance << "\n";
     std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
 
-    //df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
-    //geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
+    df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
+    geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
 
     // 3. Query test (1M samples)
     const geo::u32 NUM_QUERIES = 1000000u;
@@ -160,20 +161,16 @@ static void TestDF()
 
 int main(int argc, char** argv)
 {
-//#pragma omp parallel
-//	{
-//		int id = omp_get_thread_num();
-//#pragma omp critical
-//		{
-//			std::cout << "Thread " << id << std::endl;
-//		}
-//	}
-
+    geo::SetLogLevel(geo::LogLevel::LOG_ERROR);
 	int r = 0;
 
 #ifdef RUN_PartialScans
 	RunPartialScansAlignmentTests();
 #endif // RUN_PartialScans
+
+#ifdef RUN_DFTEST
+    TestDF();
+#endif // RUN_DFTEST
 
 #ifdef RUN_UnitTests
 	r = RunUnitTests(argc, argv);
