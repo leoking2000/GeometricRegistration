@@ -1,7 +1,7 @@
 #include <GLFW/glfw3.h> 
 #include <cassert>
 #include <stdio.h>
-#include "LeoWindow.h"
+#include "GLWindow.h"
 
 namespace gl
 {
@@ -83,6 +83,15 @@ namespace gl
 		}
 	}
 
+	static void glfw_scroll_callback(GLFWwindow* glfw_window, double xoffset, double yoffset)
+	{
+		Window::WinData* data = reinterpret_cast<Window::WinData*>(glfwGetWindowUserPointer(glfw_window));
+		if (data->mouseMoveCallback)
+		{
+			data->mouseScrollCallBack((float)yoffset);
+		}
+	}
+
 	//-----------------------------------------------------------
 
 	Window::Window(WindowsParameters win_params, bool create)
@@ -138,6 +147,7 @@ namespace gl
 		glfwSetKeyCallback(m_window, glfw_key_callback);
 		glfwSetMouseButtonCallback(m_window, glfw_mouse_button_callback);
 		glfwSetCursorPosCallback(m_window, glfw_cursor_position_callback);
+		glfwSetScrollCallback(m_window, glfw_scroll_callback);
 
 		glfwMakeContextCurrent(m_window);
 		glfwSwapInterval(m_data.params.init_flags & WIN_FLAG_VSYNC ? 1 : 0);
@@ -242,5 +252,10 @@ namespace gl
 	void Window::SetMouseMoveCallback(MouseMoveCallback mouse_move_callback)
 	{
 		m_data.mouseMoveCallback = mouse_move_callback;
+	}
+
+	void Window::SetScrollCallback(ScrollCallback mouse_scroll_callback)
+	{
+		m_data.mouseScrollCallBack = mouse_scroll_callback;
 	}
 }

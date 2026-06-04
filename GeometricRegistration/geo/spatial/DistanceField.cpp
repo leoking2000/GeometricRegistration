@@ -178,15 +178,25 @@ namespace geo
         }
     }
 
-    DistanceField::DistanceField(const DistanceFieldParameters& params)
+    void DistanceField::PreBuild(const DistanceFieldParameters& params)
     {
         // Store the max distance of the truncation
         m_max_dist = params.max_distance;
-        // create the bounding box
-        m_box = BBox(params.bounding_box.Min() - glm::vec3(m_max_dist), params.bounding_box.Max() + glm::vec3(m_max_dist));
 
-        m_resolution = params.resolution;
-        m_cellSize = m_box.MaxSize() / m_resolution;
+        // create the bounding box
+        m_box = BBox(params.bounding_box.Min() - glm::vec3(m_max_dist), 
+                     params.bounding_box.Max() + glm::vec3(m_max_dist));
+
+        if (params.cell_size > 0.0f)
+        {
+            m_cellSize = params.cell_size;
+            m_resolution = glm::ceil(m_box.MaxSize() / m_cellSize);
+        }
+        else
+        {
+            m_resolution = params.resolution;
+            m_cellSize = m_box.MaxSize() / m_resolution;
+        }
 
         // expand bounding box
         glm::vec3 offset_low(0.0f);
@@ -206,8 +216,10 @@ namespace geo
         m_compact_cells.rehash(2048);
     }
 
-    void DistanceField::Build(const Mesh& mesh)
+    void DistanceField::Build(const DistanceFieldParameters& params, const Mesh& mesh)
     {
+        PreBuild(params);
+
         m_cells.clear();
         m_compact_cells.clear();
 

@@ -19,8 +19,8 @@ static void RunPartialScansAlignmentTests()
 
 	std::cout << "Loading 3D Models...\n";
 	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
-    //Model fox    = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 128);
-    //Model dora_3 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 128);
+    //Model fox    = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 32);
+    //Model dora_2 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 128);
 	std::cout << "Models Loaded\n";
 
 	std::cout << "Creating Test Suite...";
@@ -111,13 +111,13 @@ static void TestDF()
     //geo::f32 cellSize = mesh.BoundingBox().MaxSize() / params.resolution;
     //params.max_distance = cellSize * 5.0f;
 
-    geo::DistanceField df(params);
+    geo::DistanceField df;
 
     std::cout << "Building Distance Field......\n";
     geo::TimingStat buildTime;
 
     geo::TimePoint startBuild = geo::Clock::now();
-    df.Build(mesh);
+    df.Build(params, mesh);
     geo::TimePoint endBuild = geo::Clock::now();
     std::cout << "Done\n\n";
 

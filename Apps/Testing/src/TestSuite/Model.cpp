@@ -16,8 +16,7 @@ namespace tests
         // set the maximum radius to be 1/4 the diagonal of the mesh
         dfParams.max_distance = 0.25f * glm::length(dfParams.bounding_box.Max() - dfParams.bounding_box.Min());
 
-        sdf = geo::DistanceField(dfParams);
-        sdf.Build(mesh);
+        sdf.Build(dfParams, mesh);
     }
 
     Model::Model(const std::string& n, geo::PointCloud3D c)

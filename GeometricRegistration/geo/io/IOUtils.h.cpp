@@ -89,6 +89,12 @@ namespace geo::io
     // OBJ Loader
     // ============================================================
 
+    struct VertexPN
+    {
+        glm::vec3 pos;
+        glm::vec3 normal;
+    };
+
     GeometryDumpData LoadOBJ(const std::filesystem::path& path)
     {
         GeometryDumpData data;
@@ -104,11 +110,13 @@ namespace geo::io
         std::string warn;
         std::string err;
 
+        std::string baseDir = path.parent_path().string();
+
         bool success = tinyobj::LoadObj(
             &attrib, &shapes, &materials,
             &warn, &err,
             path.string().c_str(),
-            nullptr,
+            baseDir.c_str(),
             true // triangulate
         );
 
@@ -128,71 +136,87 @@ namespace geo::io
             return {};
         }
 
-        // --------------------------------------------------------
-        // Vertices
-        // --------------------------------------------------------
 
-        data.points.reserve(attrib.vertices.size() / 3);
-        for (size_t i = 0; i < attrib.vertices.size(); i += 3)
-        {
-            data.points.emplace_back(
-                attrib.vertices[i + 0],
-                attrib.vertices[i + 1],
-                attrib.vertices[i + 2]
-            );
-        }
+        std::vector<VertexPN> vertices;
+        std::vector<u32> indices;
+
+        vertices.reserve(attrib.vertices.size() / 3);
 
         // --------------------------------------------------------
-        // Normals
-        //
-        // NOTE: OBJ stores per-face-vertex normal indices which can differ
-        // from vertex indices (e.g. "f 1//3 2//1 3//2"). We load the raw
-        // normal buffer here and store only vertex_index in the index buffer.
-        // If normal count doesn't match vertex count, Mesh will recompute
-        // normals via ComputeVertexNormals().
-        // --------------------------------------------------------
-
-        if (!attrib.normals.empty())
-        {
-            data.normals.reserve(attrib.normals.size() / 3);
-            for (size_t i = 0; i < attrib.normals.size(); i += 3)
-            {
-                data.normals.emplace_back(
-                    attrib.normals[i + 0],
-                    attrib.normals[i + 1],
-                    attrib.normals[i + 2]
-                );
-            }
-        }
-
-        // --------------------------------------------------------
-        // Triangles
+        // Expand faces into per-corner vertices 
         // --------------------------------------------------------
 
         for (const auto& shape : shapes)
         {
             size_t indexOffset = 0;
+
             for (size_t f = 0; f < shape.mesh.num_face_vertices.size(); f++)
             {
                 int fv = shape.mesh.num_face_vertices[f];
                 if (fv != 3)
                 {
-                    GEOLOGWARN("Skipping non-triangle face in OBJ file");
+                    GEOLOGWARN("Non-triangle face skipped");
                     indexOffset += fv;
                     continue;
                 }
 
-                glm::uvec3 tri(0);
                 for (int v = 0; v < 3; v++)
                 {
-                    const tinyobj::index_t idx = shape.mesh.indices[indexOffset + v];
-                    tri[v] = (u32)idx.vertex_index;
-                }
+                    const tinyobj::index_t& idx =
+                        shape.mesh.indices[indexOffset + v];
 
-                data.indexBuffer.emplace_back(tri);
+                    VertexPN vert;
+
+                    // POSITION
+                    vert.pos = glm::vec3(
+                        attrib.vertices[3 * idx.vertex_index + 0],
+                        attrib.vertices[3 * idx.vertex_index + 1],
+                        attrib.vertices[3 * idx.vertex_index + 2]
+                    );
+
+                    // NORMAL
+                    if (idx.normal_index >= 0 && !attrib.normals.empty())
+                    {
+                        vert.normal = glm::vec3(
+                            attrib.normals[3 * idx.normal_index + 0],
+                            attrib.normals[3 * idx.normal_index + 1],
+                            attrib.normals[3 * idx.normal_index + 2]
+                        );
+                    }
+                    else
+                    {
+                        vert.normal = glm::vec3(0.0f, 1.0f, 0.0f);
+                    }
+
+                    indices.emplace_back((u32)vertices.size());
+                    vertices.emplace_back(vert);
+                }
 
                 indexOffset += 3;
             }
+        }
+
+        // --------------------------------------------------------
+        // Flatten into engine format
+        // --------------------------------------------------------
+
+        data.points.reserve(vertices.size());
+        data.normals.reserve(vertices.size());
+
+        for (const auto& v : vertices)
+        {
+            data.points.emplace_back(v.pos);
+            data.normals.emplace_back(glm::normalize(v.normal));
+        }
+
+        // build triangle list (1:1 with expanded vertices)
+        for (u32 i = 0; i < indices.size(); i += 3)
+        {
+            data.indexBuffer.emplace_back(
+                indices[i + 0],
+                indices[i + 1],
+                indices[i + 2]
+            );
         }
 
         GEOLOGINFO("Loaded OBJ: " << path

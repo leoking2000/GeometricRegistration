@@ -57,8 +57,8 @@ static geo::DistanceField BuildDF(const geo::Mesh& mesh, geo::u32 resolution, ge
     params.resolution = resolution;
     params.max_distance = cellSize * bandCells;
 
-    geo::DistanceField df(params);
-    df.Build(mesh);
+    geo::DistanceField df;
+    df.Build(params, mesh);
     return df;
 }
 
@@ -341,8 +341,8 @@ TEST(ESATest, RecoverKnownTransform)
     dfParams.resolution = 64;
     dfParams.max_distance = cellSize * 30.0f;
 
-    geo::DistanceField df(dfParams);
-    df.Build(mesh);
+    geo::DistanceField df;
+    df.Build(dfParams, mesh);
 
     // 3. Sample source points from the same mesh
     geo::Random rng(42);

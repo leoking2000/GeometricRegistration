@@ -41,7 +41,7 @@ namespace gl
 		void Create();
 		void Destroy();
 	public:
-		// Check if window should close (KEY_ESCAPE pressed or windows close icon clicked)
+		// Check if window should close
 		bool ShouldClose() const;
 		// Polls Events
 		void PollEvents();
@@ -74,6 +74,9 @@ namespace gl
 
 		using MouseMoveCallback = std::function<void(float, float)>;
 		void SetMouseMoveCallback(MouseMoveCallback mouse_move_callback);
+
+		using ScrollCallback = std::function<void(float)>;
+		void SetScrollCallback(ScrollCallback cb);
 	public:
 		struct WinData
 		{
@@ -81,6 +84,7 @@ namespace gl
 			ButtonEventCallback  keyboardCallback;
 			ButtonEventCallback  mouseKeyCallback;
 			MouseMoveCallback    mouseMoveCallback;
+			ScrollCallback       mouseScrollCallBack;
 			WindowResizeCallback windowResizeCallback;
 		};
 	private:

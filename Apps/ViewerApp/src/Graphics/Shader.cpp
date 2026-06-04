@@ -14,8 +14,13 @@ namespace gl
 		m_program_id(0)
 	{
 		std::string vert_source = geo::io::ReadFile(filepath + ".vert");
-		std::string geom_source = geo::io::ReadFile(filepath + ".geom");
 		std::string frag_source = geo::io::ReadFile(filepath + ".frag");
+
+		std::string geom_source = "";
+		if (geo::io::FileExists(filepath + ".geom"))
+		{
+			geom_source = geo::io::ReadFile(filepath + ".geom");
+		}
 
 		if (vert_source == "")
 		{

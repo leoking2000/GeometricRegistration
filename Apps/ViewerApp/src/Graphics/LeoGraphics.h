@@ -4,6 +4,7 @@
 #include "Shader.h"
 #include "Texture.h"
 #include "FrameBuffer.h"
+#include <glad/glad.h>
 
 #define OPENGL_DEBUG 0
 

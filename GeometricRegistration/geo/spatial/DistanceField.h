@@ -72,7 +72,8 @@ namespace geo
     {
         BBox bounding_box;
         f32 max_distance = 0.0f;
-        u32 resolution = 128;
+        u32 resolution   = 128;
+        f32 cell_size    = -1.0f;
     };
 
     // Hash helper for sparce voxel storage
@@ -92,9 +93,8 @@ namespace geo
     {
     public:
         DistanceField() = default;
-        DistanceField(const DistanceFieldParameters& params);
     public:
-        void Build(const Mesh& mesh); // Builds the distance field from a triangle mesh.
+        void Build(const DistanceFieldParameters& params, const Mesh& mesh); // Builds the distance field from a triangle mesh.
         f32 operator()(const glm::vec3& q) const; // Evaluates signed distance at query point q.
         inline f32 GetMaxDist() const { return m_max_dist; } // Returns maximum truncation distance used during construction.
         inline f32 GetCellSize() const { return m_cellSize; } // Returns the cellSize
@@ -115,6 +115,7 @@ namespace geo
         {
             return (u64(coord.x) << 42) | (u64(coord.y) << 21) | u64(coord.z);
         }
+        void PreBuild(const DistanceFieldParameters& params);
     private:
         BBox m_box;
         glm::ivec3 m_dims{0};
