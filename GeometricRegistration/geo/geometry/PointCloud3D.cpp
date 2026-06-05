@@ -1,5 +1,6 @@
 #include <cassert>
 #include <numeric>
+#include <random>
 #include <geo/io/IOUtils.h>
 #include "PointCloud3D.h"
 

@@ -190,7 +190,7 @@ namespace geo
         if (params.cell_size > 0.0f)
         {
             m_cellSize = params.cell_size;
-            m_resolution = glm::ceil(m_box.MaxSize() / m_cellSize);
+            m_resolution = (u32)glm::ceil(m_box.MaxSize() / m_cellSize);
         }
         else
         {
