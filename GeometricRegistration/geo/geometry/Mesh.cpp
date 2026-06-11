@@ -145,67 +145,116 @@ namespace geo
         m_triangles = std::move(flatTriangles);
     }
 
-    // Converts Mesh → generic IO container
     static io::GeometryDumpData ToDump(const Mesh& mesh)
     {
-        io::GeometryDumpData data;
+        io::GeometryDumpData dump;
+        dump.fileType = io::FileType::UNKNOWN; // set by caller via path extension
+        dump.geometryType = io::GeometryType::TRIANGLE_MESH;
 
-        data.geometryType = io::GeometryType::TRIANGLE_MESH;
+        dump.positions = mesh.GetVertices();
+        dump.normals = mesh.GetNormals();
 
-        data.points = mesh.GetVertices();
+        const auto& tris = mesh.GetTriangles();
+        dump.indexBuffer.reserve(tris.size());
 
-        if (mesh.GetNormals().size() == mesh.GetVertices().size())
+        for (const TriangleData& tri : tris)
         {
-            data.normals = mesh.GetNormals();
+            io::TriangleIndex idx;
+            idx.vertexIndex = tri.vertexIndices;
+            idx.normalIndex = tri.vertexIndices; // normals are per-vertex and aligned
+            idx.coordsIndex = glm::uvec3(0u);    // no texcoords on Mesh
+            idx.colorIndex = glm::uvec3(0u);
+            dump.indexBuffer.push_back(idx);
         }
 
-        // Reconstruct index buffer from triangles
-        data.indexBuffer.reserve(mesh.TriangleCount());
+        // bbox — copy the already-computed one rather than recomputing
+        dump.bbox = mesh.BoundingBox();
 
-        for (index_t i = 0; i < mesh.TriangleCount(); ++i)
-        {
-            const TriangleData& tri = mesh.Triangle(i);
-
-            data.indexBuffer.emplace_back(
-                tri.vertexIndices.x,
-                tri.vertexIndices.y,
-                tri.vertexIndices.z
-            );
-        }
-
-        return data;
+        return dump;
     }
 
     void Mesh::Save(const std::filesystem::path& path) const
     {
-        io::GeometryDumpData data = ToDump(*this);
-        data.filePath = path;
-        io::SaveGeometry(path, data);
+        if (m_vertices.empty())
+        {
+            GEOLOGWARN("Mesh::Save — mesh is empty, nothing written to " << path);
+            return;
+        }
+
+        io::GeometryDumpData dump = ToDump(*this);
+        dump.filePath = path;
+        dump.fileType = io::GetFileType(path);
+
+        io::SaveGeometry(path, dump);
+
+        GEOLOGINFO("Mesh::Save — wrote " << VertexCount() << " vertices, " << TriangleCount() << " triangles to " << path);
     }
+
+    struct Key
+    {
+        u32 vi, ni;
+        bool operator<(const Key& o) const
+        {
+            if (vi != o.vi) return vi < o.vi;
+            return ni < o.ni;
+        }
+    };
 
     Mesh Mesh::Load(const std::filesystem::path& path)
     {
-        io::GeometryDumpData data = io::LoadGeometry(path);
+        io::GeometryDumpData dump = io::LoadGeometry(path);
 
-        // If file contains point cloud only, promote to degenerate mesh
-        if (!data.HasIndices())
+        if (dump.positions.empty())
         {
-            GEOLOGERROR("Mesh::Load - file has no index buffer (non-triangle geometry): " << path.string());
+            GEOLOGERROR("Mesh::Load - no vertices in file: " << path);
+            return Mesh{};
+        }
 
-            std::vector<glm::uvec3> emptyIndices;
-            return Mesh(
-                data.filePath.string(),
-                std::move(data.points),
-                std::move(emptyIndices),
-                std::move(data.normals)
-            );
+        if (!dump.HasIndices())
+        {
+            GEOLOGERROR("Mesh::Load - file contains no face data (point cloud?): " << path);
+            return Mesh{};
+        }
+
+        std::map<Key, u32>      cache;
+        std::vector<glm::vec3>  points;
+        std::vector<glm::vec3>  normals;
+        std::vector<glm::uvec3> indexBuffer;
+
+        points.reserve(dump.positions.size());
+        normals.reserve(dump.positions.size());
+        indexBuffer.reserve(dump.indexBuffer.size());
+
+        for (const io::TriangleIndex& tri : dump.indexBuffer)
+        {
+            glm::uvec3 face;
+
+            for (int v = 0; v < 3; v++)
+            {
+                const u32 vi = tri.vertexIndex[v];
+                const u32 ni = tri.normalIndex[v];
+                const Key key{ vi, ni };
+
+                auto [it, inserted] = cache.emplace(key, static_cast<u32>(points.size()));
+
+                if (inserted)
+                {
+                    points.push_back(vi < dump.positions.size() ? dump.positions[vi] : glm::vec3(0.0f));
+
+                    normals.push_back(ni < dump.normals.size() ? dump.normals[ni] : glm::vec3(0.0f, 1.0f, 0.0f));
+                }
+
+                face[v] = it->second;
+            }
+
+            indexBuffer.push_back(face);
         }
 
         return Mesh(
-            data.filePath.string(),
-            std::move(data.points),
-            std::move(data.indexBuffer),
-            std::move(data.normals)
+            io::GetFileName(path),
+            std::move(points),
+            std::move(indexBuffer),
+            std::move(normals)
         );
     }
 

@@ -2,6 +2,7 @@
 #include <numeric>
 #include <random>
 #include <geo/io/IOUtils.h>
+#include <geo/utils/logging/LogMacros.h>
 #include "PointCloud3D.h"
 
 namespace geo
@@ -135,43 +136,78 @@ namespace geo
 		return PointCloud3D(std::move(pts), {});
 	}
 
-	// Converts this point cloud into a generic dump structure for serialization.
-	static io::GeometryDumpData ToDump(const PointCloud3D& pc)
-	{
-		io::GeometryDumpData data;
-
-		data.geometryType = io::GeometryType::POINT_CLOUD;
-		data.fileType = io::FileType::PLY;
-
-		data.points = pc.GetPoints();
-		data.normals = pc.HasNormals() ? pc.GetNormals() : std::vector<glm::vec3>{};
-
-		// Point clouds do not use indices
-		data.indexBuffer.clear();
-
-		return data;
-	}
-
 	void PointCloud3D::Save(const std::filesystem::path& path) const
 	{
-		io::GeometryDumpData data = ToDump(*this);
+		io::GeometryDumpData dump;
+		dump.filePath = path;
+		dump.fileType = io::GetFileType(path);
+		dump.geometryType = io::GeometryType::POINT_CLOUD;
 
-		data.filePath = path;
+		dump.positions = m_points;
+		dump.normals   = m_normals;
 
-		// Delegate actual writing to IO layer (format chosen by extension)
-		io::SavePLY(path, data);
+		io::SaveGeometry(path, dump);
 	}
 
-	PointCloud3D PointCloud3D::Load(const std::filesystem::path & path)
+	struct Key
 	{
-		io::GeometryDumpData data = io::LoadGeometry(path);
+		u32 vi, ni;
+		bool operator==(const Key& o) const { return vi == o.vi && ni == o.ni; }
+	};
 
-		std::vector<glm::vec3> points = std::move(data.points);
-		std::vector<glm::vec3> normals;
-
-		if (data.HasNormals())
+	struct KeyHash
+	{
+		size_t operator()(const Key& k) const
 		{
-			normals = std::move(data.normals);
+			size_t h = 2166136261u;
+			h ^= k.vi; h *= 16777619u;
+			h ^= k.ni; h *= 16777619u;
+			return h;
+		}
+	};
+
+	PointCloud3D PointCloud3D::Load(const std::filesystem::path& path)
+	{
+		io::GeometryDumpData dump = io::LoadGeometry(path);
+
+		if (dump.positions.empty())
+		{
+			GEOLOGWARN("PointCloud3D::Load — no points in file: " << path);
+			return PointCloud3D{};
+		}
+
+		// ------------------------------------------------------------------
+		// True point cloud (no index buffer) — arrays are already aligned.
+		// Every slot i is consistent across points and normals by construction.
+		// ------------------------------------------------------------------
+		if (!dump.HasIndices())
+		{
+			return PointCloud3D(std::move(dump.positions), std::move(dump.normals));
+		}
+
+		const glm::vec3 defaultNormal(0.0f, 1.0f, 0.0f);
+
+		std::unordered_set<Key, KeyHash> seen;
+		seen.reserve(dump.indexBuffer.size() * 3);
+
+		std::vector<glm::vec3> points;
+		std::vector<glm::vec3> normals;
+		points.reserve(dump.indexBuffer.size() * 3);
+		normals.reserve(dump.indexBuffer.size() * 3);
+
+		for (const io::TriangleIndex& tri : dump.indexBuffer)
+		{
+			for (int v = 0; v < 3; v++)
+			{
+				const u32 vi = tri.vertexIndex[v];
+				const u32 ni = tri.normalIndex[v];
+
+				// insert() returns false in .second if key was already present
+				if (!seen.insert(Key{ vi, ni }).second) continue;
+
+				points.emplace_back(vi < dump.positions.size() ? dump.positions[vi] : glm::vec3(0.0f));
+				normals.emplace_back(ni < dump.normals.size() ? dump.normals[ni] : defaultNormal);
+			}
 		}
 
 		return PointCloud3D(std::move(points), std::move(normals));

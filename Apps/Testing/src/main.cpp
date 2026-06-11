@@ -6,8 +6,8 @@ using namespace tests;
 static constexpr u32 SEED = 2026;
 
 #define RUN_PartialScans
-#define RUN_UnitTests
-#define RUN_DFTEST
+//#define RUN_UnitTests
+//#define RUN_DFTEST
 
 //#define RUN_SparseICP
 #define RUN_EfficientICP
@@ -18,10 +18,10 @@ static void RunPartialScansAlignmentTests()
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
-	Model dora_1 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
-    //Model fox    = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 32);
-    //Model dora_2 = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 128);
-	std::cout << "Models Loaded\n";
+	Model model = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
+    //Model model = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 256);
+    //Model model = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 256);
+	std::cout << "Model Loaded\n";
 
 	std::cout << "Creating Test Suite...";
 
@@ -43,12 +43,12 @@ static void RunPartialScansAlignmentTests()
 
 	TestSuitePSA suite;
 
-	suite.AddFullOverlap(&dora_1, gt, SEED);
-	suite.AddHalfOverlap(&dora_1, gt, SEED);
-	suite.AddQuarterOverlap(&dora_1, gt, SEED);
-	suite.AddWithOutliers(&dora_1, 0.1f, gt, SEED);
-	suite.AddWithNoise(&dora_1, 0.05f, gt, SEED);
-	suite.AddHard(&dora_1, gt, SEED);
+	suite.AddFullOverlap(&model, gt, SEED);
+	suite.AddHalfOverlap(&model, gt, SEED);
+	suite.AddQuarterOverlap(&model, gt, SEED);
+	suite.AddWithOutliers(&model, 0.1f, gt, SEED);
+	suite.AddWithNoise(&model, 0.05f, gt, SEED);
+	suite.AddHard(&model, gt, SEED);
 
 
 	std::cout << "Done\n";
@@ -92,9 +92,9 @@ static void TestDF()
     // 1. Create input data
     std::cout << "Loading Mesh...\n";
 
-    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/bunny/bunny.obj").ToMesh();
-    //geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/fox_skull/fox_skull.obj").ToMesh();
-    geo::Mesh mesh = geo::io::LoadGeometry(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj").ToMesh();
+    //geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/bunny/bunny.obj");
+    //geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
 
     //mesh.Flatten();
 

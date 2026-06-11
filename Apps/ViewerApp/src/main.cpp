@@ -9,11 +9,18 @@ int main()
 {
     geo::SetLogLevel(geo::LogLevel::LOG_INFO);
 
-    geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
+    //geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj");
+    //geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/Tombstone/Tombstone1_med.obj");
+     
     //geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/bunny/bunny.obj");
+    geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
+    //geo::Mesh cpu_mesh = geo::Mesh::Load(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
+
+    std::cout << "Vertex Count: " << cpu_mesh.VertexCount() << " | Face Count: " << cpu_mesh.TriangleCount() << "\n";
+
     geo::BBox box = cpu_mesh.BoundingBox();
 
-    //geo::PointCloud3D cpu_cloud = geo::PointCloud3D::Load(RESOURCES_PATH"models/owl/owl-clean.ply");
+    //geo::PointCloud3D cpu_cloud = geo::PointCloud3D::Load(RESOURCES_PATH"models/owl/owl-decimate10pc-textured.ply");
     //geo::BBox box = cpu_cloud.ComputeBoundingBox();
 
     gl::WINInitialization();

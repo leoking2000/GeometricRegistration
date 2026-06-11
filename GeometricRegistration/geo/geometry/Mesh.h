@@ -9,7 +9,7 @@ namespace geo
 	struct TriangleData
 	{
 		glm::uvec3 vertexIndices = glm::uvec3(0u);
-		glm::vec3 faceNormal = glm::vec3(0.0f);
+		glm::vec3 faceNormal  = glm::vec3(0.0f);
 		f32 area = 0.0f;
 		index_t operator[](int i) const
 		{
@@ -101,8 +101,7 @@ namespace geo
 		std::vector<glm::vec3> m_normals; // Vertex normal buffer
 		std::vector<TriangleData> m_triangles; // Triangle index buffer + cached geometric properties
 
-		// TODO: Add Material data and Trasformation Data
-
+		// TODO: Add Trasformation Data
 	protected:
 		BBox m_bounding_box; // Cached bounding box of the mesh
 		f64 m_area = 0.0; // Cached total surface area of the mesh
