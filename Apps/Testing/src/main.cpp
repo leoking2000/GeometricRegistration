@@ -18,7 +18,8 @@ static void RunPartialScansAlignmentTests()
 	std::cout << "====== Partial Scans Alignment Tests ======\n";
 
 	std::cout << "Loading 3D Models...\n";
-	Model model = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
+    Model model = CreateModelFromOBJ(RESOURCES_PATH"models/owl/owl-decimate10pc-textured.ply", 128);
+	//Model model = CreateModelFromOBJ(RESOURCES_PATH"models/DoraColumnBase/DoraColumnBase1_low.obj", 128);
     //Model model = CreateModelFromOBJ(RESOURCES_PATH"models/fox_skull/fox_skull.obj", 256);
     //Model model = CreateModelFromOBJ(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj", 256);
 	std::cout << "Model Loaded\n";

@@ -139,7 +139,7 @@ namespace geo
             
             		if (d < maxDist)
             		{
-            			cost += glm::pow(d, params.icpParams.p);
+            			cost += d * d;
             			count++;
             		}
             	}

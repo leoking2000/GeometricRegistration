@@ -31,3 +31,4 @@ add_subdirectory(thirdparty/stb)             # texture read-write
 add_subdirectory(GeometricRegistration)      # static library
 add_subdirectory(Apps/Testing)               # runs tests
 add_subdirectory(Apps/ViewerApp)             # visualization tool
+add_subdirectory(Apps/GeoAlign)              # CLI tool
