@@ -9,7 +9,8 @@
 
 namespace geo
 {
-    Mesh::Mesh(const std::string& filename, std::vector<glm::vec3> points, std::vector<glm::uvec3> triangles, std::vector<glm::vec3> normals)
+    Mesh::Mesh(const std::string& filename, 
+        std::vector<glm::vec3> points, std::vector<glm::uvec3> triangles, std::vector<glm::vec3> normals)
         :
         m_filename(filename),
         m_vertices(std::move(points)),
@@ -26,6 +27,11 @@ namespace geo
 
         ComputeSurfaceArea();
         ComputeBoundingBox();
+
+        GEOLOGINFO("Mesh created: " << m_filename
+            << " | vertices=" << m_vertices.size()
+            << " | triangles=" << m_triangles.size()
+            << " | normals=" << m_normals.size());
     }
 
     Mesh::~Mesh()
@@ -110,6 +116,8 @@ namespace geo
 
     void Mesh::Flatten()
     {
+        GEOLOGINFO("Flattening mesh | vertices=" << m_vertices.size() << " triangles=" << m_triangles.size());
+
         std::vector<glm::vec3> flatVertices;
         std::vector<glm::vec3> flatNormals;
         std::vector<TriangleData> flatTriangles;
@@ -143,6 +151,8 @@ namespace geo
         m_vertices = std::move(flatVertices);
         m_normals = std::move(flatNormals);
         m_triangles = std::move(flatTriangles);
+
+        GEOLOGINFO("Mesh flattened | new vertices=" << m_vertices.size());
     }
 
     static io::GeometryDumpData ToDump(const Mesh& mesh)
@@ -175,6 +185,8 @@ namespace geo
 
     void Mesh::Save(const std::filesystem::path& path) const
     {
+        GEOLOGINFO("Saving mesh: " << path << " | vertices=" << VertexCount() << " | triangles=" << TriangleCount());
+
         if (m_vertices.empty())
         {
             GEOLOGWARN("Mesh::Save — mesh is empty, nothing written to " << path);
@@ -187,7 +199,7 @@ namespace geo
 
         io::SaveGeometry(path, dump);
 
-        GEOLOGINFO("Mesh::Save — wrote " << VertexCount() << " vertices, " << TriangleCount() << " triangles to " << path);
+        GEOLOGINFO("Mesh saved successfully");
     }
 
     struct Key
@@ -202,6 +214,8 @@ namespace geo
 
     Mesh Mesh::Load(const std::filesystem::path& path)
     {
+        GEOLOGINFO("Loading mesh: " << path);
+
         io::GeometryDumpData dump = io::LoadGeometry(path);
 
         if (dump.positions.empty())
@@ -262,6 +276,8 @@ namespace geo
     {
         assert(!m_triangles.empty());
         assert(n > 0);
+
+        GEOLOGDEBUG("Uniform surface sampling"<< " | samples=" << n << " | normals=" << (includeNormals ? "yes" : "no"));
     
         // Prepare Output Buffers
         std::vector<glm::vec3> sampledPoints;

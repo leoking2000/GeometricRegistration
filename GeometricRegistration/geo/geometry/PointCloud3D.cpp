@@ -13,6 +13,10 @@ namespace geo
 		m_normals(std::move(normals))
 	{
 		RecalculateCentroid();
+
+		GEOLOGINFO("PointCloud3D created | points=" << m_points.size()
+			     << " normals=" << m_normals.size()
+			     << " hasNormals=" << (HasNormals() ? "yes" : "no"));
 	}
 
 	index_t PointCloud3D::Size() const
@@ -116,6 +120,8 @@ namespace geo
 		assert(targetCount > 0);
 		assert(targetCount <= Size());
 
+		GEOLOGDEBUG("UniformSubsample | input=" << Size() << " output=" << targetCount << " seed=" << seed);
+
 		std::mt19937 rng(seed);
 
 		std::vector<index_t> idx(Size());
@@ -138,6 +144,9 @@ namespace geo
 
 	void PointCloud3D::Save(const std::filesystem::path& path) const
 	{
+		GEOLOGINFO("Saving point cloud: " << path 
+			<< " | points=" << m_points.size() << " | normals=" << m_normals.size());
+
 		io::GeometryDumpData dump;
 		dump.filePath = path;
 		dump.fileType = io::GetFileType(path);
@@ -147,6 +156,8 @@ namespace geo
 		dump.normals   = m_normals;
 
 		io::SaveGeometry(path, dump);
+
+		GEOLOGINFO("Point cloud saved successfully");
 	}
 
 	struct Key
@@ -168,6 +179,8 @@ namespace geo
 
 	PointCloud3D PointCloud3D::Load(const std::filesystem::path& path)
 	{
+		GEOLOGINFO("Loading point cloud: " << path);
+
 		io::GeometryDumpData dump = io::LoadGeometry(path);
 
 		if (dump.positions.empty())

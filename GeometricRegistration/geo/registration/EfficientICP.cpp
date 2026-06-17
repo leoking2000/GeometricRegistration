@@ -4,6 +4,7 @@
 #include <glm/gtx/quaternion.hpp>
 #include <geo/utils/logging/LogMacros.h>
 #include <geo/math/ESA.h>
+#include <geo/math/Stats.h>
 #include "EfficientICP.h"
 
 namespace geo
@@ -104,6 +105,9 @@ namespace geo
         // ICP progressively transforms this cloud toward the target.
         PointCloud3D src = source;
 
+        GEOLOGINFO("EfficientICP (ESA+S-ICP) started");
+        GEOLOGDEBUG("ESA iterations=" << params.esaIterations);
+
         TimePoint startTotal = Clock::now();
 
         // ------------------------------------------------------------
@@ -121,6 +125,8 @@ namespace geo
         // ------------------------------------------------------------
         // 2. Run ESA on a subsampled source cloud
         // ------------------------------------------------------------
+        GEOLOGINFO("ESA global alignment started | Num of configs=" << configs.size());
+
         ESAResult esa_result = MultiConfigESA(configs,
             [&](float* e) -> float {
             
@@ -150,7 +156,9 @@ namespace geo
             
             	return float(cost / (f64)count);
             });
-        
+     
+        GEOLOGINFO("ESA done | cost=" << esa_result.cost);
+
         // ------------------------------------------------------------
         // 3. Apply ESA result as initial alignment
         // ------------------------------------------------------------
@@ -161,7 +169,11 @@ namespace geo
         // 4. Local refinement using Sparse ICP
         // ------------------------------------------------------------
 
+        GEOLOGINFO("Local ICP refinement started");
+
         ICPResult icp_result = geo::SparseICPPointToPlane(target, src, nn, params.icpParams);
+
+        GEOLOGINFO("Local ICP done | rmse=" << icp_result.rmse << " iter=" << icp_result.iterations);
 
         // ------------------------------------------------------------
         // 5. Combine global + local transforms
@@ -173,9 +185,10 @@ namespace geo
         // 6. Total timing
         // ------------------------------------------------------------
 
-        TimePoint endTotal = Clock::now();
+        f64 totalTime = TimeDifferenceMs(Clock::now(), startTotal);
+        GEOLOGINFO("EfficientICP finished | rmse=" << icp_result.rmse << " | total time = " << totalTime << "ms");
 
-        return { transform, icp_result, esa_result, TimeDifferenceMs(endTotal, startTotal)};
+        return { transform, icp_result, esa_result, totalTime };
     }
 
 }

@@ -3,6 +3,8 @@
 #include <execution>
 #include <nanoflann.hpp>
 #include <glm/common.hpp>
+#include <geo/utils/logging/LogMacros.h>
+#include <geo/utils/GeoTime.h>
 #include "KDTree.h"
 
 using namespace nanoflann;
@@ -41,7 +43,11 @@ namespace geo
             adaptor(points), 
             index(3, adaptor, KDTreeSingleIndexAdaptorParams(10))
         {
+            GEOLOGVERBOSE("KDTree build started | points: " << points.size());
+
             index.buildIndex();
+
+            GEOLOGVERBOSE("KDTree build finished");
         }
     };
 
@@ -50,7 +56,12 @@ namespace geo
     KDTree::KDTree(const std::vector<glm::vec3>& points)
     {
         assert(!points.empty());
+
+        TimePoint start = Clock::now();
         m_data = std::make_unique<KDTreeData>(points);
+
+        GEOLOGINFO("KDTree initialized | points: " << points.size() 
+            << " | Build time: " << TimeDifferenceMs(Clock::now(), start) << "ms");
     }
 
     KDTree::KDTree(KDTree&&) noexcept = default;
@@ -60,7 +71,12 @@ namespace geo
     void KDTree::Rebuild()
     {
         assert(!m_data->points_array.empty());
+
+        TimePoint start = Clock::now();
         m_data->index.buildIndex();
+
+        GEOLOGINFO("KDTree Rebuild | points: " << m_data->points_array.size()
+            << " | Build time: " << TimeDifferenceMs(Clock::now(), start) << "ms");
     }
 
     index_t KDTree::Query(const glm::vec3& point) const
@@ -79,10 +95,10 @@ namespace geo
         return (index_t)idx;
     }
 
-#define PARALLEL
-
     void KDTree::QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const
     {
+        TimePoint start = Clock::now();
+
         if (results.size() != points.size())
         {
             results.resize(points.size(), 0);
@@ -90,7 +106,9 @@ namespace geo
 
         assert(!m_data->points_array.empty());
 
-#ifdef PARALLEL
+        GEOLOGVERBOSE("KDTree batch query | input points: " << points.size());
+
+#ifdef KDTREE_PARALLEL_BATCH
         std::for_each(std::execution::par, results.begin(), results.end(),
             [&](index_t& i_placeholder)
             {
@@ -107,8 +125,12 @@ namespace geo
 
                 results[i] = (index_t)idx;
             });
+
+        GEOLOGVERBOSE("KDTree PARALLEL batch query done in " << TimeDifferenceMs(Clock::now(), start) << "ms");
 #else
         for (size_t i = 0; i < points.size(); i++) { results[i] = Query(points[i]); }
+
+        GEOLOGVERBOSE("KDTree LINEAR batch query done in " << TimeDifferenceMs(Clock::now(), start) << "ms");
 #endif // PARALLEL
     }
 

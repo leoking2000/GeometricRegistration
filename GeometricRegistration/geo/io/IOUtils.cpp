@@ -326,17 +326,12 @@ namespace geo::io
 
         if (!data.HasNormals() && data.HasIndices())
         {
-            GEOLOGINFO("OBJ has no normals - computing vertex normals");
+            GEOLOGWARN("OBJ has no normals - computing vertex normals in " << GetFileName(path));
             ComputeNormals(data);
         }
 
-        GEOLOGINFO("Loaded OBJ: " << path
-            << " | " << data.positions.size()    << " vertices"
-            << " | " << data.normals.size()      << " normals"
-            << " | " << data.texcoords.size()    << " texcoords"
-            << " | " << data.indexBuffer.size()  << " triangles"
-            << " | " << data.groups.size()       << " groups"
-            << " | " << data.materialsMap.size() << " materials");
+        GEOLOGDEBUG("Loaded OBJ: ");
+        GEOLOGDEBUG(data.ToString());
 
         return data;
     }
@@ -936,16 +931,12 @@ namespace geo::io
 
         if (!data.HasNormals() && data.geometryType == GeometryType::TRIANGLE_MESH)
         {
-            GEOLOGINFO("PLY mesh has no normals — computing vertex normals");
+            GEOLOGWARN("PLY mesh has no normals - computing vertex normals in " << GetFileName(path));
             ComputeNormals(data);
         }
 
-        GEOLOGINFO("Loaded PLY: " << path
-            << " | " << data.positions.size()     << " vertices"
-            << " | " << data.indexBuffer.size() << " triangles"
-            << " | normals: "  << (data.HasNormals() ? "yes" : "no")
-            << " | colors: "   << (data.HasColors()  ? "yes" : "no")
-            << " | type: "     << (data.geometryType == GeometryType::TRIANGLE_MESH ? "mesh" : "point cloud"));
+        GEOLOGDEBUG("Loaded PLY: ");
+        GEOLOGDEBUG(data.ToString());
 
         return data;
     }
@@ -1093,9 +1084,8 @@ namespace geo::io
             return false;
         }
 
-        GEOLOGINFO("Saved OBJ: " << path
-            << " | " << data.positions.size()      << " vertices"
-            << " | " << data.indexBuffer.size()  << " triangles");
+        GEOLOGDEBUG("Saved OBJ: ");
+        GEOLOGDEBUG(data.ToString());
 
         return true;
     }
@@ -1245,11 +1235,8 @@ namespace geo::io
             return false;
         }
 
-        GEOLOGINFO("Saved PLY: " << path
-            << " | " << data.positions.size()      << " vertices"
-            << " | " << data.indexBuffer.size()  << " triangles"
-            << " | normals: " << (hasNormals ? "yes" : "no")
-            << " | colors: "  << (hasColors  ? "yes" : "no"));
+        GEOLOGDEBUG("Saved PLY: ");
+        GEOLOGDEBUG(data.ToString());
 
         return true;
     }

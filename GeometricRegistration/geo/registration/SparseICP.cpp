@@ -68,6 +68,17 @@ namespace geo
 		assert(params.mu > 0.0f);
 		assert(params.admmIterations >= 1);
 
+		GEOLOGINFO("SparseICP (PointToPoint) started");
+
+		GEOLOGDEBUG("SparseICP (PointToPoint) Params |"
+			<< " p=" << params.p
+			<< " mu=" << params.mu
+			<< " admmIters=" << params.admmIterations);
+
+		GEOLOGDEBUG("Target points: " << target.Size()
+			<< " | Source points: " << source.Size()
+			<< " | Max iterations: " << params.maxIterations);
+
 		TimePoint startTotal = Clock::now();
 
 		const index_t N = src.Size();
@@ -195,12 +206,27 @@ namespace geo
 			TimePoint endTime = Clock::now();
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-			GEOLOGDEBUG("iter: " << iter + 1
-				<< " rmse: " << result.rmse
-				<< " trans: " << transNorm
-				<< " rot: " << rotAngle << "\n");
+			// VERBOSE iteration statistics.
+			GEOLOGVERBOSE(
+				"[ICP] iter=" << (iter + 1)
+				<< " rmse=" << result.rmse
+				<< " dRMSE=" << (prevError - result.rmse)
+				<< " trans=" << transNorm
+				<< " rot=" << rotAngle
+			);
 
-			if (smallMotion && smallErrorChange)
+			if (smallMotion)
+			{
+				GEOLOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
+			}
+
+			if (smallErrorChange)
+			{
+				GEOLOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
+			}
+
+			// Stop once both geometric motion or error change are small.
+			if (smallMotion || smallErrorChange)
 			{
 				result.converged = true;
 				break;
@@ -209,6 +235,12 @@ namespace geo
 
 		TimePoint endTotal = Clock::now();
 		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
+
+		GEOLOGINFO("SparseICP (PointToPoint) finished"
+			<< " | iterations=" << result.iterations
+			<< " | rmse=" << result.rmse
+			<< " | time_ms=" << result.totalTimeMs
+			<< " | converged=" << result.converged);
 
 		return result;
 	}
@@ -231,6 +263,17 @@ namespace geo
 
 		// Point-to-plane ICP requires target normals.
 		assert(target.HasNormals());
+
+		GEOLOGINFO("SparseICP (PointToPlane) started");
+
+		GEOLOGDEBUG("SparseICP (PointToPlane) Params |"
+			<< " p=" << params.p
+			<< " mu=" << params.mu
+			<< " admmIters=" << params.admmIterations);
+
+		GEOLOGDEBUG("Target points: " << target.Size()
+			<< " | Source points: " << source.Size()
+			<< " | Max iterations: " << params.maxIterations);
 
 		TimePoint startTotal = Clock::now();
 
@@ -356,12 +399,27 @@ namespace geo
 			TimePoint endTime = Clock::now();
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
-			GEOLOGDEBUG("iter: " << iter + 1
-				<< " rmse: " << result.rmse
-				<< " trans: " << transNorm
-				<< " rot: " << rotAngle << "\n");
+			// VERBOSE iteration statistics.
+			GEOLOGVERBOSE(
+				"[ICP] iter=" << (iter + 1)
+				<< " rmse=" << result.rmse
+				<< " dRMSE=" << (prevError - result.rmse)
+				<< " trans=" << transNorm
+				<< " rot=" << rotAngle
+			);
 
-			if (smallMotion && smallErrorChange)
+			if (smallMotion)
+			{
+				GEOLOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
+			}
+
+			if (smallErrorChange)
+			{
+				GEOLOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
+			}
+
+			// Stop once both geometric motion or error change are small.
+			if (smallMotion || smallErrorChange)
 			{
 				result.converged = true;
 				break;
@@ -370,6 +428,12 @@ namespace geo
 
 		TimePoint endTotal = Clock::now();
 		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
+
+		GEOLOGINFO("SparseICP (PointToPlane) finished"
+			<< " | iterations=" << result.iterations
+			<< " | rmse=" << result.rmse
+			<< " | time_ms=" << result.totalTimeMs
+			<< " | converged=" << result.converged);
 
 		return result;
 	}

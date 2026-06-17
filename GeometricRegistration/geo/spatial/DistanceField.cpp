@@ -214,16 +214,30 @@ namespace geo
         // rehash map
         m_cells.rehash(2048);
         m_compact_cells.rehash(2048);
+
+        GEOLOGDEBUG("DistanceField Build Params:"
+                 << "\ndimensions   ="   << m_dims.x << " x " << m_dims.y << " x " << m_dims.z
+                 << "\nresolution   ="   << m_resolution
+                 << "\ncell_size    ="   << m_cellSize
+                 << "\nmax_distance ="   << m_max_dist
+                 << "\nBBox size    ="   << m_box.Size().x << "," << m_box.Size().y << "," << m_box.Size().z
+        );
     }
 
     void DistanceField::Build(const DistanceFieldParameters& params, const Mesh& mesh)
     {
+        TimePoint start = Clock::now();
+        GEOLOGINFO("DistanceField: Build started");
+
+        GEOLOGDEBUG("DistanceField: Mesh triangles: " << mesh.TriangleCount());
+
         PreBuild(params);
 
         m_cells.clear();
         m_compact_cells.clear();
 
 #ifdef DF_PARALLEL_BUILD
+        GEOLOGINFO("DistanceField: using PARALLEL build");
 
         TimePoint TriangleStart = Clock::now();
 
@@ -303,10 +317,12 @@ namespace geo
         }
 
         TimePoint TriangleEnd = Clock::now();
-        GEOLOGVERBOSE("Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
+        GEOLOGVERBOSE("DistanceField: Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
 
         ExpandSeiral(mesh);
+        //ExpandParaller(mesh);
 #else
+        GEOLOGINFO("DistanceField: using SERIAL build");
         TimePoint TriangleStart = Clock::now();
 
         // loop through every triagnle
@@ -370,12 +386,14 @@ namespace geo
         m_cells = std::move(clean);
 
         TimePoint TriangleEnd = Clock::now();
-        GEOLOGVERBOSE("Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
+        GEOLOGVERBOSE("DistanceField: Time of building norrow band: " << TimeDifferenceMs(TriangleEnd, TriangleStart) << "ms");
 
         ExpandSeiral(mesh);
 #endif
 
         computeSignAndCompact(mesh);
+
+        GEOLOGINFO("DistanceField: Total Build Time: " << TimeDifferenceMs(Clock::now(), start) << "ms");
     }
 
     f32 DistanceField::operator()(const glm::vec3& q) const
@@ -397,6 +415,7 @@ namespace geo
 
     void DistanceField::ExpandSeiral(const Mesh& mesh)
     {
+        GEOLOGVERBOSE("DistanceField: expansion started");
         TimingStat expandTime;
 
         TimePoint start = Clock::now();
@@ -491,7 +510,7 @@ namespace geo
         } while (changed);
 
         TimePoint end = Clock::now();
-        GEOLOGVERBOSE("Total Time of Expand(): " << TimeDifferenceMs(end, start) << "ms\n" << expandTime.ToString());
+        GEOLOGVERBOSE("DistanceField: Total Time of Expand(): " << TimeDifferenceMs(end, start) << "ms\n" << expandTime.ToString());
     }
 
     //void DistanceField::ExpandParaller(const Mesh& mesh)
@@ -514,6 +533,8 @@ namespace geo
         }
 
         m_cells.clear();
+
+        GEOLOGDEBUG("DistanceField: compact SDF size = " << m_compact_cells.size());
     }
 
     // ============================================================
@@ -537,6 +558,10 @@ namespace geo
 
     bool DistanceField::Save(const std::filesystem::path& path) const
     {
+        GEOLOGINFO("Saving DistanceField: " << path);
+
+        GEOLOGDEBUG("Cell count = " << m_compact_cells.size());
+
         if (m_compact_cells.empty())
         {
             GEOLOGERROR("Save: SDF not built yet (no compact cells)");
@@ -592,6 +617,8 @@ namespace geo
 
     bool DistanceField::Load(const std::filesystem::path& path, DistanceField& out)
     {
+        GEOLOGINFO("Loading DistanceField: " << path);
+
         std::ifstream file(path, std::ios::binary);
         if (!file.is_open())
         {
@@ -628,6 +655,9 @@ namespace geo
 
         out.m_box = BBox(bmin, bmax);
 
+        GEOLOGDEBUG("SDF dims=" << out.m_dims.x << "," << out.m_dims.y << "," << out.m_dims.z);
+        GEOLOGDEBUG("CellSize=" << out.m_cellSize << " maxDist=" << out.m_max_dist);
+
         // Read cells
         u64 count = 0;
         file.read(reinterpret_cast<char*>(&count), 8);
@@ -659,6 +689,8 @@ namespace geo
             std::memcpy(&dist, ptr, 4); ptr += 4;
             out.m_compact_cells.emplace(key, dist);
         }
+
+        GEOLOGINFO("SDF loaded: cells=" << count);
 
         return true;
     }

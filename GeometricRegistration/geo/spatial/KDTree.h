@@ -2,6 +2,8 @@
 #include <memory>
 #include "INearestNeighbor.h"
 
+#define KDTREE_PARALLEL_BATCH
+
 namespace geo
 {
     // Kd-Tree for 3D points using glm::vec3.

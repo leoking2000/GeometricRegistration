@@ -400,7 +400,8 @@ namespace geo
 			params.initialTransform[2], 
 			params.initialTransform[3], 
 			params.initialTransform[4],
-			params.initialTransform[5]};
+			params.initialTransform[5]
+		};
 
 		float x_min[6];
 		float x_max[6];
@@ -452,7 +453,7 @@ namespace geo
 
 		// 3. Return Result
 		result.transform = ConvertToRigidTransform(x_best);
-		result.cost = glm::sqrt(cost);
+		result.cost = cost;
 		result.totalTime = TimeDifferenceMs(Clock::now(), start);
 
         return result;

@@ -9,10 +9,6 @@ namespace geo
 		const PointCloud3D& target, const PointCloud3D& source, 
 		const INearestNeighbor& nn, const LeastSquaresICPParameters& params)
 	{
-		// Create mutable working copy of source cloud.
-		// ICP progressively transforms this cloud toward the target.
-		PointCloud3D src = source;
-
 		// Basic parameter validation.
 		assert(src.Size() >= 3);
 		assert(target.Size() == nn.Size());
@@ -20,11 +16,20 @@ namespace geo
 		assert(params.tolerance > 0.0f);
 
 		// Point-to-plane ICP requires target normals.
+		const bool usePointToPlane = params.useNormals && target.HasNormals(); // Select ICP variant.
 		assert((params.useNormals && target.HasNormals()) || !params.useNormals);
 
-		TimePoint startTotal = Clock::now();
+		GEOLOGINFO("LeastSquaresICP started");
+		GEOLOGINFO("ICP mode: " << (usePointToPlane ? "PointToPlane" : "PointToPoint"));
 
-		const bool usePointToPlane = params.useNormals && target.HasNormals(); // Select ICP variant.
+		GEOLOGDEBUG("Target points: " << target.Size()
+			<< " | Source points: " << source.Size()
+			<< " | Max iterations: " << params.maxIterations);
+
+		// Create mutable working copy of source cloud.
+		// ICP progressively transforms this cloud toward the target.
+		PointCloud3D src = source;
+		TimePoint startTotal = Clock::now();
 
 		const index_t numberOfPoints = src.Size();
 
@@ -135,13 +140,26 @@ namespace geo
 			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
 
 			// VERBOSE iteration statistics.
-			GEOLOGVERBOSE("iter: " << iter + 1
-					 << " rmse: " << result.rmse
-				     << " trans: " << transNorm
-				     << " rot: " << rotAngle << "\n");
+			GEOLOGVERBOSE(
+				"[ICP] iter=" << (iter + 1)
+				<< " rmse=" << result.rmse
+				<< " dRMSE=" << (prevError - result.rmse)
+				<< " trans=" << transNorm
+				<< " rot=" << rotAngle
+			);
 
-			// Stop once both geometric motion and error change are small.
-			if (smallMotion && smallErrorChange)
+			if (smallMotion)
+			{
+				GEOLOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
+			}
+
+			if (smallErrorChange)
+			{
+				GEOLOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
+			}
+
+			// Stop once both geometric motion or error change are small.
+			if (smallMotion || smallErrorChange)
 			{
 				result.converged = true;
 				break;
@@ -150,6 +168,12 @@ namespace geo
 
 		TimePoint endTotal = Clock::now();
 		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal); // Final total ICP runtime in milliseconds.
+
+		GEOLOGINFO("LeastSquaresICP finished"
+			<< " | iterations=" << result.iterations
+			<< " | rmse=" << result.rmse
+			<< " | time_ms=" << result.totalTimeMs
+			<< " | converged=" << result.converged);
 
 		return result;
 	}
