@@ -3,10 +3,8 @@
 #include <functional>
 #include <geo/utils/GeoRand.h>
 #include <geo/utils/GeoTime.h>
-#include <geo/spatial/DistanceField.h>
-#include <geo/geometry/PointCloud3D.h>
-#include "RigidTransform.h"
-#include "BBox.h"
+#include <geo/math/RigidTransform.h>
+#include <geo/math/BBox.h>
 
 // The Enhanced Simulated Annealing method as presented by P. Siarry, G. Berthiau,
 // F. Durbin and J. Haussy in "Enhanced Simulated Annealing for Globally Minimizing

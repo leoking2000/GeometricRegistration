@@ -5,7 +5,10 @@
 #include <memory.h>
 #include "ESA.h"
 
-#pragma warning( disable : 6993 4244 4305)
+#pragma warning( disable : 6993)
+
+#pragma warning(push)
+#pragma warning( disable : 6993 4244 4305 4101)
 
 // Utility macros for min/max (kept local to avoid std dependency in legacy ESA code)
 #define mymin(a,b) (((a)<=(b))?(a):(b))
@@ -366,7 +369,7 @@ float EnhancedSimulatedAnnealingPlus
 
 	return e_best;
 }
-
+#pragma warning(pop)
 
 namespace geo
 {

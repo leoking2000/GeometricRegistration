@@ -11,3 +11,7 @@ add_library(eigen INTERFACE)
 
 target_include_directories(eigen INTERFACE include "${CMAKE_CURRENT_SOURCE_DIR}/")
 
+target_compile_options(eigen INTERFACE
+    /wd4996
+    /wd26450
+)

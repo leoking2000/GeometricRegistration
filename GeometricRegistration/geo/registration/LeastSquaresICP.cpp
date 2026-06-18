@@ -1,6 +1,5 @@
 #include <geo/utils/logging/LogMacros.h>
 #include <geo/math/Solvers.h>
-#include <geo/math/Stats.h>
 #include "LeastSquaresICP.h"
 
 namespace geo

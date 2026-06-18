@@ -9,3 +9,10 @@ set(CMAKE_INTERPROCEDURAL_OPTIMIZATION TRUE) #link time optimization
 add_library(nanoflann INTERFACE)
 
 target_include_directories(nanoflann INTERFACE include "${CMAKE_CURRENT_SOURCE_DIR}/")
+
+target_compile_options(nanoflann INTERFACE
+    /wd28020
+    /wd26495
+    /wd4287
+    /wd4267
+)

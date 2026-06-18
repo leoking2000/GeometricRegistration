@@ -42,7 +42,7 @@ namespace geo
             case LogLevel::LOG_ERROR:   return "[Error]    ";
             case LogLevel::LOG_FATAL:   return "[Fatal]    ";
             case LogLevel::LOG_NONE:    return "[None]     ";
-            default:                return "[Unknown]  ";
+            default:                    return "[Unknown]  ";
         }
     }
 }

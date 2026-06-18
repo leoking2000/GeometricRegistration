@@ -3,8 +3,8 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <geo/utils/logging/LogMacros.h>
-#include <geo/math/ESA.h>
-#include <geo/math/Stats.h>
+#include "ESA.h"
+#include <geo/math/solvers.h>
 #include "EfficientICP.h"
 
 namespace geo

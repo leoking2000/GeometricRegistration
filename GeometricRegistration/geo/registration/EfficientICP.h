@@ -1,6 +1,6 @@
 #include <geo/geometry/PointCloud3D.h>
-#include <geo/spatial/INearestNeighbor.h>
 #include <geo/spatial/DistanceField.h>
+#include <geo/spatial/INearestNeighbor.h>
 #include "SparseICP.h"
 #include "ICPResult.h"
 
