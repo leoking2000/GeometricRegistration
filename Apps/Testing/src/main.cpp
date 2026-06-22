@@ -5,8 +5,8 @@ using namespace tests;
 
 static constexpr u32 SEED = 2026;
 
-#define RUN_PartialScans
-//#define RUN_UnitTests
+//#define RUN_PartialScans
+#define RUN_UnitTests
 //#define RUN_DFTEST
 
 //#define RUN_SparseICP

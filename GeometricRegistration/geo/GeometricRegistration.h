@@ -23,3 +23,4 @@
 #include "registration/SparseICP.h"
 #include "registration/EfficientICP.h"
 
+#include "reassembly/FacetExtraction.h"

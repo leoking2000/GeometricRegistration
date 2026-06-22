@@ -10,6 +10,7 @@
 
 #include "IOUtilsTests.h"
 #include "SDFTests.h"
+#include "FacetExtractionTests.h"
 
 static inline void ExpectMat3Near(
     const glm::mat3& A,

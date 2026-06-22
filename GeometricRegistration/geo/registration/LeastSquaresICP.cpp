@@ -9,7 +9,7 @@ namespace geo
 		const INearestNeighbor& nn, const LeastSquaresICPParameters& params)
 	{
 		// Basic parameter validation.
-		assert(src.Size() >= 3);
+		assert(source.Size() >= 3);
 		assert(target.Size() == nn.Size());
 		assert(params.maxIterations >= 1);
 		assert(params.tolerance > 0.0f);
