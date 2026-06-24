@@ -8,9 +8,11 @@ namespace geo
 	// Per-triangle geometric data stored alongside index buffer
 	struct TriangleData
 	{
-		glm::uvec3 vertexIndices = glm::uvec3(0u);
-		glm::vec3 faceNormal  = glm::vec3(0.0f);
-		f32 area = 0.0f;
+		glm::uvec3 vertexIndices  = glm::uvec3(0u);
+		glm::vec3  faceNormal     = glm::vec3(0.0f);
+		glm::vec3  centroid       = glm::vec3(0.0f);
+		f32        area           = 0.0f;
+
 		index_t operator[](int i) const
 		{
 			return vertexIndices[i];
@@ -70,6 +72,12 @@ namespace geo
 		// Flattens mesh data into a triangle soup
 		void Flatten();
 	public:
+		// Applies a rigid transformation (rotation + translation)
+		// Note:
+		// - This operation mutates the internal data.
+		// - Any previously built spatial acceleration structures (e.g., KD-trees, DistanceField) become invalid.
+		void Transform(const RigidTransform& transform);
+	public:
 		// Source filename associated with mesh
 		inline const std::string& FileName() const { return m_filename; }
 
@@ -97,11 +105,9 @@ namespace geo
 	protected:
 		std::string m_filename; // Source file name
 	protected:
-		std::vector<glm::vec3> m_vertices; // Vertex position buffer
-		std::vector<glm::vec3> m_normals; // Vertex normal buffer
+		std::vector<glm::vec3> m_vertices;     // Vertex position buffer
+		std::vector<glm::vec3> m_normals;      // Vertex normal buffer
 		std::vector<TriangleData> m_triangles; // Triangle index buffer + cached geometric properties
-
-		// TODO: Add Trasformation Data
 	protected:
 		BBox m_bounding_box; // Cached bounding box of the mesh
 		f64 m_area = 0.0; // Cached total surface area of the mesh

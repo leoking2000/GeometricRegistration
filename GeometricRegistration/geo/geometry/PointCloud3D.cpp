@@ -2,8 +2,11 @@
 #include <numeric>
 #include <random>
 #include <geo/io/IOUtils.h>
+#include <geo/io/IOGeometry.h>
 #include <geo/utils/logging/LogMacros.h>
 #include "PointCloud3D.h"
+
+#pragma warning( disable : 6993)
 
 namespace geo
 {
@@ -12,7 +15,16 @@ namespace geo
 		m_points(std::move(points)),
 		m_normals(std::move(normals))
 	{
+		if (!HasNormals())
+		{
+			m_normals.clear();
+		}
+
+		m_points.shrink_to_fit();
+		m_normals.shrink_to_fit();
+
 		RecalculateCentroid();
+		ReComputeBoundingBox();
 
 		GEOLOGINFO("PointCloud3D created | points=" << m_points.size()
 			     << " normals=" << m_normals.size()
@@ -48,11 +60,54 @@ namespace geo
 		return m_centroid;
 	}
 
-	BBox PointCloud3D::ComputeBoundingBox() const
+	const BBox& PointCloud3D::BoundingBox() const
+	{
+		return m_boundingBox;
+	}
+
+	void PointCloud3D::Transform(const RigidTransform& transform)
+	{
+		// handle empty point cloud case
+		if (m_points.empty())
+		{
+			m_centroid = glm::vec3(0.0f);
+			m_boundingBox.MakeEmpty();
+			return;
+		}
+
+		// cache has normal
+		const bool hasNormals = HasNormals();
+
+		// Initialize min/max with first point
+		glm::vec3 minP(F32_MAX);
+		glm::vec3 maxP(-F32_MAX);
+
+		// Transform both points and normals if they exist
+		for (size_t i = 0; i < m_points.size(); i++)
+		{
+			m_points[i] = transform.TransformPoint(m_points[i]);
+
+			if (hasNormals) {
+				m_normals[i] = glm::normalize(transform.TransformNormal(m_normals[i]));
+			}
+
+			minP = glm::min(minP, m_points[i]);
+			maxP = glm::max(maxP, m_points[i]);
+		}
+
+		// Update cached centroid using same transform
+		m_centroid = transform.TransformPoint(m_centroid);
+
+		// Update cached bounding Box
+		m_boundingBox.Set(minP, maxP);
+	}
+
+	void PointCloud3D::ReComputeBoundingBox()
 	{
 		// Return default (empty) bounding box if no points exist
 		if (m_points.empty()) {
-			return BBox();
+			m_boundingBox.MakeEmpty();
+			return;
 		}
 
 		// Initialize min/max with first point
@@ -68,31 +123,7 @@ namespace geo
 			maxP = glm::max(maxP, p);
 		}
 
-		return BBox(minP, maxP);
-	}
-
-	void PointCloud3D::Transform(const RigidTransform& transform)
-	{
-		if (HasNormals())
-		{
-			// Transform both points and normals
-			for (size_t i = 0; i < m_points.size(); i++)
-			{
-				m_points[i] = transform.TransformPoint(m_points[i]);
-				m_normals[i] = glm::normalize(transform.TransformNormal(m_normals[i]));
-			}
-		}
-		else
-		{
-			// Transform only points
-			for (size_t i = 0; i < m_points.size(); i++)
-			{
-				m_points[i] = transform.TransformPoint(m_points[i]);
-			}
-		}
-
-		// Update cached centroid using same transform
-		m_centroid = transform.TransformPoint(m_centroid);
+		m_boundingBox = BBox(minP, maxP);
 	}
 
 	void PointCloud3D::RecalculateCentroid()

@@ -1,28 +1,13 @@
 #pragma once
 #include <filesystem>
 #include <unordered_map>
-#include <glm/glm.hpp>
+#include <geo/math/Triangle.h>
 #include <geo/geometry/Mesh.h>
 
 //#define DF_PARALLEL_BUILD
 
 namespace geo
 {
-    // Computes the closest point on a triangle (A, B, C) to point p.
-    //
-    // Outputs:
-    // - out_closestPoint : closest point on triangle surface
-    // - out_distance     : Euclidean distance to p
-    //
-    // Returns:
-    // - true if a valid closest point was computed (within maxDist)
-    bool closestPointToTriangle(
-        glm::vec3& out_closestPoint,  f32& out_distance,
-        const glm::vec3& p,
-        const glm::vec3& a, const glm::vec3& b, const glm::vec3& c,
-        const glm::vec3& faceNormal,
-        f32 maxDist = F32_MAX);
-
     // Same as closestPointToTriangle but operates on a mesh triangle index.
     bool closestPointToTriangleByIndex(
         glm::vec3& out_closestPoint, f32& out_distance,

@@ -33,13 +33,13 @@ namespace geo
 		// @return Const reference to the normal
 		const glm::vec3& Normal(index_t i) const;
 
-		// Computes or returns the cached centroid of the point cloud
+		// returns the cached centroid of the point cloud
 		// @return Geometric center of all points
 		const glm::vec3& Centroid() const;
-	public:
-		// Computes the axis-aligned bounding box (AABB) of the point cloud
-		// @return Bounding box enclosing all points
-		BBox ComputeBoundingBox() const;
+
+		// returns the cached bounding Box of the point cloud
+		// @return bounding Box of the point cloud
+		const BBox& BoundingBox() const;
 	public:
 		// Applies a rigid transformation (rotation + translation) to all points.
 		// Note:
@@ -65,13 +65,18 @@ namespace geo
 		const std::vector<glm::vec3>& GetPoints() const { return m_points; };
 		// Direct access to underlying normal container (read-only)
 		const std::vector<glm::vec3>& GetNormals() const { return m_normals; };
-	private:
+	public:
 		// Recomputes the centroid based on current point data
 		// Should be called after any modification to m_points
 		void RecalculateCentroid();
+
+		// Recomputes the axis-aligned bounding box (AABB) of the point cloud
+		// Should be called after any modification to m_points
+		void ReComputeBoundingBox();
 	private:
 		std::vector<glm::vec3> m_points;  // Storage for 3D points
 		std::vector<glm::vec3> m_normals; // Storage for normals (optional, may be empty)
-		glm::vec3 m_centroid{ 0.0f };     // Cached centroid of the point cloud 
+		glm::vec3 m_centroid{ 0.0f };     // Cached centroid of the point cloud
+		BBox m_boundingBox;               // Cached bounding Box of the point cloud
 	};
 }

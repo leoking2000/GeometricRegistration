@@ -1,6 +1,6 @@
 #pragma once
 #include <geo/geometry/PointCloud3D.h>
-#include "GeoRand.h"
+#include <geo/utils/GeoRand.h>
 
 namespace geo
 {

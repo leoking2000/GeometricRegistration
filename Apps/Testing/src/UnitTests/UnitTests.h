@@ -11,6 +11,7 @@
 #include "IOUtilsTests.h"
 #include "SDFTests.h"
 #include "FacetExtractionTests.h"
+#include "RandomPointCloud.h"
 
 static inline void ExpectMat3Near(
     const glm::mat3& A,
@@ -1210,7 +1211,7 @@ TEST(PointCloudTest, ComputeBoundingBox_Simple)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.ComputeBoundingBox();
+    geo::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(-1, 0, 0));
     ExpectVec3Near(box.Max(), glm::vec3(1, 5, 3));
@@ -1223,7 +1224,7 @@ TEST(PointCloudTest, ComputeBoundingBox_SinglePoint)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.ComputeBoundingBox();
+    geo::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(2, 3, 4));
     ExpectVec3Near(box.Max(), glm::vec3(2, 3, 4));
@@ -1239,7 +1240,7 @@ TEST(PointCloudTest, ComputeBoundingBox_NegativeCoordinates)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.ComputeBoundingBox();
+    geo::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(-5, -3, -6));
     ExpectVec3Near(box.Max(), glm::vec3(-1, -1, -1));
@@ -1258,8 +1259,8 @@ TEST(PointCloudTest, ComputeBoundingBox_OrderIndependence)
     geo::PointCloud3D pc1(pts1);
     geo::PointCloud3D pc2(pts2);
 
-    geo::BBox b1 = pc1.ComputeBoundingBox();
-    geo::BBox b2 = pc2.ComputeBoundingBox();
+    geo::BBox b1 = pc1.BoundingBox();
+    geo::BBox b2 = pc2.BoundingBox();
 
     ExpectVec3Near(b1.Min(), b2.Min());
     ExpectVec3Near(b1.Max(), b2.Max());
@@ -1273,7 +1274,7 @@ TEST(PointCloudTest, ComputeBoundingBox_CenterAndSize)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.ComputeBoundingBox();
+    geo::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Center(), glm::vec3(0, 0, 0));
     ExpectVec3Near(box.Size(), glm::vec3(2, 2, 2));

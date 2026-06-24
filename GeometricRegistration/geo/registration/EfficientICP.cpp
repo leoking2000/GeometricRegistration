@@ -118,7 +118,7 @@ namespace geo
 
         esa_parames.maxIterations = params.esaIterations;
         esa_parames.seed = params.seed;
-        esa_parames.searchSpace = ESASearchSpace::FullRotation(target.ComputeBoundingBox());
+        esa_parames.searchSpace = ESASearchSpace::FullRotation(target.BoundingBox());
 
         std::vector<ESAParameters> configs = GenerateESAConfigurations(esa_parames);
 

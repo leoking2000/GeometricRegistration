@@ -48,8 +48,8 @@ int main()
     geo::SetLogLevel(geo::LogLevel::LOG_INFO);
 
     std::cout << "Loading Models\n";
-    geo::Mesh target = geo::Mesh::Load(RESOURCES_PATH"models/ravenna/ravenna001.ply");
-    geo::Mesh source = geo::Mesh::Load(RESOURCES_PATH"models/ravenna/ravenna002.ply");
+    geo::Mesh target = geo::Mesh::Load(RESOURCES_PATH"models/scans/ravenna/ravenna001.ply");
+    geo::Mesh source = geo::Mesh::Load(RESOURCES_PATH"models/scans/ravenna/ravenna002.ply");
     std::cout << "Done\n============================\n\n";
 
     glm::mat4 matrix = AlignScans(target, source);

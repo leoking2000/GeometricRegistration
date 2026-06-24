@@ -3,6 +3,8 @@
 #include <limits>
 #include <geo/utils/logging/LogMacros.h>
 #include <geo/io/IOUtils.h>
+#include <geo/io/IOGeometry.h>
+#include <geo/math/Triangle.h>
 #include "Mesh.h"
 
 #pragma warning( disable : 6993)
@@ -40,8 +42,6 @@ namespace geo
     
     void Mesh::ComputeTriangleData(const std::vector<glm::uvec3>& indexBuffer)
     {   
-        constexpr f32 eps = std::numeric_limits<float>::epsilon();
-
         // clear and reserve triangle storage
         m_triangles.clear();
         m_triangles.resize(indexBuffer.size());
@@ -58,10 +58,9 @@ namespace geo
             const glm::vec3& p2 = m_vertices[tri.y];
             const glm::vec3& p3 = m_vertices[tri.z];
 
-            glm::vec3 cross = glm::cross(p2 - p1, p3 - p1);
-
-            data.faceNormal = glm::normalize(cross);
-            data.area = 0.5f * glm::length(cross);
+            data.faceNormal = TriangleNormal(p1, p2, p3);
+            data.centroid   = TriangleCentroid(p1, p2, p3);
+            data.area       = TriangleArea(p1, p2, p3);
 
             m_triangles[i] = data;
         }
@@ -153,6 +152,28 @@ namespace geo
         m_triangles = std::move(flatTriangles);
 
         GEOLOGINFO("Mesh flattened | new vertices=" << m_vertices.size());
+    }
+
+    void Mesh::Transform(const RigidTransform& transform)
+    {
+        #pragma omp parallel for schedule(static)
+        for (int i = 0; i < static_cast<int>(m_vertices.size()); i++)
+        {
+            m_vertices[i] = transform.TransformPoint(m_vertices[i]);
+            m_normals[i] = glm::normalize(transform.TransformNormal(m_normals[i]));
+        }
+
+        // Update cached triangle normals and centroids.
+        // Areas are invariant under rigid transforms.
+        #pragma omp parallel for schedule(static)
+        for (int i = 0; i < static_cast<int>(m_triangles.size()); i++)
+        {
+            TriangleData& tri = m_triangles[i];
+            tri.faceNormal = glm::normalize(transform.TransformNormal(tri.faceNormal));
+            tri.centroid = transform.TransformPoint(tri.centroid);
+        }
+
+        ComputeBoundingBox();
     }
 
     static io::GeometryDumpData ToDump(const Mesh& mesh)
