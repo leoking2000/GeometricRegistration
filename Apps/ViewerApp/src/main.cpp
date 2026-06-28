@@ -1,7 +1,7 @@
 #include <geo/GeometricRegistration.h>
 #include <Graphics/LeoGraphics.h>
 #include <Platform/GLWindow.h>
-#include <Platform/ViewerController.h>
+#include <Camera/ViewerController.h>
 #include <Render/MeshDrawable.h>
 #include <Render/PointCloudDrawable.h>
 

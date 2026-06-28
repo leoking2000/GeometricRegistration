@@ -92,9 +92,22 @@ namespace gl
 		}
 	}
 
+	static void glfw_drop_callback(GLFWwindow* glfw_window, int count, const char** paths)
+	{
+		Window::WinData* data = reinterpret_cast<Window::WinData*>(glfwGetWindowUserPointer(glfw_window));
+
+		if (!data->windowDropCallback) {
+			return;
+		}
+
+		for (int i = 0; i < count; i++) {
+			data->windowDropCallback(paths[i]);
+		}
+	}
+
 	//-----------------------------------------------------------
 
-	Window::Window(WindowsParameters win_params, bool create)
+	Window::Window(WindowParameters win_params, bool create)
 	{
 		m_data.params = win_params;
 
@@ -105,7 +118,7 @@ namespace gl
 
 	Window::Window(geo::u32 width, geo::u32 height, const std::string& title, geo::u32 flags, bool create)
 		:
-		Window(gl::WindowsParameters{ title.c_str(), width, height, flags }, create)
+		Window(gl::WindowParameters{ title.c_str(), width, height, flags }, create)
 	{
 	}
 
@@ -148,6 +161,7 @@ namespace gl
 		glfwSetMouseButtonCallback(m_window, glfw_mouse_button_callback);
 		glfwSetCursorPosCallback(m_window, glfw_cursor_position_callback);
 		glfwSetScrollCallback(m_window, glfw_scroll_callback);
+		glfwSetDropCallback(m_window, glfw_drop_callback);
 
 		glfwMakeContextCurrent(m_window);
 		glfwSwapInterval(m_data.params.init_flags & WIN_FLAG_VSYNC ? 1 : 0);
@@ -160,6 +174,11 @@ namespace gl
 			glfwDestroyWindow(m_window);
 			m_window = nullptr;
 		}
+	}
+
+	bool Window::IsCreated() const
+	{
+		return m_window != nullptr;
 	}
 
 	//-----------------------------------------------------------
@@ -232,6 +251,11 @@ namespace gl
 		glfwSetInputMode(m_window, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 	}
 
+	geo::f64 Window::GetTime()
+	{
+		return glfwGetTime();
+	}
+
 	//-----------------------------------------------------------
 
 	void Window::SetResizeCallback(WindowResizeCallback resize_callback)
@@ -244,7 +268,7 @@ namespace gl
 		m_data.keyboardCallback = key_callback;
 	}
 
-	void Window::SetMouseButtonCallBack(ButtonEventCallback mouse_key_callback)
+	void Window::SetMouseButtonCallback(ButtonEventCallback mouse_key_callback)
 	{
 		m_data.mouseKeyCallback = mouse_key_callback;
 	}
@@ -257,5 +281,15 @@ namespace gl
 	void Window::SetScrollCallback(ScrollCallback mouse_scroll_callback)
 	{
 		m_data.mouseScrollCallBack = mouse_scroll_callback;
+	}
+
+	void Window::SetDropCallback(DropCallback cb)
+	{
+		m_data.windowDropCallback = cb;
+	}
+
+	void* Window::NativeHandle()
+	{
+		return m_window;
 	}
 }

@@ -1,6 +1,6 @@
 #pragma once
+#include <Platform/GLWindow.h>
 #include "ViewerCamera.h"
-#include "GLWindow.h"
 
 namespace gl
 {

@@ -3,7 +3,6 @@
 #include <glm/glm.hpp>
 #include <Graphics/Mesh.h>
 #include <Graphics/Shader.h>
-#include <Platform/ViewerCamera.h>
 
 namespace gl
 {

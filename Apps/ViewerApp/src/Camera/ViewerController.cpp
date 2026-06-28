@@ -1,5 +1,4 @@
 #include "ViewerController.h"
-#include "Keys.h"
 
 namespace gl
 {
@@ -13,7 +12,7 @@ namespace gl
 				OnMouseMove(x, y);
 			});
 
-		window.SetMouseButtonCallBack(
+		window.SetMouseButtonCallback(
 			[this](int button, int action)
 			{
 				OnMouseButton(button, action);
