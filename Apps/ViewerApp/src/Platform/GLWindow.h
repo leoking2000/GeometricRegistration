@@ -3,7 +3,7 @@
 #include <string>
 #include <filesystem>
 #include <glm/glm.hpp>
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include "Keys.h"
 
 namespace gl

@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 
 namespace gl
 {

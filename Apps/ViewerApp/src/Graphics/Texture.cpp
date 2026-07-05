@@ -1,6 +1,6 @@
 #include <cassert>
 #include <glad/glad.h>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include "Texture.h"
 
 namespace gl

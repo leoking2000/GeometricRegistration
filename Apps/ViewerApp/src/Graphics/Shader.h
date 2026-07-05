@@ -1,9 +1,9 @@
 #pragma once
-#include <geo/utils/GeoTypes.h>
 #include <unordered_map>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
 #include <string>
+#include <geo/GeoTypes.h>
 
 namespace gl
 {

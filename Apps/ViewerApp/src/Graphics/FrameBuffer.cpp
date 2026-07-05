@@ -1,5 +1,5 @@
 #include <glad/glad.h>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include "FrameBuffer.h"
 
 

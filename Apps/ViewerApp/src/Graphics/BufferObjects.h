@@ -1,5 +1,5 @@
 #pragma once
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include <vector>
 #include <glm/glm.hpp>
 
