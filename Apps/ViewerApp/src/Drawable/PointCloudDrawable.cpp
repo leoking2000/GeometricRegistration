@@ -3,31 +3,58 @@
 #include <geo/logging/LogMacros.h>
 #include "PointCloudDrawable.h"
 
+static_assert(sizeof(glm::vec3) == 3 * sizeof(float));
+
 namespace gl
 {
     PointCloudDrawable::PointCloudDrawable(const std::vector<glm::vec3>& points)
         :
         m_transform(geo::RigidTransform::Identity())
     {
-        m_pointCount = (geo::u32)points.size();
-        gl::VertexBuffer vbo((const void*)points.data(), (geo::u32)(points.size() * 3 * sizeof(float)));
+        if (points.empty())
+        {
+            GEOLOGWARN("PointCloudDrawable created with 0 points");
 
+            m_pointCount = 0;
+            return;
+        }
+
+        Upload(points);
+    }
+
+    void PointCloudDrawable::Upload(const std::vector<glm::vec3>& points)
+    {
+        if (points.empty())
+        {
+            GEOLOGWARN("Can not upload cloud with zero data.");
+            return;
+        }
+
+        // Create a new VertexArray
+        m_vao = VertexArray();
+
+        // Create VertexBuffer
+        m_pointCount = (geo::u32)points.size();
+        gl::VertexBuffer vbo(
+            (const void*)points.data(), 
+            (geo::u32)(points.size() * sizeof(glm::vec3)),
+            gl::BufferUsage::Static
+        );
+
+        // Create VertexBuffer Layout
         gl::ElementType arr[1] = { gl::ElementType::FLOAT3 };
         gl::Layout<1> layout(arr);
 
+        // add VertexBuffer to VertexArray
         m_vao.AddBuffer(std::move(vbo), layout);
+
+        m_transform = geo::RigidTransform::Identity();
 
         GEOLOGINFO("Uploaded PointCloudDrawable | " << m_pointCount << " points");
     }
 
-    PointCloudDrawable PointCloudDrawable::Load(const std::filesystem::path filepath)
-    {
-        geo::io::GeometryDumpData data = geo::io::LoadGeometry(filepath);
-        return PointCloudDrawable(std::move(data.positions));
-    }
-
-    void PointCloudDrawable::Draw(const gl::ShaderProgram & shader,
-        const glm::mat4 & view_projection, const glm::vec3 color, geo::f32 pointSize) const
+    void PointCloudDrawable::Draw(const gl::ShaderProgram& shader,
+        const glm::mat4& view_projection, const glm::vec3& color, geo::f32 pointSize) const
 	{
         shader.Bind();
 
@@ -47,10 +74,5 @@ namespace gl
     void PointCloudDrawable::Transform(const geo::RigidTransform& transform)
     {
         m_transform = geo::RigidTransform::Compose(transform, m_transform);
-    }
-
-    void PointCloudDrawable::SetTransform(const geo::RigidTransform& transform)
-    {
-        m_transform = transform;
     }
 }
