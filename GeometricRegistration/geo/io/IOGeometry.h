@@ -3,7 +3,7 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_map>
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include <geo/math/BBox.h>
 
 namespace geo::io

@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #include <array>
 #include <vector>
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include "RigidTransform.h"
 
 namespace geo

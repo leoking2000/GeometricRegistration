@@ -1,7 +1,7 @@
 #include <omp.h>
 #include <cassert>
 #include <limits>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include <geo/io/IOUtils.h>
 #include <geo/io/IOGeometry.h>
 #include <geo/math/Triangle.h>

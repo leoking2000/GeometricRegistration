@@ -8,7 +8,7 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include "IOUtils.h"
 #include "IOGeometry.h"
 

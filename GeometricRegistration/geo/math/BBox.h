@@ -1,5 +1,5 @@
 #pragma once
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/compatibility.hpp>

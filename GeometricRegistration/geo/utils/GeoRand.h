@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 #include <glm/glm.hpp>
-#include "GeoTypes.h"
+#include <geo/GeoTypes.h>
 
 namespace geo
 {

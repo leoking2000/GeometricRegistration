@@ -1,6 +1,6 @@
 #include <cassert>
 #include <fstream>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include <geo/utils/GeoTime.h>
 #include <geo/io/IOUtils.h>
 #include "DistanceField.h"

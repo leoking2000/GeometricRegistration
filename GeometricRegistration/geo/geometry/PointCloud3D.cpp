@@ -1,9 +1,9 @@
 #include <cassert>
 #include <numeric>
 #include <random>
+#include <geo/logging/LogMacros.h>
 #include <geo/io/IOUtils.h>
 #include <geo/io/IOGeometry.h>
-#include <geo/utils/logging/LogMacros.h>
 #include "PointCloud3D.h"
 
 #pragma warning( disable : 6993)

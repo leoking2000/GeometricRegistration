@@ -1,5 +1,5 @@
 #include <fstream>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include "IOUtils.h"
 
 namespace geo::io

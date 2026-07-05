@@ -1,10 +1,10 @@
-#define GLM_ENABLE_EXPERIMENTAL
 #include <stdlib.h>
+#define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <geo/utils/logging/LogMacros.h>
-#include "ESA.h"
+#include <geo/logging/LogMacros.h>
 #include <geo/math/solvers.h>
+#include "ESA.h"
 #include "EfficientICP.h"
 
 namespace geo

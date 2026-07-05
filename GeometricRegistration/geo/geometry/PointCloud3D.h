@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <filesystem>
-#include <utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 #include <math/RigidTransform.h>
 #include <math/BBox.h>
 

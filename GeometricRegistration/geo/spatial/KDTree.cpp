@@ -3,7 +3,7 @@
 #include <execution>
 #include <nanoflann.hpp>
 #include <glm/common.hpp>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include <geo/utils/GeoTime.h>
 #include "KDTree.h"
 

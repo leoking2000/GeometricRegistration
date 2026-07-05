@@ -1,6 +1,6 @@
 #pragma once
 #include <string_view>
-#include <geo/utils/GeoTypes.h>
+#include <geo/GeoTypes.h>
 
 namespace geo
 {

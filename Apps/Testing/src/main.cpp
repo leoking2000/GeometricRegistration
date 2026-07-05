@@ -10,7 +10,7 @@ static constexpr u32 SEED = 2026;
 //#define RUN_DFTEST
 
 //#define RUN_SparseICP
-#define RUN_EfficientICP
+//#define RUN_EfficientICP
 
 
 static void RunPartialScansAlignmentTests()

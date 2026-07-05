@@ -1,4 +1,4 @@
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include <geo/math/Solvers.h>
 #include "SparseICP.h"
 

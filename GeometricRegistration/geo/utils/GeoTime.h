@@ -1,8 +1,7 @@
 #pragma once
+#include <geo/Logging/LogLevel.h>
 #include <chrono>
 #include <string>
-#include "GeoTypes.h"
-#include "logging/LogLevel.h"
 
 namespace geo
 {

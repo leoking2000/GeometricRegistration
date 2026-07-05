@@ -1,5 +1,5 @@
 #include <cassert>
-#include <geo/utils/logging/LogMacros.h>
+#include <geo/logging/LogMacros.h>
 #include <geo/utils/GeoTime.h>
 #include "LinearNN.h"
 

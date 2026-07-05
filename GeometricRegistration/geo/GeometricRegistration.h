@@ -1,8 +1,10 @@
 #pragma once
-#include "utils/GeoTypes.h"
+#include "GeoTypes.h"
+
+#include "Logging/LogMacros.h"
+
 #include "utils/GeoRand.h"
 #include "utils/GeoTime.h"
-#include "utils/logging/LogMacros.h"
 
 #include "io/IOUtils.h"
 #include "io/IOGeometry.h"

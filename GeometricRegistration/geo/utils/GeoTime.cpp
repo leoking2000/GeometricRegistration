@@ -1,9 +1,9 @@
+#include <geo/Logging/LogMacros.h>
 #include <algorithm>
 #include <limits>
 #include <sstream>
 #include <iomanip>
 #include "GeoTime.h"
-#include "logging/LogMacros.h"
 
 namespace geo
 {
