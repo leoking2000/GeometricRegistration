@@ -36,12 +36,12 @@ namespace gl
     public:
         // Applies an additional rigid transform to the drawable.
         // The supplied transform is composed with the existing model transform.
-        void Transform(const geo::RigidTransform& transform);
+        void ApplyTransform(const geo::RigidTransform& transform);
         inline void SetTransform(const geo::RigidTransform& transform) { m_transform = transform; }
         inline const geo::RigidTransform& GetTransform() const { return m_transform; }
     private:
         geo::u32 m_pointCount = 0;
+        geo::RigidTransform m_transform = geo::RigidTransform::Identity();
         gl::VertexArray m_vao;
-        geo::RigidTransform m_transform;
     };
 }

@@ -2,14 +2,28 @@
 
 namespace gl
 {
-	void MeshDrawable::Upload(const geo::Mesh& mesh)
+	MeshDrawable::MeshDrawable(
+		const std::vector<glm::vec3>&  points, 
+		const std::vector<glm::vec3>&  normals, 
+		const std::vector<glm::uvec3>& triangles)
 	{
-		std::vector<float> vertex_buffer;
+		Upload(points, normals, triangles);
+	}
 
-		for (geo::index_t i = 0; i < mesh.VertexCount(); i++)
+	void MeshDrawable::Upload(
+		const std::vector<glm::vec3>&  points, 
+		const std::vector<glm::vec3>&  normals, 
+		const std::vector<glm::uvec3>& triangles)
+	{
+		assert(points.size() == normals.size());
+
+		std::vector<float> vertex_buffer;
+		vertex_buffer.reserve(points.size() * 6);
+
+		for (geo::index_t i = 0; i < points.size(); i++)
 		{
-			glm::vec3 pos    = mesh.Vertex(i);
-			glm::vec3 normal = mesh.Normal(i);
+			glm::vec3 pos    = points[i];
+			glm::vec3 normal = normals[i];
 
 			vertex_buffer.emplace_back(pos.x);
 			vertex_buffer.emplace_back(pos.y);
@@ -29,10 +43,11 @@ namespace gl
 		vertexArray.AddBuffer(std::move(vertexBuffer), layout);
 
 		std::vector<geo::u32> indices;
+		indices.reserve(triangles.size() * 3);
 
-		for (geo::index_t i = 0; i < mesh.TriangleCount(); i++)
+		for (geo::index_t i = 0; i < triangles.size(); i++)
 		{
-			const geo::TriangleData& tri = mesh.Triangle(i);
+			const glm::uvec3& tri = triangles[i];
 
 			indices.emplace_back(tri[0]);
 			indices.emplace_back(tri[1]);
@@ -40,19 +55,20 @@ namespace gl
 		}
 
 		IndexBuffer indexBuffer(indices.data(), (geo::u32)indices.size());
-
 		m_gpuMesh = gl::Mesh(vertexArray, indexBuffer, 2);
 	}
 
 	void MeshDrawable::Draw(
 		const gl::ShaderProgram& shader, 
-		const glm::mat4& mvp, const glm::mat4& model, 
+		const glm::mat4& view_projection,
 		const glm::vec3 color, const glm::vec3& cameraPos, 
 		const glm::vec3& lightDir)
 	{
 		shader.Bind();
 
-		shader.SetUniform("u_mvp", mvp);
+		glm::mat4 model = m_transform.ToMat4();
+
+		shader.SetUniform("u_mvp", view_projection * model);
 		shader.SetUniform("u_model", model);
 
 		shader.SetUniform("u_color", color);
@@ -64,5 +80,10 @@ namespace gl
 		m_gpuMesh.Draw();
 
 		shader.UnBind();
+	}
+
+	void MeshDrawable::ApplyTransform(const geo::RigidTransform& transform)
+	{
+		m_transform = geo::RigidTransform::Compose(transform, m_transform);
 	}
 }

@@ -1,4 +1,6 @@
 #pragma once
+#include <filesystem>
+#include <memory>
 #include <glm/glm.hpp>
 #include <geo/GeoTypes.h>
 
@@ -68,6 +70,8 @@ namespace gl
 
         ~Texture();
     public:
+        static Texture Load(const std::filesystem::path filepath, TextureFormat format = TextureFormat::RGBA8UB);
+    public:
         inline geo::u32 GetID() const { return m_id; };
         inline TextureDimensions Dimensions() const { return m_params.dimensions; }
         inline TexSize Size() const { return m_params.size; }
@@ -116,4 +120,28 @@ namespace gl
         friend class FrameBuffer;
         static geo::u32 TYPE[4];
     };
+
+    struct ImageDataDeleter
+    {
+        void operator()(geo::u8* ptr) const;
+    };
+
+    class ImageData
+    {
+    public:
+        ImageData() = default;
+
+        ImageData(ImageData&&) noexcept = default;
+        ImageData& operator=(ImageData&&) noexcept = default;
+
+        ImageData(const ImageData&) = delete;
+        ImageData& operator=(const ImageData&) = delete;
+    public:
+        geo::i32 width = 0;
+        geo::i32 height = 0;
+        geo::i32 bpp = 0;
+        std::unique_ptr<geo::u8, ImageDataDeleter> data;
+    };
+
+    ImageData ReadImageData(const std::string& filepath);
 }

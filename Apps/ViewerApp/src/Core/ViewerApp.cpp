@@ -66,11 +66,11 @@ void ViewerApp::Run()
 
     //std::cout << "Loading Models\n";
     
-    //geo::Mesh target = geo::Mesh::Load(RESOURCES_PATH"models/fragments/Tombstone/Tombstone1_med.obj");
+    geo::Mesh target = geo::Mesh::Load(RESOURCES_PATH"models/fragments/Tombstone/Tombstone1_med.obj");
     //geo::Mesh source = geo::Mesh::Load(RESOURCES_PATH"models/fragments/Tombstone/Tombstone1_med.obj");
 
-    geo::PointCloud3D cpu_cloud = geo::PointCloud3D::Load(RESOURCES_PATH"models/scans/owl/owl-decimate10pc-textured.ply");
-    gl::PointCloudDrawable gpu_cloud(cpu_cloud.GetPoints());
+    //geo::PointCloud3D cpu_cloud = geo::PointCloud3D::Load(RESOURCES_PATH"models/scans/owl/owl-decimate10pc-textured.ply");
+    //gl::PointCloudDrawable gpu_cloud(cpu_cloud.GetPoints());
 
     //glm::vec3 eulerRot(60.0f, -50.0f, 20.5f);
     //glm::vec3 translation(-1.0f, 3.0f, 1.0f);
@@ -91,22 +91,29 @@ void ViewerApp::Run()
 
     //glm::mat4 matrix = AlignScans(target, source);
 
-    //gl::MeshDrawable mesh_target;
-    //mesh_target.Upload(target);
+    gl::MeshDrawable mesh_target;
+    std::vector<glm::uvec3> indeces;
+    indeces.reserve(target.TriangleCount());
+    for (geo::index_t i = 0; i < target.TriangleCount(); i++)
+    {
+        indeces.emplace_back(target.Triangle(i).vertexIndices);
+    }
+
+    mesh_target.Upload(target.GetVertices(), target.GetNormals(), std::move(indeces));
 
     //gl::MeshDrawable mesh_source;
     // mesh_source.Upload(source);
 
     gl::ViewerCamera camera;
-    geo::BBox box = cpu_cloud.BoundingBox();
+    geo::BBox box = target.BoundingBox();
     camera.m_target = box.Center();
     camera.m_distance = 0.5f * box.MaxSize();
 
     gl::ViewerController controller;
     controller.Attach(m_window, camera);
 
-    //gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/MeshPhong");
-    gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/PointShader");
+    gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/MeshPhong");
+    //gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/PointShader");
 
     glm::mat4 proj = camera.ProjectionMatrix((geo::f32)m_window.Size().x / (geo::f32)m_window.Size().y);
 
@@ -119,13 +126,13 @@ void ViewerApp::Run()
 
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        gpu_cloud.Draw(shader, proj * camera.ViewMatrix(), glm::vec3(1.0f), 0.1f);
+        //gpu_cloud.Draw(shader, proj * camera.ViewMatrix(), glm::vec3(1.0f), 0.1f);
 
-        //mesh_target.Draw(
-        //    shader, proj * camera.ViewMatrix(),
-        //    glm::mat4(1.0f), glm::vec3(1.0f, 1.0f, 1.0f), // RED
-        //    camera.Position()
-        //);
+        mesh_target.Draw(
+            shader, proj * camera.ViewMatrix(), 
+            glm::vec3(1.0f, 1.0f, 1.0f), // RED
+            camera.Position()
+        );
 
         //mesh_source.Draw(
         //    shader, proj * camera.ViewMatrix() * matrix,

@@ -1,4 +1,5 @@
 #include <cassert>
+#include <stb/stb_image.h>
 #include <glad/glad.h>
 #include <geo/logging/LogMacros.h>
 #include "Texture.h"
@@ -58,6 +59,14 @@ namespace gl
     Texture::~Texture()
     {
         glDeleteTextures(1, &m_id);
+    }
+
+    Texture Texture::Load(const std::filesystem::path filepath, TextureFormat format)
+    {
+        std::string file_path = filepath.string();
+        ImageData image = ReadImageData(file_path);
+
+        return Texture(image.width, image.height, format, image.data.get());
     }
 
     void Texture::Bind(geo::u32 slot) const
@@ -277,5 +286,57 @@ namespace gl
         }
 
         return isValid;
+    }
+
+    ImageData ReadImageData(const std::string& filepath)
+    {
+        ImageData image_data;
+
+        stbi_set_flip_vertically_on_load(1);
+
+        int width, height, bpp;
+        geo::u8* raw = stbi_load(filepath.c_str(), &width, &height, &bpp, 4);
+
+        if (raw == nullptr)
+        {
+            GEOLOGERROR("Failed to read image data From: " << filepath);
+
+            // Fallback 2x2 magenta checker
+            const geo::u8 fallback[16] = {
+                255,   0, 255, 255,   0,   0,   0, 255,
+                  0,   0,   0, 255, 255,   0, 255, 255
+            };
+
+            geo::u8* fallbackHeap = static_cast<geo::u8*>(std::malloc(16));
+            if (!fallbackHeap)
+            {
+                GEOLOGERROR("Fallback allocation failed for image: " << filepath);
+                return image_data; // empty image
+            }
+
+            std::memcpy(fallbackHeap, fallback, 16);
+
+            image_data.width = 2;
+            image_data.height = 2;
+            image_data.bpp = 4;
+            image_data.data.reset(fallbackHeap);
+
+            return image_data;
+        }
+
+        image_data.width = width;
+        image_data.height = height;
+        image_data.bpp = 4;
+
+        image_data.data.reset(raw);
+
+        return image_data;
+    }
+
+    void ImageDataDeleter::operator()(geo::u8* ptr) const
+    {
+        if (ptr != nullptr) {
+            stbi_image_free(ptr);
+        }
     }
 }

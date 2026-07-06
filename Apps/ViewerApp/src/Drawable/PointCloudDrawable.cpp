@@ -8,30 +8,24 @@ static_assert(sizeof(glm::vec3) == 3 * sizeof(float));
 namespace gl
 {
     PointCloudDrawable::PointCloudDrawable(const std::vector<glm::vec3>& points)
-        :
-        m_transform(geo::RigidTransform::Identity())
     {
-        if (points.empty())
-        {
-            GEOLOGWARN("PointCloudDrawable created with 0 points");
-
-            m_pointCount = 0;
-            return;
-        }
-
         Upload(points);
     }
 
     void PointCloudDrawable::Upload(const std::vector<glm::vec3>& points)
     {
-        if (points.empty())
-        {
-            GEOLOGWARN("Can not upload cloud with zero data.");
-            return;
-        }
+        m_pointCount = 0; // reset pointCount
 
         // Create a new VertexArray
         m_vao = VertexArray();
+
+        // hudle empty case
+        if (points.empty())
+        {
+            m_transform = geo::RigidTransform::Identity();
+            GEOLOGWARN("Can not upload cloud with zero data.");
+            return;
+        }
 
         // Create VertexBuffer
         m_pointCount = (geo::u32)points.size();
@@ -48,7 +42,7 @@ namespace gl
         // add VertexBuffer to VertexArray
         m_vao.AddBuffer(std::move(vbo), layout);
 
-        m_transform = geo::RigidTransform::Identity();
+        m_transform = geo::RigidTransform::Identity(); // reset transform
 
         GEOLOGINFO("Uploaded PointCloudDrawable | " << m_pointCount << " points");
     }
@@ -56,6 +50,10 @@ namespace gl
     void PointCloudDrawable::Draw(const gl::ShaderProgram& shader,
         const glm::mat4& view_projection, const glm::vec3& color, geo::f32 pointSize) const
 	{
+        if (m_pointCount == 0) {
+            return;
+        }
+
         shader.Bind();
 
         shader.SetUniform("u_mvp", view_projection * m_transform.ToMat4());
@@ -71,7 +69,7 @@ namespace gl
         shader.UnBind();
 	}
 
-    void PointCloudDrawable::Transform(const geo::RigidTransform& transform)
+    void PointCloudDrawable::ApplyTransform(const geo::RigidTransform& transform)
     {
         m_transform = geo::RigidTransform::Compose(transform, m_transform);
     }
