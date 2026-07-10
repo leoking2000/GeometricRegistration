@@ -2,7 +2,8 @@
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/quaternion.hpp>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
+#include <core/utils/Time.h>
 #include <geo/math/solvers.h>
 #include "ESA.h"
 #include "EfficientICP.h"
@@ -68,7 +69,7 @@ namespace geo
 
         const glm::vec3 referenceDir(0.0f, 0.0f, 1.0f);
 
-        for (geo::u32 i = 0; i < (geo::u32)directions.size(); i++)
+        for (u32 i = 0; i < (u32)directions.size(); i++)
         {
             ESAParameters p = baseParams;
 
@@ -105,10 +106,10 @@ namespace geo
         // ICP progressively transforms this cloud toward the target.
         PointCloud3D src = source;
 
-        GEOLOGINFO("EfficientICP (ESA+S-ICP) started");
-        GEOLOGDEBUG("ESA iterations=" << params.esaIterations);
+        LOGINFO("EfficientICP (ESA+S-ICP) started");
+        LOGDEBUG("ESA iterations=" << params.esaIterations);
 
-        TimePoint startTotal = Clock::now();
+        core::TimePoint startTotal = core::Clock::now();
 
         // ------------------------------------------------------------
         // 1. Configure ESA global optimization parameters
@@ -125,12 +126,12 @@ namespace geo
         // ------------------------------------------------------------
         // 2. Run ESA on a subsampled source cloud
         // ------------------------------------------------------------
-        GEOLOGINFO("ESA global alignment started | Num of configs=" << configs.size());
+        LOGINFO("ESA global alignment started | Num of configs=" << configs.size());
 
         ESAResult esa_result = MultiConfigESA(configs,
             [&](float* e) -> float {
             
-            	const RigidTransform T = ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5]});
+            	const core::RigidTransform T = ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5]});
             	const f32 maxDist = df.GetMaxDist();
             
             	f64 cost = 0.0;
@@ -157,7 +158,7 @@ namespace geo
             	return float(cost / (f64)count);
             });
      
-        GEOLOGINFO("ESA done | cost=" << esa_result.cost);
+        LOGINFO("ESA done | cost=" << esa_result.cost);
 
         // ------------------------------------------------------------
         // 3. Apply ESA result as initial alignment
@@ -169,24 +170,24 @@ namespace geo
         // 4. Local refinement using Sparse ICP
         // ------------------------------------------------------------
 
-        GEOLOGINFO("Local ICP refinement started");
+        LOGINFO("Local ICP refinement started");
 
         ICPResult icp_result = geo::SparseICPPointToPlane(target, src, nn, params.icpParams);
 
-        GEOLOGINFO("Local ICP done | rmse=" << icp_result.rmse << " iter=" << icp_result.iterations);
+        LOGINFO("Local ICP done | rmse=" << icp_result.rmse << " iter=" << icp_result.iterations);
 
         // ------------------------------------------------------------
         // 5. Combine global + local transforms
         // ------------------------------------------------------------
 
-        geo::RigidTransform transform = RigidTransform::Compose(icp_result.transform, esa_result.transform);
+        core::RigidTransform transform = core::RigidTransform::Compose(icp_result.transform, esa_result.transform);
 
         // ------------------------------------------------------------
         // 6. Total timing
         // ------------------------------------------------------------
 
-        f64 totalTime = TimeDifferenceMs(Clock::now(), startTotal);
-        GEOLOGINFO("EfficientICP finished | rmse=" << icp_result.rmse << " | total time = " << totalTime << "ms");
+        f64 totalTime = core::TimeDifferenceMs(core::Clock::now(), startTotal);
+        LOGINFO("EfficientICP finished | rmse=" << icp_result.rmse << " | total time = " << totalTime << "ms");
 
         return { transform, icp_result, esa_result, totalTime };
     }

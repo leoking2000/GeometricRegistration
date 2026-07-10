@@ -38,6 +38,6 @@ target_include_directories("${PROJECT_NAME}" PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}
 
 ############ link libraries ############
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE GeometricRegistration glm gtest_main)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Core GeometricRegistration glm gtest_main)
 
 ########################################

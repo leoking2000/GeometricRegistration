@@ -9,8 +9,8 @@ static constexpr u32 SEED = 2026;
 #define RUN_UnitTests
 //#define RUN_DFTEST
 
-//#define RUN_SparseICP
-//#define RUN_EfficientICP
+#define RUN_SparseICP
+#define RUN_EfficientICP
 
 
 static void RunPartialScansAlignmentTests()
@@ -40,7 +40,7 @@ static void RunPartialScansAlignmentTests()
 		glm::vec3(0, 0, 1));
 
 	glm::mat4 rotation = Ry * Rx * Rz;
-	geo::RigidTransform gt = { glm::mat3(rotation), translation };
+    core::RigidTransform gt = { glm::mat3(rotation), translation };
 
 	TestSuitePSA suite;
 
@@ -86,7 +86,7 @@ static void RunPartialScansAlignmentTests()
 
 static void TestDF()
 {
-    geo::Random rng{ SEED };
+    core::Random rng{ SEED };
 
     std::cout << "==== DistanceField Test ====\n";
 
@@ -115,11 +115,11 @@ static void TestDF()
     geo::DistanceField df;
 
     std::cout << "Building Distance Field......\n";
-    geo::TimingStat buildTime;
+    core::TimingStat buildTime;
 
-    geo::TimePoint startBuild = geo::Clock::now();
+    core::TimePoint startBuild = core::Clock::now();
     df.Build(params, mesh);
-    geo::TimePoint endBuild = geo::Clock::now();
+    core::TimePoint endBuild = core::Clock::now();
     std::cout << "Done\n\n";
 
     std::cout << "Mesh Name: " << mesh.FileName() << "\n";
@@ -127,16 +127,16 @@ static void TestDF()
     std::cout << "Number of Triangles: " << mesh.TriangleCount() << "\n";
     std::cout << "DF Resolution: " << params.resolution << "\n";
     std::cout << "DF Max Distance: " << params.max_distance << "\n";
-    std::cout << "DF Build Time: " << geo::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
+    std::cout << "DF Build Time: " << core::TimeDifferenceMs(endBuild, startBuild) << " ms\n\n";
 
     df.Save(RESOURCES_PATH"models/sdf_cache.gsdf");
     geo::DistanceField::Load(RESOURCES_PATH"models/sdf_cache.gsdf", df);
 
     // 3. Query test (1M samples)
-    const geo::u32 NUM_QUERIES = 1000000u;
+    const u32 NUM_QUERIES = 1000000u;
 
-    geo::TimingStat queryStat;
-    geo::f32 sum = 0.0f;
+    core::TimingStat queryStat;
+    f32 sum = 0.0f;
 
     for (int i = 0; i < NUM_QUERIES; ++i)
     {
@@ -145,7 +145,7 @@ static void TestDF()
             rng.Float(params.bounding_box.Min().y, params.bounding_box.Max().y),
             rng.Float(params.bounding_box.Min().z, params.bounding_box.Max().z));
 
-        geo::ScopedTimer scope(&queryStat);
+        core::ScopedTimer scope(&queryStat);
         sum += df(q);
     }
 
@@ -162,7 +162,7 @@ static void TestDF()
 
 int main(int argc, char** argv)
 {
-    geo::SetLogLevel(geo::LogLevel::LOG_ERROR);
+    core::SetLogLevel(core::LogLevel::LOG_ERROR);
 	int r = 0;
 
 #ifdef RUN_PartialScans

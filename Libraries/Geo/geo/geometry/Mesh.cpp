@@ -1,10 +1,10 @@
 #include <omp.h>
 #include <cassert>
 #include <limits>
-#include <geo/logging/LogMacros.h>
-#include <geo/io/IOUtils.h>
-#include <geo/io/IOGeometry.h>
-#include <geo/math/Triangle.h>
+#include <core/logging/Log.h>
+#include <core/io/IOUtils.h>
+#include <core/io/IOGeometry.h>
+#include <core/math/Triangle.h>
 #include "Mesh.h"
 
 #pragma warning( disable : 6993)
@@ -23,14 +23,14 @@ namespace geo
         // generate normals if missing
         if (m_normals.size() != m_vertices.size())
         {
-            GEOLOGWARN("Mesh " << m_filename << " does not contain vertex normals. Computing normals.");
+            LOGWARN("Mesh " << m_filename << " does not contain vertex normals. Computing normals.");
             ComputeVertexNormals();
         }
 
         ComputeSurfaceArea();
         ComputeBoundingBox();
 
-        GEOLOGINFO("Mesh created: " << m_filename
+        LOGINFO("Mesh created: " << m_filename
             << " | vertices=" << m_vertices.size()
             << " | triangles=" << m_triangles.size()
             << " | normals=" << m_normals.size());
@@ -58,9 +58,9 @@ namespace geo
             const glm::vec3& p2 = m_vertices[tri.y];
             const glm::vec3& p3 = m_vertices[tri.z];
 
-            data.faceNormal = TriangleNormal(p1, p2, p3);
-            data.centroid   = TriangleCentroid(p1, p2, p3);
-            data.area       = TriangleArea(p1, p2, p3);
+            data.faceNormal = core::TriangleNormal(p1, p2, p3);
+            data.centroid   = core::TriangleCentroid(p1, p2, p3);
+            data.area       = core::TriangleArea(p1, p2, p3);
 
             m_triangles[i] = data;
         }
@@ -91,7 +91,7 @@ namespace geo
 
     void Mesh::ComputeBoundingBox()
     {
-        m_bounding_box = BBox();
+        m_bounding_box = core::BBox();
 
         for (const glm::vec3& v : m_vertices)
         {
@@ -115,7 +115,7 @@ namespace geo
 
     void Mesh::Flatten()
     {
-        GEOLOGINFO("Flattening mesh | vertices=" << m_vertices.size() << " triangles=" << m_triangles.size());
+        LOGINFO("Flattening mesh | vertices=" << m_vertices.size() << " triangles=" << m_triangles.size());
 
         std::vector<glm::vec3> flatVertices;
         std::vector<glm::vec3> flatNormals;
@@ -151,10 +151,10 @@ namespace geo
         m_normals = std::move(flatNormals);
         m_triangles = std::move(flatTriangles);
 
-        GEOLOGINFO("Mesh flattened | new vertices=" << m_vertices.size());
+        LOGINFO("Mesh flattened | new vertices=" << m_vertices.size());
     }
 
-    void Mesh::Transform(const RigidTransform& transform)
+    void Mesh::Transform(const core::RigidTransform& transform)
     {
         #pragma omp parallel for schedule(static)
         for (int i = 0; i < static_cast<int>(m_vertices.size()); i++)
@@ -176,11 +176,11 @@ namespace geo
         ComputeBoundingBox();
     }
 
-    static io::GeometryDumpData ToDump(const Mesh& mesh)
+    static core::io::GeometryDumpData ToDump(const Mesh& mesh)
     {
-        io::GeometryDumpData dump;
-        dump.fileType = io::FileType::UNKNOWN; // set by caller via path extension
-        dump.geometryType = io::GeometryType::TRIANGLE_MESH;
+        core::io::GeometryDumpData dump;
+        dump.fileType = core::io::FileType::UNKNOWN; // set by caller via path extension
+        dump.geometryType = core::io::GeometryType::TRIANGLE_MESH;
 
         dump.positions = mesh.GetVertices();
         dump.normals = mesh.GetNormals();
@@ -190,7 +190,7 @@ namespace geo
 
         for (const TriangleData& tri : tris)
         {
-            io::TriangleIndex idx;
+            core::io::TriangleIndex idx;
             idx.vertexIndex = tri.vertexIndices;
             idx.normalIndex = tri.vertexIndices; // normals are per-vertex and aligned
             idx.coordsIndex = glm::uvec3(0u);    // no texcoords on Mesh
@@ -206,21 +206,21 @@ namespace geo
 
     void Mesh::Save(const std::filesystem::path& path) const
     {
-        GEOLOGINFO("Saving mesh: " << path << " | vertices=" << VertexCount() << " | triangles=" << TriangleCount());
+        LOGINFO("Saving mesh: " << path << " | vertices=" << VertexCount() << " | triangles=" << TriangleCount());
 
         if (m_vertices.empty())
         {
-            GEOLOGWARN("Mesh::Save — mesh is empty, nothing written to " << path);
+            LOGWARN("Mesh::Save — mesh is empty, nothing written to " << path);
             return;
         }
 
-        io::GeometryDumpData dump = ToDump(*this);
+        core::io::GeometryDumpData dump = ToDump(*this);
         dump.filePath = path;
-        dump.fileType = io::GetFileType(path);
+        dump.fileType = core::io::GetFileType(path);
 
-        io::SaveGeometry(path, dump);
+        core::io::SaveGeometry(path, dump);
 
-        GEOLOGINFO("Mesh saved successfully");
+        LOGINFO("Mesh saved successfully");
     }
 
     struct Key
@@ -235,19 +235,19 @@ namespace geo
 
     Mesh Mesh::Load(const std::filesystem::path& path)
     {
-        GEOLOGINFO("Loading mesh: " << path);
+        LOGINFO("Loading mesh: " << path);
 
-        io::GeometryDumpData dump = io::LoadGeometry(path);
+        core::io::GeometryDumpData dump = core::io::LoadGeometry(path);
 
         if (dump.positions.empty())
         {
-            GEOLOGERROR("Mesh::Load - no vertices in file: " << path);
+            LOGERROR("Mesh::Load - no vertices in file: " << path);
             return Mesh{};
         }
 
         if (!dump.HasIndices())
         {
-            GEOLOGERROR("Mesh::Load - file contains no face data (point cloud?): " << path);
+            LOGERROR("Mesh::Load - file contains no face data (point cloud?): " << path);
             return Mesh{};
         }
 
@@ -260,7 +260,7 @@ namespace geo
         normals.reserve(dump.positions.size());
         indexBuffer.reserve(dump.indexBuffer.size());
 
-        for (const io::TriangleIndex& tri : dump.indexBuffer)
+        for (const core::io::TriangleIndex& tri : dump.indexBuffer)
         {
             glm::uvec3 face;
 
@@ -286,19 +286,19 @@ namespace geo
         }
 
         return Mesh(
-            io::GetFileName(path),
+            core::io::GetFileName(path),
             std::move(points),
             std::move(indexBuffer),
             std::move(normals)
         );
     }
 
-    PointCloud3D Mesh::SamplePointsUniform(u32 n, Random& rng, bool includeNormals) const
+    PointCloud3D Mesh::SamplePointsUniform(u32 n, core::Random& rng, bool includeNormals) const
     {
         assert(!m_triangles.empty());
         assert(n > 0);
 
-        GEOLOGDEBUG("Uniform surface sampling"<< " | samples=" << n << " | normals=" << (includeNormals ? "yes" : "no"));
+        LOGDEBUG("Uniform surface sampling"<< " | samples=" << n << " | normals=" << (includeNormals ? "yes" : "no"));
     
         // Prepare Output Buffers
         std::vector<glm::vec3> sampledPoints;

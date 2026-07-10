@@ -1,8 +1,8 @@
 #include <fstream>
-#include <geo/logging/LogMacros.h>
+#include "logging/Log.h"
 #include "IOUtils.h"
 
-namespace geo::io
+namespace core::io
 {
     // ============================================================
     // Utilities
@@ -15,7 +15,7 @@ namespace geo::io
 
         if (!input_file.is_open())
         {
-            GEOLOGERROR("Failed to open file at " << filename.c_str());
+            LOGERROR("Failed to open file at " << filename.c_str());
             return std::string();
         }
 

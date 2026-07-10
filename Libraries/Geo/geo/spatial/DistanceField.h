@@ -1,7 +1,7 @@
 #pragma once
 #include <filesystem>
 #include <unordered_map>
-#include <geo/math/Triangle.h>
+#include <core/math/Triangle.h>
 #include <geo/geometry/Mesh.h>
 
 //#define DF_PARALLEL_BUILD
@@ -55,7 +55,7 @@ namespace geo
     // Distance field construction parameters
     struct DistanceFieldParameters
     {
-        BBox bounding_box;
+        core::BBox bounding_box;
         f32 max_distance = 0.0f;
         u32 resolution   = 128;
         f32 cell_size    = -1.0f;
@@ -102,7 +102,7 @@ namespace geo
         }
         void PreBuild(const DistanceFieldParameters& params);
     private:
-        BBox m_box;
+        core::BBox m_box;
         glm::ivec3 m_dims{0};
         u32 m_resolution = 0u;
         f32 m_cellSize = 0.0f;

@@ -45,7 +45,7 @@ namespace geo
         return result;
     }
 
-    RigidTransform SolveRigidPointToPoint(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target)
+    core::RigidTransform SolveRigidPointToPoint(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target)
     {
         assert(source.size() == target.size());
         assert(source.size() >= 3);
@@ -90,7 +90,7 @@ namespace geo
         return { R, t };
     }
 
-    RigidTransform SolveRigidPointToPointWeighted(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target, const std::vector<f32>& weights)
+    core::RigidTransform SolveRigidPointToPointWeighted(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target, const std::vector<f32>& weights)
     {
         assert(source.size() == target.size());
         assert(weights.size() == source.size());
@@ -208,7 +208,7 @@ namespace geo
         return glm::mat3(1.0f) + std::sin(theta) * K + (1 - std::cos(theta)) * K * K;
     }
 
-    RigidTransform SolveRigidPointToPlane(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target, const std::vector<glm::vec3>& normals)
+    core::RigidTransform SolveRigidPointToPlane(const std::vector<glm::vec3>& source, const std::vector<glm::vec3>& target, const std::vector<glm::vec3>& normals)
     {
         assert(source.size() == target.size());
         assert(source.size() >= 3);
@@ -266,7 +266,7 @@ namespace geo
         return { R, t };
     }
 
-    RigidTransform SolveRigidPointToPlaneShifted(
+    core::RigidTransform SolveRigidPointToPlaneShifted(
         const std::vector<glm::vec3>& source,
         const std::vector<glm::vec3>& target,
         const std::vector<glm::vec3>& normals,

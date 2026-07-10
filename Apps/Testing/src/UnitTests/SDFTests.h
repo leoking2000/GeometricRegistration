@@ -9,18 +9,18 @@
 // Generates a UV sphere mesh centered at origin with given radius.
 // The analytical SDF is: dist(p) = length(p) - radius
 // Positive outside, negative inside.
-static geo::Mesh MakeSphereMesh(geo::f32 radius, geo::u32 rings, geo::u32 sectors)
+static geo::Mesh MakeSphereMesh(f32 radius, u32 rings, u32 sectors)
 {
     std::vector<glm::vec3> vertices;
     std::vector<glm::uvec3> triangles;
 
     // Generate vertices
-    for (geo::u32 r = 0; r <= rings; r++)
+    for (u32 r = 0; r <= rings; r++)
     {
-        geo::f32 phi = glm::pi<geo::f32>() * r / rings;
-        for (geo::u32 s = 0; s <= sectors; s++)
+        f32 phi = glm::pi<f32>() * r / rings;
+        for (u32 s = 0; s <= sectors; s++)
         {
-            geo::f32 theta = 2.0f * glm::pi<geo::f32>() * s / sectors;
+            f32 theta = 2.0f * glm::pi<f32>() * s / sectors;
             vertices.emplace_back(
                 radius * std::sin(phi) * std::cos(theta),
                 radius * std::cos(phi),
@@ -30,14 +30,14 @@ static geo::Mesh MakeSphereMesh(geo::f32 radius, geo::u32 rings, geo::u32 sector
     }
 
     // Generate triangles
-    for (geo::u32 r = 0; r < rings; r++)
+    for (u32 r = 0; r < rings; r++)
     {
-        for (geo::u32 s = 0; s < sectors; s++)
+        for (u32 s = 0; s < sectors; s++)
         {
-            geo::u32 a = r * (sectors + 1) + s;
-            geo::u32 b = r * (sectors + 1) + s + 1;
-            geo::u32 c = (r + 1) * (sectors + 1) + s;
-            geo::u32 d = (r + 1) * (sectors + 1) + s + 1;
+            u32 a = r * (sectors + 1) + s;
+            u32 b = r * (sectors + 1) + s + 1;
+            u32 c = (r + 1) * (sectors + 1) + s;
+            u32 d = (r + 1) * (sectors + 1) + s + 1;
 
             triangles.emplace_back(a, b, c);
             triangles.emplace_back(b, d, c);
@@ -48,9 +48,9 @@ static geo::Mesh MakeSphereMesh(geo::f32 radius, geo::u32 rings, geo::u32 sector
 }
 
 // Builds a DistanceField for a mesh, with max_dist as a multiple of cellSize
-static geo::DistanceField BuildDF(const geo::Mesh& mesh, geo::u32 resolution, geo::f32 bandCells)
+static geo::DistanceField BuildDF(const geo::Mesh& mesh, u32 resolution, f32 bandCells)
 {
-    geo::f32 cellSize = mesh.BoundingBox().MaxSize() / resolution;
+    f32 cellSize = mesh.BoundingBox().MaxSize() / resolution;
 
     geo::DistanceFieldParameters params;
     params.bounding_box = mesh.BoundingBox();
@@ -78,14 +78,14 @@ protected:
         m_df = BuildDF(m_mesh, 64, 20.0f);
 
         // Tolerance: queries are approximate to within one cell size
-        geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
+        f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
         m_tol = cellSize * 1.866f;
     }
 
-    static inline geo::f32           m_radius;
+    static inline f32                m_radius;
+    static inline f32                m_tol;
     static inline geo::Mesh          m_mesh;
     static inline geo::DistanceField m_df;
-    static inline geo::f32           m_tol;
 };
 
 
@@ -107,7 +107,7 @@ TEST_F(DistanceFieldTest, SurfacePointsNearZero)
 
     for (const auto& p : surfacePoints)
     {
-        geo::f32 dist = m_df(p);
+        f32 dist = m_df(p);
         EXPECT_NEAR(dist, 0.0f, m_tol)
             << "Surface point " << p.x << " " << p.y << " " << p.z
             << " gave distance " << dist << ", expected ~0";
@@ -130,8 +130,8 @@ TEST_F(DistanceFieldTest, OutsidePointsHavePositiveDistance)
 
     for (const auto& p : outsidePoints)
     {
-        geo::f32 dist = m_df(p);
-        geo::f32 expected = glm::length(p) - m_radius;  // analytical answer
+        f32 dist = m_df(p);
+        f32 expected = glm::length(p) - m_radius;  // analytical answer
 
         EXPECT_GT(dist, 0.0f) << "Outside point should have positive distance";
         EXPECT_NEAR(dist, expected, m_tol) << "Distance doesn't match analytical SDF";
@@ -152,8 +152,8 @@ TEST_F(DistanceFieldTest, InsidePointsHaveNegativeDistance)
 
     for (const auto& p : insidePoints)
     {
-        geo::f32 dist = m_df(p);
-        geo::f32 expected = glm::length(p) - m_radius;  // negative for inside points
+        f32 dist = m_df(p);
+        f32 expected = glm::length(p) - m_radius;  // negative for inside points
 
         EXPECT_LT(dist, 0.0f) << "Inside point should have negative distance";
         EXPECT_NEAR(dist, expected, m_tol) << "Distance doesn't match analytical SDF";
@@ -168,13 +168,13 @@ TEST_F(DistanceFieldTest, DistanceGrowsLinearly)
 {
     // Move outward from the surface along +X and check
     // that each step increases the distance by approximately cellSize
-    geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
+    f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
 
-    geo::f32 prevDist = 0.0f;
+    f32 prevDist = 0.0f;
     for (int step = 1; step <= 3; step++)
     {
         glm::vec3 p(m_radius + step * cellSize, 0.0f, 0.0f);
-        geo::f32 dist = m_df(p);
+        f32 dist = m_df(p);
 
         if (step > 1)
         {
@@ -194,13 +194,13 @@ TEST_F(DistanceFieldTest, SignedDistanceIsSymmetric)
 {
     // For a sphere, SDF(center + offset) = -SDF(center - offset) is NOT true
     // But |SDF(surface + d)| ≈ |SDF(surface - d)| IS true
-    geo::f32 offset = 0.5f;
+    f32 offset = 0.5f;
 
     glm::vec3 outsidePoint(m_radius + offset, 0.0f, 0.0f);
     glm::vec3 insidePoint(m_radius - offset, 0.0f, 0.0f);
 
-    geo::f32 dOutside = m_df(outsidePoint);
-    geo::f32 dInside = m_df(insidePoint);
+    f32 dOutside = m_df(outsidePoint);
+    f32 dInside = m_df(insidePoint);
 
     EXPECT_NEAR(glm::abs(dOutside), glm::abs(dInside), m_tol)
         << "Distance magnitude should be symmetric across the surface";
@@ -214,12 +214,12 @@ TEST_F(DistanceFieldTest, SignedDistanceIsSymmetric)
 
 TEST_F(DistanceFieldTest, BeyondBandReturnsMaxDist)
 {
-    geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
-    geo::f32 maxDist = cellSize * 20.0f;
+    f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
+    f32 maxDist = cellSize * 20.0f;
 
     // A point very far outside the sphere — well beyond the narrow band
     glm::vec3 farPoint(m_radius + maxDist * 2.0f, 0.0f, 0.0f);
-    geo::f32 dist = m_df(farPoint);
+    f32 dist = m_df(farPoint);
 
     EXPECT_FLOAT_EQ(dist, maxDist) << "Point beyond narrow band should return exactly max_dist";
 }
@@ -233,10 +233,10 @@ TEST_F(DistanceFieldTest, CenterOfSphereIsInsideBand)
     // The sphere center is radius=1.0 from the surface.
     // If max_dist < 1.0 the center is outside the band and returns max_dist.
     // If max_dist > 1.0 the center is inside the band and returns -radius.
-    geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
-    geo::f32 maxDist = cellSize * 20.0f;
+    f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
+    f32 maxDist = cellSize * 20.0f;
 
-    geo::f32 dist = m_df(glm::vec3(0.0f));
+    f32 dist = m_df(glm::vec3(0.0f));
 
     if (maxDist > m_radius)
     {
@@ -257,8 +257,8 @@ TEST_F(DistanceFieldTest, CenterOfSphereIsInsideBand)
 
 TEST_F(DistanceFieldTest, OutsideGridReturnMaxDist)
 {
-    geo::f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
-    geo::f32 maxDist = cellSize * 20.0f;
+    f32 cellSize = m_mesh.BoundingBox().MaxSize() / 64.0f;
+    f32 maxDist = cellSize * 20.0f;
 
     // Way outside the grid
     glm::vec3 wayOutside(1000.0f, 1000.0f, 1000.0f);
@@ -276,8 +276,8 @@ TEST(ClosestPointToTriangle, QueryAtVertexA)
     glm::vec3 fn = glm::normalize(glm::cross(b - a, c - a));
 
     // Query behind vertex A — closest point is A
-    glm::vec3 cp; geo::f32 dist;
-    bool hit = geo::closestPointToTriangle(cp, dist, glm::vec3(-1, -1, 0), a, b, c, fn);
+    glm::vec3 cp; f32 dist;
+    bool hit = core::closestPointToTriangle(cp, dist, glm::vec3(-1, -1, 0), a, b, c, fn);
 
     ASSERT_TRUE(hit);
     EXPECT_NEAR(cp.x, 0.0f, 1e-5f);
@@ -292,8 +292,8 @@ TEST(ClosestPointToTriangle, QueryAboveFace)
 
     // Query directly above face center
     glm::vec3 query(0.25f, 0.25f, 1.0f);
-    glm::vec3 cp; geo::f32 dist;
-    bool hit = geo::closestPointToTriangle(cp, dist, query, a, b, c, fn);
+    glm::vec3 cp; f32 dist;
+    bool hit = core::closestPointToTriangle(cp, dist, query, a, b, c, fn);
 
     ASSERT_TRUE(hit);
     EXPECT_NEAR(dist, 1.0f, 1e-5f);  // height above plane is exactly 1
@@ -305,9 +305,9 @@ TEST(ClosestPointToTriangle, MaxDistEarlyExit)
     glm::vec3 a(0, 0, 0), b(1, 0, 0), c(0, 1, 0);
     glm::vec3 fn = glm::normalize(glm::cross(b - a, c - a));
 
-    glm::vec3 cp; geo::f32 dist;
+    glm::vec3 cp; f32 dist;
     // Query is 2 units away but maxDist is 0.5 — should return false
-    bool hit = geo::closestPointToTriangle(cp, dist, glm::vec3(0.25f, 0.25f, 2.0f), a, b, c, fn, 0.5f);
+    bool hit = core::closestPointToTriangle(cp, dist, glm::vec3(0.25f, 0.25f, 2.0f), a, b, c, fn, 0.5f);
     EXPECT_FALSE(hit);
 }
 
@@ -317,8 +317,8 @@ TEST(ClosestPointToTriangle, DegenerateTriangleReturnsFalse)
     glm::vec3 a(0, 0, 0), b(0, 0, 0), c(0, 0, 0);
     glm::vec3 fn(0, 0, 1);  // arbitrary — cross product is zero
 
-    glm::vec3 cp; geo::f32 dist;
-    bool hit = geo::closestPointToTriangle(cp, dist, glm::vec3(1, 0, 0), a, b, c, fn);
+    glm::vec3 cp; f32 dist;
+    bool hit = core::closestPointToTriangle(cp, dist, glm::vec3(1, 0, 0), a, b, c, fn);
     // Should not crash — may return false due to degenerate sum check
     (void)hit;
     SUCCEED();  // just testing it doesn't crash
@@ -336,7 +336,7 @@ TEST(ESATest, RecoverKnownTransform)
     dfParams.bounding_box = mesh.BoundingBox();
     dfParams.bounding_box.ExpandByAbsolute(1.0f);
 
-    geo::f32 cellSize = mesh.BoundingBox().MaxSize() / 64.0f;
+    f32 cellSize = mesh.BoundingBox().MaxSize() / 64.0f;
 
     dfParams.resolution = 64;
     dfParams.max_distance = cellSize * 30.0f;
@@ -345,15 +345,15 @@ TEST(ESATest, RecoverKnownTransform)
     df.Build(dfParams, mesh);
 
     // 3. Sample source points from the same mesh
-    geo::Random rng(42);
+    core::Random rng(42);
     geo::PointCloud3D src = mesh.SamplePointsUniform(512, rng, false);
 
     // 4. Apply a known small transform to the source
     glm::vec3 knownTranslation(-1.9f, -1.25f, 1.15f);
-    geo::f32  knownRotation = glm::radians(30.0f);  // small rotation around Y
+    f32  knownRotation = glm::radians(30.0f);  // small rotation around Y
 
     glm::mat4 Ry = glm::rotate(glm::mat4(1.0f), knownRotation, glm::vec3(0, 1, 0));
-    geo::RigidTransform knownT{ glm::mat3(Ry), knownTranslation };
+    core::RigidTransform knownT{ glm::mat3(Ry), knownTranslation };
     src.Transform(knownT);
 
     // 5. Run ESA to recover the transform
@@ -370,16 +370,16 @@ TEST(ESATest, RecoverKnownTransform)
     //params.searchSpace.rotationMax = glm::vec3(glm::radians(60.0f));
 
     geo::ESAResult result = RunESA(params, [&df, &src](float* e) -> float {
-       const geo::RigidTransform T = geo::ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5] });
-       const geo::f32 maxDist = df.GetMaxDist();
+       const core::RigidTransform T = geo::ConvertToRigidTransform({ e[0], e[1], e[2], e[3], e[4], e[5] });
+       const f32 maxDist = df.GetMaxDist();
        
-       geo::f64 cost = 0.0;
-       geo::u32 count = 0;
+       f64 cost = 0.0;
+       u32 count = 0;
        
-       for (geo::index_t i = 0; i < src.Size(); i++)
+       for (index_t i = 0; i < src.Size(); i++)
        {
            glm::vec3 tp = T.TransformPoint(src.Point(i));
-           geo::f32 d = df(tp);
+           f32 d = df(tp);
        
            if (glm::abs(d) < maxDist)
            {
@@ -392,18 +392,18 @@ TEST(ESATest, RecoverKnownTransform)
            return maxDist * maxDist;
        }
 
-        return float(cost / (geo::f64)count);
+        return float(cost / (f64)count);
     });
 
     // 6. The recovered transform should bring src back close to the surface
     // We verify by transforming src points with the result and checking
     // average SDF value is near zero
-    geo::f32 avgDist = 0.0f;
-    geo::u32 count = 0;
-    for (geo::index_t i = 0; i < src.Size(); i++)
+    f32 avgDist = 0.0f;
+    u32 count = 0;
+    for (index_t i = 0; i < src.Size(); i++)
     {
         glm::vec3 tp = result.transform.TransformPoint(src.Point(i));
-        geo::f32 d = df(tp);
+        f32 d = df(tp);
         if (glm::abs(d) < df.GetMaxDist())
         {
             avgDist += glm::abs(d);

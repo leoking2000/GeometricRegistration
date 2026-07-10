@@ -22,7 +22,7 @@
 // Selects a subset of variables (subdim out of dim) to perturb
 // while maintaining balanced exploration across dimensions.
 // ------------------------------------------------------------
-static void Partitioning(long n, long p, long* p_index, long* p_accum, geo::Random& rng)
+static void Partitioning(long n, long p, long* p_index, long* p_accum, core::Random& rng)
 {
 	long i;
 	long p_accum_min;
@@ -72,7 +72,7 @@ float EnhancedSimulatedAnnealingPlus
 	float* x_min, float* x_max, float* step_fraction,
 	long* wraparound, std::function<float(float*)> e,
 	void (*monitor)(float*, float), long iterations_max,
-	geo::Random& rng)
+	core::Random& rng)
 {
 	long no_x_init = 0,			// flag: 1 if x_init==NULL
 		vsize,					// vector size in bytes
@@ -373,7 +373,7 @@ float EnhancedSimulatedAnnealingPlus
 
 namespace geo
 {
-    RigidTransform ConvertToRigidTransform(const ESARigidTransform& x)
+    core::RigidTransform ConvertToRigidTransform(const ESARigidTransform& x)
     {
         const glm::vec3 t(x[0], x[1], x[2]);
         const glm::vec3 r(x[3], x[4], x[5]); // radians
@@ -391,11 +391,11 @@ namespace geo
     {
 		ESAResult result{};
 
-		TimePoint start = Clock::now();
+		core::TimePoint start = core::Clock::now();
 
 		// 1. Build ESA Variables
 
-		geo::Random rng(params.seed);
+		core::Random rng(params.seed);
 
 		float x_init[6] = { 
 			params.initialTransform[0], 
@@ -457,14 +457,14 @@ namespace geo
 		// 3. Return Result
 		result.transform = ConvertToRigidTransform(x_best);
 		result.cost = cost;
-		result.totalTime = TimeDifferenceMs(Clock::now(), start);
+		result.totalTime = core::TimeDifferenceMs(core::Clock::now(), start);
 
         return result;
     }
 
 	ESAResult MultiConfigESA(const std::vector<ESAParameters>& configs, std::function<float(float*)> costfn)
 	{
-		TimePoint start = Clock::now();
+		core::TimePoint start = core::Clock::now();
 		std::vector<ESAResult> results(configs.size(), {});
 
 		#pragma omp parallel for schedule(dynamic)
@@ -477,7 +477,7 @@ namespace geo
 			[](const ESAResult& a, const ESAResult& b) { return a.cost < b.cost; });
 
 		ESAResult winner = *best;
-		winner.totalTime = TimeDifferenceMs(Clock::now(), start);
+		winner.totalTime = core::TimeDifferenceMs(core::Clock::now(), start);
 
 		return winner;
 	}

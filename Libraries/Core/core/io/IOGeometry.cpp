@@ -3,17 +3,18 @@
 #include <algorithm>
 #include <cstring>
 #include <limits>
+#include <unordered_set>
 #include <map>
 
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
-#include <geo/logging/LogMacros.h>
+#include "logging/Log.h"
 #include "IOUtils.h"
 #include "IOGeometry.h"
 
 
-namespace geo::io
+namespace core::io
 {
     FileType GetFileType(const std::filesystem::path& path)
     {
@@ -163,12 +164,12 @@ namespace geo::io
             true // triangulate
         );
 
-        if (!warn.empty()) { GEOLOGWARN(warn); }
-        if (!err.empty()) { GEOLOGERROR(err); }
+        if (!warn.empty()) { LOGWARN(warn); }
+        if (!err.empty()) { LOGERROR(err); }
 
         if (!success)
         {
-            GEOLOGERROR("Failed to load OBJ: " << path);
+            LOGERROR("Failed to load OBJ: " << path);
             data.geometryType = GeometryType::UNKNOWN;
             data.fileType = FileType::UNKNOWN;
             return data;
@@ -252,7 +253,7 @@ namespace geo::io
 
                 if (fv != 3)
                 {
-                    GEOLOGWARN("Skipping non-triangle face in OBJ file (fv=" << fv << ")");
+                    LOGWARN("Skipping non-triangle face in OBJ file (fv=" << fv << ")");
                     indexOffset += fv;
                     continue;
                 }
@@ -296,12 +297,12 @@ namespace geo::io
 
         if (!data.HasNormals() && data.HasIndices())
         {
-            GEOLOGWARN("OBJ has no normals - computing vertex normals in " << GetFileName(path));
+            LOGWARN("OBJ has no normals - computing vertex normals in " << GetFileName(path));
             ComputeNormals(data);
         }
 
-        GEOLOGDEBUG("Loaded OBJ: ");
-        GEOLOGDEBUG(data.ToString());
+        LOGDEBUG("Loaded OBJ: ");
+        LOGDEBUG(data.ToString());
 
         return data;
     }
@@ -489,7 +490,7 @@ namespace geo::io
         std::ifstream file(path, std::ios::binary);
         if (!file.is_open())
         {
-            GEOLOGERROR("Failed to open PLY file: " << path);
+            LOGERROR("Failed to open PLY file: " << path);
             return {};
         }
 
@@ -508,7 +509,7 @@ namespace geo::io
             if (!line.empty() && line.back() == '\r') line.pop_back();
             if (line != "ply")
             {
-                GEOLOGERROR("Not a valid PLY file (missing magic): " << path);
+                LOGERROR("Not a valid PLY file (missing magic): " << path);
                 return {};
             }
 
@@ -568,7 +569,7 @@ namespace geo::io
 
         if (format == PLY::PLYFormat::UNKNOWN)
         {
-            GEOLOGERROR("PLY file has unknown or missing format declaration: " << path);
+            LOGERROR("PLY file has unknown or missing format declaration: " << path);
             return {};
         }
 
@@ -587,7 +588,7 @@ namespace geo::io
 
         if (!vertElem || vertElem->count == 0)
         {
-            GEOLOGERROR("PLY file has no vertex element: " << path);
+            LOGERROR("PLY file has no vertex element: " << path);
             return {};
         }
 
@@ -605,7 +606,7 @@ namespace geo::io
 
         if (xIdx < 0 || yIdx < 0 || zIdx < 0)
         {
-            GEOLOGERROR("PLY vertex element is missing x/y/z properties: " << path);
+            LOGERROR("PLY vertex element is missing x/y/z properties: " << path);
             return {};
         }
 
@@ -740,7 +741,7 @@ namespace geo::io
                     }
                     else
                     {
-                        GEOLOGWARN("PLY: skipping polygon with " << count << " vertices");
+                        LOGWARN("PLY: skipping polygon with " << count << " vertices");
                     }
                 }
             }
@@ -872,7 +873,7 @@ namespace geo::io
                             }
                             else
                             {
-                                GEOLOGWARN("PLY: skipping polygon with " << count << " vertices");
+                                LOGWARN("PLY: skipping polygon with " << count << " vertices");
                                 ptr += count * PLY::PLYTypeBytes(prop.listElem);
                             }
                         }
@@ -901,12 +902,12 @@ namespace geo::io
 
         if (!data.HasNormals() && data.geometryType == GeometryType::TRIANGLE_MESH)
         {
-            GEOLOGWARN("PLY mesh has no normals - computing vertex normals in " << GetFileName(path));
+            LOGWARN("PLY mesh has no normals - computing vertex normals in " << GetFileName(path));
             ComputeNormals(data);
         }
 
-        GEOLOGDEBUG("Loaded PLY: ");
-        GEOLOGDEBUG(data.ToString());
+        LOGDEBUG("Loaded PLY: ");
+        LOGDEBUG(data.ToString());
 
         return data;
     }
@@ -920,7 +921,7 @@ namespace geo::io
         std::ofstream file(path);
         if (!file.is_open())
         {
-            GEOLOGERROR("Failed to open OBJ for writing: " << path);
+            LOGERROR("Failed to open OBJ for writing: " << path);
             return false;
         }
 
@@ -983,7 +984,7 @@ namespace geo::io
             }
             else
             {
-                GEOLOGWARN("SaveOBJ: could not write MTL file: " << mtlPath);
+                LOGWARN("SaveOBJ: could not write MTL file: " << mtlPath);
             }
         }
 
@@ -1050,12 +1051,12 @@ namespace geo::io
 
         if (!file.good())
         {
-            GEOLOGERROR("SaveOBJ: write error: " << path);
+            LOGERROR("SaveOBJ: write error: " << path);
             return false;
         }
 
-        GEOLOGDEBUG("Saved OBJ: ");
-        GEOLOGDEBUG(data.ToString());
+        LOGDEBUG("Saved OBJ: ");
+        LOGDEBUG(data.ToString());
 
         return true;
     }
@@ -1071,7 +1072,7 @@ namespace geo::io
     {
         if (data.positions.empty())
         {
-            GEOLOGERROR("SavePLY: no points to write");
+            LOGERROR("SavePLY: no points to write");
             return false;
         }
 
@@ -1080,7 +1081,7 @@ namespace geo::io
         std::ofstream file(path, std::ios::binary);
         if (!file.is_open())
         {
-            GEOLOGERROR("SavePLY: failed to open file for writing: " << path);
+            LOGERROR("SavePLY: failed to open file for writing: " << path);
             return false;
         }
 
@@ -1201,12 +1202,12 @@ namespace geo::io
 
         if (!file.good())
         {
-            GEOLOGERROR("SavePLY: write error: " << path);
+            LOGERROR("SavePLY: write error: " << path);
             return false;
         }
 
-        GEOLOGDEBUG("Saved PLY: ");
-        GEOLOGDEBUG(data.ToString());
+        LOGDEBUG("Saved PLY: ");
+        LOGDEBUG(data.ToString());
 
         return true;
     }
@@ -1219,7 +1220,7 @@ namespace geo::io
     {
         if (!FileExists(path))
         {
-            GEOLOGERROR("Geometry file does not exist: " << path);
+            LOGERROR("Geometry file does not exist: " << path);
             return {};
         }
 
@@ -1228,7 +1229,7 @@ namespace geo::io
         case FileType::OBJ: return LoadOBJ(path);
         case FileType::PLY: return LoadPLY(path);
         default:
-            GEOLOGERROR("Unsupported geometry file type: " << path);
+            LOGERROR("Unsupported geometry file type: " << path);
             return {};
         }
     }
@@ -1243,16 +1244,16 @@ namespace geo::io
         {
         case FileType::OBJ:
             if (!SaveOBJ(path, data))
-                GEOLOGERROR("SaveGeometry failed to save OBJ file: " << path);
+                LOGERROR("SaveGeometry failed to save OBJ file: " << path);
             return;
 
         case FileType::PLY:
             if (!SavePLY(path, data))
-                GEOLOGERROR("SaveGeometry failed to save PLY file: " << path);
+                LOGERROR("SaveGeometry failed to save PLY file: " << path);
             return;
 
         default:
-            GEOLOGERROR("SaveGeometry: unsupported file type: " << path);
+            LOGERROR("SaveGeometry: unsupported file type: " << path);
             return;
         }
     }

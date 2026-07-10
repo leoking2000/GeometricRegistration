@@ -1,16 +1,4 @@
 #pragma once
-#include "GeoTypes.h"
-
-#include "Logging/LogMacros.h"
-
-#include "utils/GeoRand.h"
-#include "utils/GeoTime.h"
-
-#include "io/IOUtils.h"
-#include "io/IOGeometry.h"
-
-#include "math/BBox.h"
-#include "math/RigidTransform.h"
 #include "math/solvers.h"
 
 #include "geometry/PointCloud3D.h"

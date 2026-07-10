@@ -1,6 +1,6 @@
 #pragma once
-#include <geo/utils/GeoTime.h>
-#include <geo/math/RigidTransform.h>
+#include <core/utils/Time.h>
+#include <core/math/RigidTransform.h>
 
 namespace geo
 {
@@ -8,7 +8,7 @@ namespace geo
     {
         // Final rigid transform estimated by ICP.
         // Maps source geometry into target space.
-        RigidTransform transform = {};
+        core::RigidTransform transform = {};
 
         f64 totalTimeMs = 0.0;  // Total wall-clock execution time in milliseconds.
 
@@ -22,12 +22,12 @@ namespace geo
 
         // Full iteration timing statistics.
         // Includes correspondence search + solve + transform update.
-        TimingStat totalIterationTime;
+        core::TimingStat totalIterationTime;
 
         // Time spent finding nearest-neighbor correspondences.
-        TimingStat correspondenceSearchTime;
+        core::TimingStat correspondenceSearchTime;
 
         // Time spent solving alignment system
-        TimingStat alignmentSolveTime;
+        core::TimingStat alignmentSolveTime;
     };
 }

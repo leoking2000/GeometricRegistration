@@ -1,8 +1,8 @@
-#include "Log.h"
 #include <mutex>
 #include <sstream>
+#include "Log.h"
 
-namespace geo
+namespace core
 {
     // Global log level controlling filtering of all log output.
     static LogLevel g_logLevel = LogLevel::LOG_INFO;

@@ -1,9 +1,9 @@
 #pragma once
 #include <random>
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include "Types.h"
 
-namespace geo
+namespace core
 {
 	/// <summary>
 	/// uses the std::mt19937 engine.

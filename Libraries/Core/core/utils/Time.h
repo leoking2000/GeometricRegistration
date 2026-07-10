@@ -1,9 +1,10 @@
 #pragma once
-#include <geo/Logging/LogLevel.h>
 #include <chrono>
 #include <string>
+#include "Types.h"
+#include "logging/Log.h"
 
-namespace geo
+namespace core
 {
     // Alias for the clock type used across the library.
     // steady_clock is used because it is monotonic and not affected by system time changes.

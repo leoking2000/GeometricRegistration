@@ -1,10 +1,10 @@
 #pragma once
 #include <array>
 #include <functional>
-#include <geo/utils/GeoRand.h>
-#include <geo/utils/GeoTime.h>
-#include <geo/math/RigidTransform.h>
-#include <geo/math/BBox.h>
+#include <core/utils/Rand.h>
+#include <core/utils/Time.h>
+#include <core/math/RigidTransform.h>
+#include <core/math/BBox.h>
 
 // The Enhanced Simulated Annealing method as presented by P. Siarry, G. Berthiau,
 // F. Durbin and J. Haussy in "Enhanced Simulated Annealing for Globally Minimizing
@@ -30,7 +30,7 @@ float EnhancedSimulatedAnnealingPlus
     float* x_min, float* x_max, float* step_fraction,
     long* wraparound, std::function<float(float*)> e,
     void (*monitor)(float*, float), long iterations_max,
-    geo::Random& rng);
+    core::Random& rng);
 
 namespace geo
 {
@@ -40,7 +40,7 @@ namespace geo
     using ESARigidTransform = std::array<f32, 6>;
 
     // Converts 6D ESA parameter vector into a rigid transform
-    RigidTransform ConvertToRigidTransform(const ESARigidTransform& x);
+    core::RigidTransform ConvertToRigidTransform(const ESARigidTransform& x);
 
     // Search space definition for ESA optimization
     struct ESASearchSpace
@@ -59,7 +59,7 @@ namespace geo
         f32 rotationStep = 0.05f;
 
         // Full rotation search — use when you have no prior on orientation
-        static ESASearchSpace FullRotation(const BBox& box)
+        static ESASearchSpace FullRotation(const core::BBox& box)
         {
             ESASearchSpace s;
             glm::vec3 size = box.Size();
@@ -84,7 +84,7 @@ namespace geo
     // ESA result container
     struct ESAResult
     {
-        RigidTransform transform = {};
+        core::RigidTransform transform = {};
         f32 cost = 0.0;
 
         f64 totalTime = 0.0;

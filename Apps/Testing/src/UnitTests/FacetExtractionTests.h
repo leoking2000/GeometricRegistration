@@ -33,9 +33,9 @@ TEST(BuildTriangleAdjacencyTest, SingleTriangle)
 
     ASSERT_EQ(adj.size(), 1u);
 
-    EXPECT_EQ(adj[0][0], geo::INVALID_INDEX);
-    EXPECT_EQ(adj[0][1], geo::INVALID_INDEX);
-    EXPECT_EQ(adj[0][2], geo::INVALID_INDEX);
+    EXPECT_EQ(adj[0][0], INVALID_INDEX);
+    EXPECT_EQ(adj[0][1], INVALID_INDEX);
+    EXPECT_EQ(adj[0][2], INVALID_INDEX);
 }
 
 TEST(BuildTriangleAdjacencyTest, TwoTrianglesSharingOneEdge)
@@ -58,13 +58,13 @@ TEST(BuildTriangleAdjacencyTest, TwoTrianglesSharingOneEdge)
 
     ASSERT_EQ(adj.size(), 2u);
 
-    EXPECT_EQ(adj[0][0], geo::INVALID_INDEX);
+    EXPECT_EQ(adj[0][0], INVALID_INDEX);
     EXPECT_EQ(adj[0][1], 1u);
-    EXPECT_EQ(adj[0][2], geo::INVALID_INDEX);
+    EXPECT_EQ(adj[0][2], INVALID_INDEX);
 
     EXPECT_EQ(adj[1][0], 0u);
-    EXPECT_EQ(adj[1][1], geo::INVALID_INDEX);
-    EXPECT_EQ(adj[1][2], geo::INVALID_INDEX);
+    EXPECT_EQ(adj[1][1], INVALID_INDEX);
+    EXPECT_EQ(adj[1][2], INVALID_INDEX);
 }
 
 TEST(BuildTriangleAdjacencyTest, SharedEdgeDetectedRegardlessOfWinding)
@@ -90,7 +90,7 @@ TEST(BuildTriangleAdjacencyTest, SharedEdgeDetectedRegardlessOfWinding)
     bool found01 = false;
     bool found10 = false;
 
-    for (geo::u32 e = 0; e < 3; ++e)
+    for (u32 e = 0; e < 3; ++e)
     {
         found01 |= (adj[0][e] == 1u);
         found10 |= (adj[1][e] == 0u);
@@ -124,9 +124,9 @@ TEST(BuildTriangleAdjacencyTest, TetrahedronHasNoBoundaryEdges)
 
     for (const auto& a : adj)
     {
-        EXPECT_NE(a[0], geo::INVALID_INDEX);
-        EXPECT_NE(a[1], geo::INVALID_INDEX);
-        EXPECT_NE(a[2], geo::INVALID_INDEX);
+        EXPECT_NE(a[0], INVALID_INDEX);
+        EXPECT_NE(a[1], INVALID_INDEX);
+        EXPECT_NE(a[2], INVALID_INDEX);
     }
 }
 
@@ -310,7 +310,7 @@ TEST(RunRegionGrowingTest, EveryTriangleReceivesAValidLabel)
 
     for (auto l : labels)
     {
-        EXPECT_NE(l, geo::INVALID_INDEX);
+        EXPECT_NE(l, INVALID_INDEX);
     }
 
     EXPECT_EQ(numRegions, 4u);
@@ -319,7 +319,7 @@ TEST(RunRegionGrowingTest, EveryTriangleReceivesAValidLabel)
 TEST(MergeSmallRegionsTest, EmptyInput)
 {
     std::vector<glm::uvec3> adj;
-    std::vector<geo::index_t> labels;
+    std::vector<index_t> labels;
 
     const auto numRegions =
         geo::MergeSmallRegions(adj, labels, 0, 2);
@@ -332,11 +332,11 @@ TEST(MergeSmallRegionsTest, SingleLargeRegionUnchanged)
 {
     std::vector<glm::uvec3> adj =
     {
-        {geo::INVALID_INDEX, geo::INVALID_INDEX, 1},
-        {0, geo::INVALID_INDEX, geo::INVALID_INDEX}
+        {INVALID_INDEX, INVALID_INDEX, 1},
+        {0, INVALID_INDEX, INVALID_INDEX}
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0, 0
     };
@@ -353,12 +353,12 @@ TEST(MergeSmallRegionsTest, SmallRegionMergedIntoLargerNeighbour)
 {
     std::vector<glm::uvec3> adj =
     {
-        {1, geo::INVALID_INDEX, geo::INVALID_INDEX},
-        {0, 2, geo::INVALID_INDEX},
-        {1, geo::INVALID_INDEX, geo::INVALID_INDEX}
+        {1, INVALID_INDEX, INVALID_INDEX},
+        {0, 2, INVALID_INDEX},
+        {1, INVALID_INDEX, INVALID_INDEX}
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         1,
@@ -379,11 +379,11 @@ TEST(MergeSmallRegionsTest, LabelCompactionRemovesGaps)
 {
     std::vector<glm::uvec3> adj =
     {
-        {1, geo::INVALID_INDEX, geo::INVALID_INDEX},
-        {0, geo::INVALID_INDEX, geo::INVALID_INDEX}
+        {1, INVALID_INDEX, INVALID_INDEX},
+        {0, INVALID_INDEX, INVALID_INDEX}
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         2
@@ -402,10 +402,10 @@ TEST(MergeSmallRegionsTest, RegionWithoutNeighboursCannotBeMerged)
 {
     std::vector<glm::uvec3> adj =
     {
-        {geo::INVALID_INDEX, geo::INVALID_INDEX, geo::INVALID_INDEX}
+        {INVALID_INDEX, INVALID_INDEX, INVALID_INDEX}
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0
     };
@@ -421,14 +421,14 @@ TEST(MergeSmallRegionsTest, MultipleSmallRegionsCollapseIntoLargest)
 {
     std::vector<glm::uvec3> adj =
     {
-        {1, geo::INVALID_INDEX, geo::INVALID_INDEX}, // t0
-        {0, 2, geo::INVALID_INDEX},                  // t1
-        {1, 3, geo::INVALID_INDEX},                  // t2
-        {2, 4, geo::INVALID_INDEX},                  // t3
-        {3, geo::INVALID_INDEX, geo::INVALID_INDEX}  // t4
+        {1, INVALID_INDEX, INVALID_INDEX}, // t0
+        {0, 2, INVALID_INDEX},             // t1
+        {1, 3, INVALID_INDEX},             // t2
+        {2, 4, INVALID_INDEX},             // t3
+        {3, INVALID_INDEX, INVALID_INDEX}  // t4
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         1,
@@ -452,12 +452,12 @@ TEST(MergeSmallRegionsTest, OutputLabelsAreCompact)
 {
     std::vector<glm::uvec3> adj =
     {
-        {1, geo::INVALID_INDEX, geo::INVALID_INDEX},
-        {0, geo::INVALID_INDEX, geo::INVALID_INDEX},
-        {geo::INVALID_INDEX, geo::INVALID_INDEX, geo::INVALID_INDEX}
+        {1, INVALID_INDEX, INVALID_INDEX},
+        {0, INVALID_INDEX, INVALID_INDEX},
+        {INVALID_INDEX, INVALID_INDEX, INVALID_INDEX}
     };
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         5,
         5,
@@ -469,7 +469,7 @@ TEST(MergeSmallRegionsTest, OutputLabelsAreCompact)
 
     EXPECT_EQ(numRegions, 2u);
 
-    std::set<geo::index_t> unique(labels.begin(), labels.end());
+    std::set<index_t> unique(labels.begin(), labels.end());
 
     EXPECT_EQ(unique.size(), 2u);
     EXPECT_TRUE(unique.count(0));
@@ -484,7 +484,7 @@ TEST(BuildFacetsTest, EmptyInput)
         {}
     );
 
-    std::vector<geo::index_t> labels;
+    std::vector<index_t> labels;
 
     auto facets = geo::BuildFacets(mesh, labels, 0);
 
@@ -505,7 +505,7 @@ TEST(BuildFacetsTest, SingleTriangleFacet)
         }
     );
 
-    std::vector<geo::index_t> labels = { 0 };
+    std::vector<index_t> labels = { 0 };
 
     auto facets = geo::BuildFacets(mesh, labels, 1);
 
@@ -541,7 +541,7 @@ TEST(BuildFacetsTest, TwoTrianglesSameFacet)
         }
     );
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         0
@@ -574,7 +574,7 @@ TEST(BuildFacetsTest, TwoIndependentFacets)
         }
     );
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         1
@@ -607,10 +607,10 @@ TEST(BuildFacetsTest, InvalidTrianglesIgnored)
         }
     );
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
-        geo::INVALID_INDEX
+        INVALID_INDEX
     };
 
     auto facets = geo::BuildFacets(mesh, labels, 1);
@@ -637,7 +637,7 @@ TEST(BuildFacetsTest, AreaWeightedCentroidForQuad)
         }
     );
 
-    std::vector<geo::index_t> labels =
+    std::vector<index_t> labels =
     {
         0,
         0
@@ -651,5 +651,3 @@ TEST(BuildFacetsTest, AreaWeightedCentroidForQuad)
     EXPECT_NEAR(facets[0].centroid.y, 0.5f, 1e-5f);
     EXPECT_NEAR(facets[0].centroid.z, 0.0f, 1e-5f);
 }
-
-

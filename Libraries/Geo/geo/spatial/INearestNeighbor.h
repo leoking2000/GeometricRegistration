@@ -1,7 +1,7 @@
 #pragma once
 #include <vector>
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include <core/Types.h>
 
 namespace geo
 {

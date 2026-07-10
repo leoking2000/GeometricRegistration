@@ -2,7 +2,7 @@
 #include <algorithm>
 #include "BBox.h"
 
-namespace geo
+namespace core
 {
     void BBox::MakeEmpty()
     {

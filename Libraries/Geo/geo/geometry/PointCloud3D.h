@@ -1,9 +1,9 @@
 #pragma once
 #include <vector>
 #include <filesystem>
-#include <geo/GeoTypes.h>
-#include <math/RigidTransform.h>
-#include <math/BBox.h>
+#include <core/Types.h>
+#include <core/math/RigidTransform.h>
+#include <core/math/BBox.h>
 
 namespace geo
 {
@@ -39,13 +39,13 @@ namespace geo
 
 		// returns the cached bounding Box of the point cloud
 		// @return bounding Box of the point cloud
-		const BBox& BoundingBox() const;
+		const core::BBox& BoundingBox() const;
 	public:
 		// Applies a rigid transformation (rotation + translation) to all points.
 		// Note:
 		// - This operation mutates the internal point data.
 		// - Any previously built spatial acceleration structures (e.g., KD-trees) become invalid.
-		void Transform(const RigidTransform& transform);
+		void Transform(const core::RigidTransform& transform);
 	public:
 		// Uniform subsampling NOTE: normals are not retured
 		PointCloud3D PointCloud3D::UniformSubsample(index_t targetCount, u32 seed) const;
@@ -77,6 +77,6 @@ namespace geo
 		std::vector<glm::vec3> m_points;  // Storage for 3D points
 		std::vector<glm::vec3> m_normals; // Storage for normals (optional, may be empty)
 		glm::vec3 m_centroid{ 0.0f };     // Cached centroid of the point cloud
-		BBox m_boundingBox;               // Cached bounding Box of the point cloud
+		core::BBox m_boundingBox;         // Cached bounding Box of the point cloud
 	};
 }

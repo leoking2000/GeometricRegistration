@@ -1,4 +1,4 @@
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
 #include <geo/math/Solvers.h>
 #include "SparseICP.h"
 
@@ -67,23 +67,23 @@ namespace geo
 		assert(params.mu > 0.0f);
 		assert(params.admmIterations >= 1);
 
-		GEOLOGINFO("SparseICP (PointToPoint) started");
+		LOGINFO("SparseICP (PointToPoint) started");
 
-		GEOLOGDEBUG("SparseICP (PointToPoint) Params |"
+		LOGDEBUG("SparseICP (PointToPoint) Params |"
 			<< " p=" << params.p
 			<< " mu=" << params.mu
 			<< " admmIters=" << params.admmIterations);
 
-		GEOLOGDEBUG("Target points: " << target.Size()
+		LOGDEBUG("Target points: " << target.Size()
 			<< " | Source points: " << source.Size()
 			<< " | Max iterations: " << params.maxIterations);
 
-		TimePoint startTotal = Clock::now();
+		core::TimePoint startTotal = core::Clock::now();
 
 		const index_t N = src.Size();
 
 		ICPResult result;
-		result.transform = RigidTransform::Identity();
+		result.transform = core::RigidTransform::Identity();
 
 		// Correspondence index buffer:
 		// correspondences[i] = nearest target point for source point i.
@@ -105,18 +105,18 @@ namespace geo
 		// Main ICP iteration loop.
 		for (u32 iter = 0; iter < params.maxIterations; ++iter)
 		{
-			TimePoint startTime = Clock::now();
+			core::TimePoint startTime = core::Clock::now();
 
 			// ------------------------------------------------------------
 			// 1. Find nearest-neighbor correspondences
 			// ------------------------------------------------------------
 
-			TimePoint startCorrTime = Clock::now();
+			core::TimePoint startCorrTime = core::Clock::now();
 
 			nn.QueryBatch(src.GetPoints(), correspondences);
 
-			TimePoint endCorrTime = Clock::now();
-			result.correspondenceSearchTime.AddSample(TimeDifferenceMs(endCorrTime, startCorrTime));
+			core::TimePoint endCorrTime = core::Clock::now();
+			result.correspondenceSearchTime.AddSample(core::TimeDifferenceMs(endCorrTime, startCorrTime));
 
 			// Get the target points to the buffer
 			for (index_t t = 0; t < N; t++)
@@ -128,8 +128,8 @@ namespace geo
 			// 2. ADMM solve (rigid + sparse split)
 			// ---------------------------
 
-			RigidTransform localTransform = RigidTransform::Identity();
-			TimePoint startSolveTime = Clock::now();
+			core::RigidTransform localTransform = core::RigidTransform::Identity();
+			core::TimePoint startSolveTime = core::Clock::now();
 
 			// ADMM loop
 			for (u32 admmIter = 0; admmIter < params.admmIterations; ++admmIter)
@@ -174,15 +174,15 @@ namespace geo
 				}
 			}
 
-			TimePoint endSolveTime = Clock::now();
-			result.alignmentSolveTime.AddSample(TimeDifferenceMs(endSolveTime, startSolveTime));
+			core::TimePoint endSolveTime = core::Clock::now();
+			result.alignmentSolveTime.AddSample(core::TimeDifferenceMs(endSolveTime, startSolveTime));
 
 			// ---------------------------
 			// 3. Apply transform
 			// ---------------------------
 
 			src.Transform(localTransform);
-			result.transform = RigidTransform::Compose(localTransform, result.transform);
+			result.transform = core::RigidTransform::Compose(localTransform, result.transform);
 
 
 			// ---------------------------
@@ -194,7 +194,7 @@ namespace geo
 			// 5. Convergence check
 			// ---------------------------
 			const f32 transNorm = glm::length(localTransform.translation);
-			const f32 rotAngle = RotationAngle(localTransform.rotation);
+			const f32 rotAngle = core::RotationAngle(localTransform.rotation);
 
 			const bool smallMotion = (transNorm < params.transTolerance) && (rotAngle < params.rotTolerance);
 			const bool smallErrorChange = std::abs(prevError - result.rmse) < params.tolerance;
@@ -202,11 +202,11 @@ namespace geo
 			prevError = result.rmse;
 			result.iterations = iter + 1;
 
-			TimePoint endTime = Clock::now();
-			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
+			core::TimePoint endTime = core::Clock::now();
+			result.totalIterationTime.AddSample(core::TimeDifferenceMs(endTime, startTime));
 
 			// VERBOSE iteration statistics.
-			GEOLOGVERBOSE(
+			LOGVERBOSE(
 				"[ICP] iter=" << (iter + 1)
 				<< " rmse=" << result.rmse
 				<< " dRMSE=" << (prevError - result.rmse)
@@ -216,12 +216,12 @@ namespace geo
 
 			if (smallMotion)
 			{
-				GEOLOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
+				LOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
 			}
 
 			if (smallErrorChange)
 			{
-				GEOLOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
+				LOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
 			}
 
 			// Stop once both geometric motion or error change are small.
@@ -232,10 +232,10 @@ namespace geo
 			}
 		}
 
-		TimePoint endTotal = Clock::now();
-		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
+		core::TimePoint endTotal = core::Clock::now();
+		result.totalTimeMs = core::TimeDifferenceMs(endTotal, startTotal);
 
-		GEOLOGINFO("SparseICP (PointToPoint) finished"
+		LOGINFO("SparseICP (PointToPoint) finished"
 			<< " | iterations=" << result.iterations
 			<< " | rmse=" << result.rmse
 			<< " | time_ms=" << result.totalTimeMs
@@ -263,23 +263,23 @@ namespace geo
 		// Point-to-plane ICP requires target normals.
 		assert(target.HasNormals());
 
-		GEOLOGINFO("SparseICP (PointToPlane) started");
+		LOGINFO("SparseICP (PointToPlane) started");
 
-		GEOLOGDEBUG("SparseICP (PointToPlane) Params |"
+		LOGDEBUG("SparseICP (PointToPlane) Params |"
 			<< " p=" << params.p
 			<< " mu=" << params.mu
 			<< " admmIters=" << params.admmIterations);
 
-		GEOLOGDEBUG("Target points: " << target.Size()
+		LOGDEBUG("Target points: " << target.Size()
 			<< " | Source points: " << source.Size()
 			<< " | Max iterations: " << params.maxIterations);
 
-		TimePoint startTotal = Clock::now();
+		core::TimePoint startTotal = core::Clock::now();
 
 		const index_t N = src.Size();
 
 		ICPResult result;
-		result.transform = RigidTransform::Identity();
+		result.transform = core::RigidTransform::Identity();
 
 		// Correspondence index buffer:
 		// correspondences[i] = nearest target point for source point i.
@@ -301,18 +301,18 @@ namespace geo
 		// Main ICP iteration loop.
 		for (u32 iter = 0; iter < params.maxIterations; ++iter)
 		{
-			TimePoint startTime = Clock::now();
+			core::TimePoint startTime = core::Clock::now();
 
 			// ---------------------------
 			// 1. Correspondence search
 			// ---------------------------
 
-			TimePoint startCorrTime = Clock::now();
+			core::TimePoint startCorrTime = core::Clock::now();
 
 			nn.QueryBatch(src.GetPoints(), correspondences);
 
-			TimePoint endCorrTime = Clock::now();
-			result.correspondenceSearchTime.AddSample(TimeDifferenceMs(endCorrTime, startCorrTime));
+			core::TimePoint endCorrTime = core::Clock::now();
+			result.correspondenceSearchTime.AddSample(core::TimeDifferenceMs(endCorrTime, startCorrTime));
 
 			// Get the target points to the buffer
 			for (index_t t = 0; t < N; t++)
@@ -326,8 +326,8 @@ namespace geo
 			// 2. ADMM solve (rigid + sparse split)
 			// ---------------------------
 
-			RigidTransform localTransform = RigidTransform::Identity();
-			TimePoint startSolveTime = Clock::now();
+			core::RigidTransform localTransform = core::RigidTransform::Identity();
+			core::TimePoint startSolveTime = core::Clock::now();
 
 			for (u32 admmIter = 0; admmIter < params.admmIterations; ++admmIter)
 			{
@@ -366,15 +366,15 @@ namespace geo
 				}
 			}
 
-			TimePoint endSolveTime = Clock::now();
-			result.alignmentSolveTime.AddSample(TimeDifferenceMs(endSolveTime, startSolveTime));
+			core::TimePoint endSolveTime = core::Clock::now();
+			result.alignmentSolveTime.AddSample(core::TimeDifferenceMs(endSolveTime, startSolveTime));
 
 			// ---------------------------
 			// 3. Apply transform
 			// ---------------------------
 
 			src.Transform(localTransform);
-			result.transform = RigidTransform::Compose(localTransform, result.transform);
+			result.transform = core::RigidTransform::Compose(localTransform, result.transform);
 
 			// ---------------------------
 			// 4. Error evaluation
@@ -387,7 +387,7 @@ namespace geo
 			// ---------------------------
 
 			const f32 transNorm = glm::length(localTransform.translation);
-			const f32 rotAngle = RotationAngle(localTransform.rotation);
+			const f32 rotAngle = core::RotationAngle(localTransform.rotation);
 
 			const bool smallMotion = (transNorm < params.transTolerance) && (rotAngle < params.rotTolerance);
 			const bool smallErrorChange = std::abs(prevError - result.rmse) < params.tolerance;
@@ -395,11 +395,11 @@ namespace geo
 			prevError = result.rmse;
 			result.iterations = iter + 1;
 
-			TimePoint endTime = Clock::now();
-			result.totalIterationTime.AddSample(TimeDifferenceMs(endTime, startTime));
+			core::TimePoint endTime = core::Clock::now();
+			result.totalIterationTime.AddSample(core::TimeDifferenceMs(endTime, startTime));
 
 			// VERBOSE iteration statistics.
-			GEOLOGVERBOSE(
+			LOGVERBOSE(
 				"[ICP] iter=" << (iter + 1)
 				<< " rmse=" << result.rmse
 				<< " dRMSE=" << (prevError - result.rmse)
@@ -409,12 +409,12 @@ namespace geo
 
 			if (smallMotion)
 			{
-				GEOLOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
+				LOGDEBUG("[ICP] small motion detected: trans=" << transNorm << " rot=" << rotAngle);
 			}
 
 			if (smallErrorChange)
 			{
-				GEOLOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
+				LOGDEBUG("[ICP] small error change detected: dRMSE=" << std::abs(prevError - result.rmse));
 			}
 
 			// Stop once both geometric motion or error change are small.
@@ -425,10 +425,10 @@ namespace geo
 			}
 		}
 
-		TimePoint endTotal = Clock::now();
-		result.totalTimeMs = TimeDifferenceMs(endTotal, startTotal);
+		core::TimePoint endTotal = core::Clock::now();
+		result.totalTimeMs = core::TimeDifferenceMs(endTotal, startTotal);
 
-		GEOLOGINFO("SparseICP (PointToPlane) finished"
+		LOGINFO("SparseICP (PointToPlane) finished"
 			<< " | iterations=" << result.iterations
 			<< " | rmse=" << result.rmse
 			<< " | time_ms=" << result.totalTimeMs
@@ -436,5 +436,4 @@ namespace geo
 
 		return result;
 	}
-
 }

@@ -1,8 +1,9 @@
+#include <core/io/IOUtils.h>
 #include "Model.h"
 
 namespace tests
 {
-    Model::Model(const std::string& n, geo::Mesh m, geo::u32 dfResolution)
+    Model::Model(const std::string& n, geo::Mesh m, u32 dfResolution)
         :
         name(n),
         mesh(std::move(m)),
@@ -27,9 +28,9 @@ namespace tests
     {
     }
 
-    Model CreateModelFromOBJ(const std::filesystem::path& filePath, geo::u32 dfResolution)
+    Model CreateModelFromOBJ(const std::filesystem::path& filePath, u32 dfResolution)
     {
-        std::string name = geo::io::GetFileName(filePath);
+        std::string name = core::io::GetFileName(filePath);
         geo::Mesh mesh = geo::Mesh::Load(filePath);
 
         return Model(name, std::move(mesh), dfResolution);

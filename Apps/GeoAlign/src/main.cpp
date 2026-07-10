@@ -8,7 +8,7 @@ struct Args
     std::string output;
 
     std::string method = "ESA";
-    geo::u32 maxIter = 100;
+    u32 maxIter = 100;
 
     bool verbose = false;
 };
@@ -27,13 +27,13 @@ static Args ParseArgs(int argc, char** argv)
                     out = argv[++i];
             };
 
-        auto nextInt = [&](geo::u32& out)
+        auto nextInt = [&](u32& out)
             {
                 if (i + 1 < argc)
                     out = std::stoi(argv[++i]);
             };
 
-        auto nextFloat = [&](geo::f32& out)
+        auto nextFloat = [&](f32& out)
             {
                 if (i + 1 < argc)
                     out = std::stof(argv[++i]);

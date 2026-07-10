@@ -1,9 +1,9 @@
 #include <cassert>
 #include <numeric>
 #include <random>
-#include <geo/logging/LogMacros.h>
-#include <geo/io/IOUtils.h>
-#include <geo/io/IOGeometry.h>
+#include <core/logging/Log.h>
+#include <core/io/IOUtils.h>
+#include <core/io/IOGeometry.h>
 #include "PointCloud3D.h"
 
 #pragma warning( disable : 6993)
@@ -26,7 +26,7 @@ namespace geo
 		RecalculateCentroid();
 		ReComputeBoundingBox();
 
-		GEOLOGINFO("PointCloud3D created | points=" << m_points.size()
+		LOGINFO("PointCloud3D created | points=" << m_points.size()
 			     << " normals=" << m_normals.size()
 			     << " hasNormals=" << (HasNormals() ? "yes" : "no"));
 	}
@@ -60,12 +60,12 @@ namespace geo
 		return m_centroid;
 	}
 
-	const BBox& PointCloud3D::BoundingBox() const
+	const core::BBox& PointCloud3D::BoundingBox() const
 	{
 		return m_boundingBox;
 	}
 
-	void PointCloud3D::Transform(const RigidTransform& transform)
+	void PointCloud3D::Transform(const core::RigidTransform& transform)
 	{
 		// handle empty point cloud case
 		if (m_points.empty())
@@ -123,7 +123,7 @@ namespace geo
 			maxP = glm::max(maxP, p);
 		}
 
-		m_boundingBox = BBox(minP, maxP);
+		m_boundingBox = core::BBox(minP, maxP);
 	}
 
 	void PointCloud3D::RecalculateCentroid()
@@ -151,7 +151,7 @@ namespace geo
 		assert(targetCount > 0);
 		assert(targetCount <= Size());
 
-		GEOLOGDEBUG("UniformSubsample | input=" << Size() << " output=" << targetCount << " seed=" << seed);
+		LOGDEBUG("UniformSubsample | input=" << Size() << " output=" << targetCount << " seed=" << seed);
 
 		std::mt19937 rng(seed);
 
@@ -175,20 +175,20 @@ namespace geo
 
 	void PointCloud3D::Save(const std::filesystem::path& path) const
 	{
-		GEOLOGINFO("Saving point cloud: " << path 
+		LOGINFO("Saving point cloud: " << path 
 			<< " | points=" << m_points.size() << " | normals=" << m_normals.size());
 
-		io::GeometryDumpData dump;
+		core::io::GeometryDumpData dump;
 		dump.filePath = path;
-		dump.fileType = io::GetFileType(path);
-		dump.geometryType = io::GeometryType::POINT_CLOUD;
+		dump.fileType = core::io::GetFileType(path);
+		dump.geometryType = core::io::GeometryType::POINT_CLOUD;
 
 		dump.positions = m_points;
 		dump.normals   = m_normals;
 
-		io::SaveGeometry(path, dump);
+		core::io::SaveGeometry(path, dump);
 
-		GEOLOGINFO("Point cloud saved successfully");
+		LOGINFO("Point cloud saved successfully");
 	}
 
 	struct Key
@@ -210,13 +210,13 @@ namespace geo
 
 	PointCloud3D PointCloud3D::Load(const std::filesystem::path& path)
 	{
-		GEOLOGINFO("Loading point cloud: " << path);
+		LOGINFO("Loading point cloud: " << path);
 
-		io::GeometryDumpData dump = io::LoadGeometry(path);
+		core::io::GeometryDumpData dump = core::io::LoadGeometry(path);
 
 		if (dump.positions.empty())
 		{
-			GEOLOGWARN("PointCloud3D::Load — no points in file: " << path);
+			LOGWARN("PointCloud3D::Load — no points in file: " << path);
 			return PointCloud3D{};
 		}
 
@@ -239,7 +239,7 @@ namespace geo
 		points.reserve(dump.indexBuffer.size() * 3);
 		normals.reserve(dump.indexBuffer.size() * 3);
 
-		for (const io::TriangleIndex& tri : dump.indexBuffer)
+		for (const core::io::TriangleIndex& tri : dump.indexBuffer)
 		{
 			for (int v = 0; v < 3; v++)
 			{

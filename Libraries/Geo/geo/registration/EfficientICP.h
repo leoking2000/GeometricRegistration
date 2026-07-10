@@ -22,7 +22,7 @@ namespace geo
 
     struct EfficientICPResult
     {
-        geo::RigidTransform transform;
+        core::RigidTransform transform;
         ICPResult icp_result;
         ESAResult esa_result;
 

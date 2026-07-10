@@ -1,10 +1,10 @@
 #pragma once
-#include <geo/GeoTypes.h>
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/compatibility.hpp>
+#include "Types.h"
 
-namespace geo
+namespace core
 {
 	// Axis-Aligned Bounding Box (AABB) in 3D space.
 	// Stores minimum/maximum corners along with derived properties

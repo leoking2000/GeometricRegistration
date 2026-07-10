@@ -9,7 +9,7 @@ namespace tests
     // fully prebuilt model, shared across tests
     struct Model
     {
-        Model(const std::string& n, geo::Mesh m, geo::u32 dfResolution);
+        Model(const std::string& n, geo::Mesh m, u32 dfResolution);
 
         // leaves mesh and sdf empty!
         Model(const std::string& n, geo::PointCloud3D cloud);
@@ -31,5 +31,5 @@ namespace tests
 
     // Loads an OBJ and builds all spatial structures.
     // This is the only place Model is constructed from a file.
-    Model CreateModelFromOBJ(const std::filesystem::path& filePath, geo::u32 dfResolution);
+    Model CreateModelFromOBJ(const std::filesystem::path& filePath, u32 dfResolution);
 }

@@ -1,6 +1,6 @@
 #pragma once
 #include <geo/geometry/PointCloud3D.h>
-#include <geo/utils/GeoRand.h>
+#include <core/utils/Rand.h>
 
 namespace geo
 {
@@ -19,5 +19,5 @@ namespace geo
 	//
 	// @return A PointCloud3D containing randomly distributed surface points (and optionally normals)
 	PointCloud3D GenerateRandomPointCloudRect(const glm::vec3& center, f32 width, f32 height, f32 depth, u32 pointCount,
-		Random& rng, bool haveNormals = true);
+		core::Random& rng, bool haveNormals = true);
 }

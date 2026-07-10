@@ -1,7 +1,7 @@
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include "Types.h"
 
-namespace geo
+namespace core
 {
     // Returns unit normal of triangle (a,b,c)
     // Right-hand rule: (b - a) x (c - a)

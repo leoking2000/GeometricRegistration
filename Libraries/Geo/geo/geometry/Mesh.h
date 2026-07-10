@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <geo/utils/GeoRand.h>
+#include <core/utils/Rand.h>
 #include "PointCloud3D.h"
 
 namespace geo
@@ -60,13 +60,13 @@ namespace geo
 		// Number of triangles in the mesh
 		inline index_t TriangleCount() const { return (index_t)m_triangles.size(); }
 		// Returns axis-aligned bounding box of the mesh
-		inline const BBox& BoundingBox() const { return m_bounding_box; }
+		inline const core::BBox& BoundingBox() const { return m_bounding_box; }
 		// Total surface area of the mesh (sum of triangle areas)
 		inline f64 SurfaceArea() const { return m_area; }
 	public:
 		// Uniformly samples n points over the surface of the mesh
 		// Optionally includes interpolated normals
-		PointCloud3D SamplePointsUniform(u32 n, Random& rng, bool includeNormals = false) const;
+		PointCloud3D SamplePointsUniform(u32 n, core::Random& rng, bool includeNormals = false) const;
 		// Converts mesh vertices (and normals) into a point cloud representation
 		PointCloud3D ToPointCloud() const { return PointCloud3D(m_vertices, m_normals); }
 		// Flattens mesh data into a triangle soup
@@ -76,7 +76,7 @@ namespace geo
 		// Note:
 		// - This operation mutates the internal data.
 		// - Any previously built spatial acceleration structures (e.g., KD-trees, DistanceField) become invalid.
-		void Transform(const RigidTransform& transform);
+		void Transform(const core::RigidTransform& transform);
 	public:
 		// Source filename associated with mesh
 		inline const std::string& FileName() const { return m_filename; }
@@ -103,14 +103,14 @@ namespace geo
 		// Computes total surface area of the mesh
 		void ComputeSurfaceArea();
 	protected:
-		std::string m_filename; // Source file name
+		std::string m_filename;                // Source file name
 	protected:
 		std::vector<glm::vec3> m_vertices;     // Vertex position buffer
 		std::vector<glm::vec3> m_normals;      // Vertex normal buffer
 		std::vector<TriangleData> m_triangles; // Triangle index buffer + cached geometric properties
 	protected:
-		BBox m_bounding_box; // Cached bounding box of the mesh
-		f64 m_area = 0.0; // Cached total surface area of the mesh
+		core::BBox m_bounding_box;             // Cached bounding box of the mesh
+		f64 m_area = 0.0;                      // Cached total surface area of the mesh
 	};
 
 }

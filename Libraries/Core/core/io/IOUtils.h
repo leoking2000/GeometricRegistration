@@ -2,7 +2,7 @@
 #include <string>
 #include <filesystem>
 
-namespace geo::io
+namespace core::io
 {
 	std::string ReadFile(const std::filesystem::path& filePath);
 

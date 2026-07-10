@@ -1,11 +1,10 @@
-#include <geo/Logging/LogMacros.h>
 #include <algorithm>
 #include <limits>
 #include <sstream>
 #include <iomanip>
-#include "GeoTime.h"
+#include "Time.h"
 
-namespace geo
+namespace core
 {
     // Converts a time interval (end - start) into seconds.
     // Uses floating-point duration for sub-second precision.
@@ -104,7 +103,7 @@ namespace geo
 
         if (!m_name.empty() && m_logLevel != LogLevel::LOG_NONE)
         {
-            GEOLOGLEVEL(m_logLevel, m_name << " took " << elapsedMs << " ms");
+            LOGLEVEL(m_logLevel, m_name << " took " << elapsedMs << " ms");
         }
     }
 

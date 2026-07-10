@@ -36,7 +36,7 @@ namespace tests
 	{
 		std::string methodName = "ESA+SparseICP PointToPlane (p=" + std::to_string(params.icpParams.p) + ")";
 
-		geo::u32 targetCount = (geo::u32)glm::ceil(glm::min(2000.0f, 0.05f * test.source->cloud.Size()));
+		u32 targetCount = (u32)glm::ceil(glm::min(2000.0f, 0.05f * test.source->cloud.Size()));
 
 		geo::EfficientICPResult result = 
 			geo::EfficientICP(test.target->cloud, test.source->cloud, 
@@ -56,7 +56,7 @@ namespace tests
 	// so they scale with object size automatically.
 	// ============================================================
 
-	static inline const char* RotationLabel(geo::f32 degrees)
+	static inline const char* RotationLabel(f32 degrees)
 	{
 		if (degrees < 1.0f)  return "EXCELLENT";
 		if (degrees < 5.0f)  return "GOOD";
@@ -64,7 +64,7 @@ namespace tests
 		return "POOR";
 	}
 
-	static inline const char* TranslationLabel(geo::f32 percentOfDiagonal)
+	static inline const char* TranslationLabel(f32 percentOfDiagonal)
 	{
 		if (percentOfDiagonal < 0.1f) return "EXCELLENT";
 		if (percentOfDiagonal < 0.5f) return "GOOD";
@@ -144,17 +144,17 @@ namespace tests
 		// Translation error: Euclidean distance, also expressed as % of mesh
 		// diagonal so it's meaningful regardless of object scale.
 		// --------------------------------------------------------
-		geo::f32 rotErr, transErr;
-		geo::Distance(result.transform, result.testCase.groundTruth, rotErr, transErr);
-		const geo::f32 rotErrDeg = glm::degrees(rotErr);
+		f32 rotErr, transErr;
+		core::Distance(result.transform, result.testCase.groundTruth, rotErr, transErr);
+		const f32 rotErrDeg = glm::degrees(rotErr);
 
 		// Diagonal for scale-relative translation error
-		geo::f32 diagonal = 0.0f;
-		geo::f32 transErrPct = 0.0f;
+		f32 diagonal = 0.0f;
+		f32 transErrPct = 0.0f;
 		const bool hasMesh = result.testCase.target && result.testCase.target->mesh.TriangleCount() > 0;
 		if (hasMesh)
 		{
-			const geo::BBox& bb = result.testCase.target->mesh.BoundingBox();
+			const core::BBox& bb = result.testCase.target->mesh.BoundingBox();
 			diagonal = glm::length(bb.Max() - bb.Min());
 			transErrPct = (diagonal > 0.0f) ? (transErr / diagonal) * 100.0f : 0.0f;
 		}
@@ -222,18 +222,18 @@ namespace tests
 
 		TestCase tc = r1.testCase; // both TestResult should have the same test case!!!
 
-		geo::f32 rot1, trans1, rot2, trans2;
-		geo::Distance(r1.icp_result.transform, tc.groundTruth, rot1, trans1);
-		geo::Distance(r2.icp_result.transform, tc.groundTruth, rot2, trans2);
+		f32 rot1, trans1, rot2, trans2;
+		core::Distance(r1.icp_result.transform, tc.groundTruth, rot1, trans1);
+		core::Distance(r2.icp_result.transform, tc.groundTruth, rot2, trans2);
 
-		const geo::f32 rot1Deg = glm::degrees(rot1);
-		const geo::f32 rot2Deg = glm::degrees(rot2);
+		const f32 rot1Deg = glm::degrees(rot1);
+		const f32 rot2Deg = glm::degrees(rot2);
 
 		const bool hasMesh = tc.target && tc.target->mesh.TriangleCount() > 0;
-		geo::f32 diagonal = 0.0f;
+		f32 diagonal = 0.0f;
 		if (hasMesh)
 		{
-			const geo::BBox& bb = tc.target->mesh.BoundingBox();
+			const core::BBox& bb = tc.target->mesh.BoundingBox();
 			diagonal = glm::length(bb.Max() - bb.Min());
 		}
 
@@ -266,8 +266,9 @@ namespace tests
 		// Translation error
 		if (hasMesh && diagonal > 0.0f)
 		{
-			geo::f32 t1Pct = (trans1 / diagonal) * 100.0f;
-			geo::f32 t2Pct = (trans2 / diagonal) * 100.0f;
+			f32 t1Pct = (trans1 / diagonal) * 100.0f;
+			f32 t2Pct = (trans2 / diagonal) * 100.0f;
+
 			std::cout << std::setw(20) << std::left << "  Trans (% diag)"
 				<< std::setprecision(3)
 				<< std::setw(18) << std::left << t1Pct

@@ -3,8 +3,8 @@
 #include <execution>
 #include <nanoflann.hpp>
 #include <glm/common.hpp>
-#include <geo/logging/LogMacros.h>
-#include <geo/utils/GeoTime.h>
+#include <core/logging/Log.h>
+#include <core/utils/Time.h>
 #include "KDTree.h"
 
 
@@ -44,11 +44,11 @@ namespace geo
             adaptor(points), 
             index(3, adaptor, KDTreeSingleIndexAdaptorParams(10))
         {
-            GEOLOGVERBOSE("KDTree build started | points: " << points.size());
+            LOGVERBOSE("KDTree build started | points: " << points.size());
 
             index.buildIndex();
 
-            GEOLOGVERBOSE("KDTree build finished");
+            LOGVERBOSE("KDTree build finished");
         }
     };
 
@@ -58,11 +58,11 @@ namespace geo
     {
         assert(!points.empty());
 
-        TimePoint start = Clock::now();
+        core::TimePoint start = core::Clock::now();
         m_data = std::make_unique<KDTreeData>(points);
 
-        GEOLOGINFO("KDTree initialized | points: " << points.size() 
-            << " | Build time: " << TimeDifferenceMs(Clock::now(), start) << "ms");
+        LOGINFO("KDTree initialized | points: " << points.size() 
+            << " | Build time: " << core::TimeDifferenceMs(core::Clock::now(), start) << "ms");
     }
 
     KDTree::KDTree(KDTree&&) noexcept = default;
@@ -73,11 +73,11 @@ namespace geo
     {
         assert(!m_data->points_array.empty());
 
-        TimePoint start = Clock::now();
+        core::TimePoint start = core::Clock::now();
         m_data->index.buildIndex();
 
-        GEOLOGINFO("KDTree Rebuild | points: " << m_data->points_array.size()
-            << " | Build time: " << TimeDifferenceMs(Clock::now(), start) << "ms");
+        LOGINFO("KDTree Rebuild | points: " << m_data->points_array.size()
+            << " | Build time: " << core::TimeDifferenceMs(core::Clock::now(), start) << "ms");
     }
 
     index_t KDTree::Query(const glm::vec3& point) const
@@ -98,7 +98,7 @@ namespace geo
 
     void KDTree::QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const
     {
-        TimePoint start = Clock::now();
+        core::TimePoint start = core::Clock::now();
 
         if (results.size() != points.size())
         {
@@ -107,7 +107,7 @@ namespace geo
 
         assert(!m_data->points_array.empty());
 
-        GEOLOGVERBOSE("KDTree batch query | input points: " << points.size());
+        LOGVERBOSE("KDTree batch query | input points: " << points.size());
 
 #ifdef KDTREE_PARALLEL_BATCH
         std::for_each(std::execution::par, results.begin(), results.end(),
@@ -127,11 +127,11 @@ namespace geo
                 results[i] = (index_t)idx;
             });
 
-        GEOLOGVERBOSE("KDTree PARALLEL batch query done in " << TimeDifferenceMs(Clock::now(), start) << "ms");
+        LOGVERBOSE("KDTree PARALLEL batch query done in " << core::TimeDifferenceMs(core::Clock::now(), start) << "ms");
 #else
         for (size_t i = 0; i < points.size(); i++) { results[i] = Query(points[i]); }
 
-        GEOLOGVERBOSE("KDTree LINEAR batch query done in " << TimeDifferenceMs(Clock::now(), start) << "ms");
+        LOGVERBOSE("KDTree LINEAR batch query done in " << core::TimeDifferenceMs(core::Clock::now(), start) << "ms");
 #endif // PARALLEL
     }
 

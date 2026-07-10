@@ -10,19 +10,19 @@ namespace tests
         Model* target = nullptr;
         Model* source = nullptr;
 
-        geo::RigidTransform groundTruth; // moves source to target
+        core::RigidTransform groundTruth; // moves source to target
 
         // metadata about this test case.
-        geo::f32 sampleRatio  = -1.0f;
-        geo::f32 overlapRatio = 1.0f;
-        geo::f32 outlierRatio = 0.0f;
-        geo::f32 noiseStdDev  = 0.0f;
+        f32 sampleRatio  = -1.0f;
+        f32 overlapRatio = 1.0f;
+        f32 outlierRatio = 0.0f;
+        f32 noiseStdDev  = 0.0f;
     };
 
     struct TestResult
     {
         TestCase testCase;
-        geo::RigidTransform transform;
+        core::RigidTransform transform;
 
         std::string methodName;
 

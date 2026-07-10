@@ -41,8 +41,8 @@ static inline void ExpectVec3Near(
 
 TEST(GeoRand, SameSeedProducesSameIntSequence)
 {
-    geo::Random a(12345u);
-    geo::Random b(12345u);
+    core::Random a(12345u);
+    core::Random b(12345u);
 
     for (int i = 0; i < 100; ++i)
         EXPECT_EQ(a.Int(-50, 50), b.Int(-50, 50));
@@ -50,8 +50,8 @@ TEST(GeoRand, SameSeedProducesSameIntSequence)
 
 TEST(GeoRand, SameSeedProducesSameFloatSequence)
 {
-    geo::Random a(12345u);
-    geo::Random b(12345u);
+    core::Random a(12345u);
+    core::Random b(12345u);
 
     for (int i = 0; i < 100; ++i)
         EXPECT_FLOAT_EQ(a.Float(-2.0f, 3.0f), b.Float(-2.0f, 3.0f));
@@ -59,9 +59,9 @@ TEST(GeoRand, SameSeedProducesSameFloatSequence)
 
 TEST(GeoRand, SetSeedResetsSequence)
 {
-    geo::Random rng(2026u);
+    core::Random rng(2026u);
 
-    const geo::i32 first = rng.Int(0, 1000);
+    const i32 first = rng.Int(0, 1000);
     rng.Int(0, 1000);
     rng.Int(0, 1000);
 
@@ -71,11 +71,11 @@ TEST(GeoRand, SetSeedResetsSequence)
 
 TEST(GeoRand, IntStaysWithinInclusiveBounds)
 {
-    geo::Random rng(9999u);
+    core::Random rng(9999u);
 
     for (int i = 0; i < 1000; ++i)
     {
-        const geo::i32 v = rng.Int(-3, 5);
+        const i32 v = rng.Int(-3, 5);
         EXPECT_GE(v, -3);
         EXPECT_LE(v, 5);
     }
@@ -83,11 +83,11 @@ TEST(GeoRand, IntStaysWithinInclusiveBounds)
 
 TEST(GeoRand, UIntStaysWithinInclusiveBounds)
 {
-    geo::Random rng(8888u);
+    core::Random rng(8888u);
 
     for (int i = 0; i < 1000; ++i)
     {
-        const geo::u32 v = rng.UInt(2u, 9u);
+        const u32 v = rng.UInt(2u, 9u);
         EXPECT_GE(v, 2u);
         EXPECT_LE(v, 9u);
     }
@@ -95,11 +95,11 @@ TEST(GeoRand, UIntStaysWithinInclusiveBounds)
 
 TEST(GeoRand, FloatStaysWithinRange)
 {
-    geo::Random rng(7777u);
+    core::Random rng(7777u);
 
     for (int i = 0; i < 1000; ++i)
     {
-        const geo::f32 v = rng.Float(-1.5f, 2.5f);
+        const f32 v = rng.Float(-1.5f, 2.5f);
         EXPECT_GE(v, -1.5f);
         EXPECT_LT(v, 2.5f);
     }
@@ -107,7 +107,7 @@ TEST(GeoRand, FloatStaysWithinRange)
 
 TEST(GeoRand, FloatReturnsExactValueForDegenerateRange)
 {
-    geo::Random rng(6666u);
+    core::Random rng(6666u);
 
     for (int i = 0; i < 100; ++i)
         EXPECT_FLOAT_EQ(rng.Float(3.25f, 3.25f), 3.25f);
@@ -115,7 +115,7 @@ TEST(GeoRand, FloatReturnsExactValueForDegenerateRange)
 
 TEST(GeoRand, Float2ComponentsStayWithinRange)
 {
-    geo::Random rng(5555u);
+    core::Random rng(5555u);
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -129,7 +129,7 @@ TEST(GeoRand, Float2ComponentsStayWithinRange)
 
 TEST(GeoRand, Float3ComponentsStayWithinRange)
 {
-    geo::Random rng(4444u);
+    core::Random rng(4444u);
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -145,7 +145,7 @@ TEST(GeoRand, Float3ComponentsStayWithinRange)
 
 TEST(GeoRand, Dir2DHasRequestedLength)
 {
-    geo::Random rng(3333u);
+    core::Random rng(3333u);
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -156,7 +156,7 @@ TEST(GeoRand, Dir2DHasRequestedLength)
 
 TEST(GeoRand, Dir3DHasRequestedLength)
 {
-    geo::Random rng(2222u);
+    core::Random rng(2222u);
 
     for (int i = 0; i < 1000; ++i)
     {
@@ -167,7 +167,7 @@ TEST(GeoRand, Dir3DHasRequestedLength)
 
 TEST(GeoRand, ZeroLengthDirectionsReturnZeroVector)
 {
-    geo::Random rng(2026u);
+    core::Random rng(2026u);
 
     EXPECT_EQ(rng.Dir2D(0.0f), glm::vec2(0.0f));
     EXPECT_EQ(rng.Dir3D(0.0f), glm::vec3(0.0f));
@@ -177,17 +177,17 @@ TEST(GeoRand, ZeroLengthDirectionsReturnZeroVector)
 
 TEST(GeoTime, TimeDifferenceMsReturnsPositiveDuration)
 {
-    const geo::TimePoint start = geo::Clock::now();
-    const geo::TimePoint end = start + std::chrono::milliseconds(5);
+    const core::TimePoint start = core::Clock::now();
+    const core::TimePoint end = start + std::chrono::milliseconds(5);
 
-    const geo::f64 dt = geo::TimeDifferenceMs(end, start);
+    const f64 dt = core::TimeDifferenceMs(end, start);
 
     EXPECT_NEAR(dt, 5.0, 1e-6);
 }
 
 TEST(GeoTime, TimingStatIsEmptyInitially)
 {
-    geo::TimingStat stat;
+    core::TimingStat stat;
 
     EXPECT_TRUE(stat.IsEmpty());
     EXPECT_EQ(stat.Count(), 0u);
@@ -197,7 +197,7 @@ TEST(GeoTime, TimingStatIsEmptyInitially)
 
 TEST(GeoTime, TimingStatAddSampleUpdatesTotals)
 {
-    geo::TimingStat stat;
+    core::TimingStat stat;
 
     stat.AddSample(10.0);
     stat.AddSample(20.0);
@@ -210,7 +210,7 @@ TEST(GeoTime, TimingStatAddSampleUpdatesTotals)
 
 TEST(GeoTime, TimingStatClampsNegativeSampleToZero)
 {
-    geo::TimingStat stat;
+    core::TimingStat stat;
 
     stat.AddSample(-5.0);
 
@@ -221,17 +221,17 @@ TEST(GeoTime, TimingStatClampsNegativeSampleToZero)
 
 TEST(GeoTime, TimingStatToStringForEmptyStat)
 {
-    geo::TimingStat stat;
+    core::TimingStat stat;
 
     EXPECT_EQ(stat.ToString(), "count=0 total=0ms avg=0ms");
 }
 
 TEST(GeoTime, ScopedTimerAddsSampleOnDestruction)
 {
-    geo::TimingStat stat;
+    core::TimingStat stat;
 
     {
-        geo::ScopedTimer timer(&stat);
+        core::ScopedTimer timer(&stat);
         std::this_thread::sleep_for(std::chrono::milliseconds(2));
     }
 
@@ -241,7 +241,7 @@ TEST(GeoTime, ScopedTimerAddsSampleOnDestruction)
 
 TEST(GeoTime, StopwatchIsNotRunningInitially)
 {
-    geo::Stopwatch sw;
+    core::Stopwatch sw;
 
     EXPECT_FALSE(sw.IsRunning());
     EXPECT_DOUBLE_EQ(sw.ElapsedMs(), 0.0);
@@ -250,14 +250,14 @@ TEST(GeoTime, StopwatchIsNotRunningInitially)
 
 TEST(GeoTime, StopwatchStartAndStopWorks)
 {
-    geo::Stopwatch sw;
+    core::Stopwatch sw;
 
     sw.Start();
     EXPECT_TRUE(sw.IsRunning());
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
 
-    const geo::f64 elapsed = sw.StopMs();
+    const f64 elapsed = sw.StopMs();
 
     EXPECT_FALSE(sw.IsRunning());
     EXPECT_GE(elapsed, 0.0);
@@ -266,9 +266,9 @@ TEST(GeoTime, StopwatchStartAndStopWorks)
 
 TEST(GeoTime, StopwatchRestartStartsWhenStopped)
 {
-    geo::Stopwatch sw;
+    core::Stopwatch sw;
 
-    const geo::f64 elapsed = sw.RestartMs();
+    const f64 elapsed = sw.RestartMs();
 
     EXPECT_DOUBLE_EQ(elapsed, 0.0);
     EXPECT_TRUE(sw.IsRunning());
@@ -276,11 +276,11 @@ TEST(GeoTime, StopwatchRestartStartsWhenStopped)
 
 TEST(GeoTime, StopwatchRestartReturnsElapsedWhenRunning)
 {
-    geo::Stopwatch sw;
+    core::Stopwatch sw;
     sw.Start();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    const geo::f64 elapsed = sw.RestartMs();
+    const f64 elapsed = sw.RestartMs();
 
     EXPECT_TRUE(sw.IsRunning());
     EXPECT_GE(elapsed, 0.0);
@@ -288,11 +288,11 @@ TEST(GeoTime, StopwatchRestartReturnsElapsedWhenRunning)
 
 TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
 {
-    geo::Stopwatch sw;
+    core::Stopwatch sw;
     sw.Start();
 
     std::this_thread::sleep_for(std::chrono::milliseconds(2));
-    const geo::f64 elapsed = sw.ElapsedMs();
+    const f64 elapsed = sw.ElapsedMs();
 
     EXPECT_TRUE(sw.IsRunning());
     EXPECT_GE(elapsed, 0.0);
@@ -300,17 +300,15 @@ TEST(GeoTime, StopwatchElapsedIsNonNegativeWhileRunning)
 
 // BBoxTests
 
-using namespace geo;
-
 TEST(BBoxTests, DefaultIsInvalid)
 {
-    geo::BBox box;
+    core::BBox box;
     EXPECT_FALSE(box.IsValid());
 }
 
 TEST(BBoxTests, SetAndAccessors)
 {
-    BBox box({ 0,0,0 }, { 2,4,6 });
+    core::BBox box({ 0,0,0 }, { 2,4,6 });
 
     EXPECT_TRUE(box.IsValid());
     EXPECT_EQ(box.Min(), glm::vec3(0, 0, 0));
@@ -322,7 +320,7 @@ TEST(BBoxTests, SetAndAccessors)
 
 TEST(BBoxTests, SetSymmetrical)
 {
-    geo::BBox box;
+    core::BBox box;
     box.SetSymmetrical({ 1,1,1 }, { 2,2,2 });
 
     EXPECT_EQ(box.Min(), glm::vec3(0, 0, 0));
@@ -331,7 +329,7 @@ TEST(BBoxTests, SetSymmetrical)
 
 TEST(BBoxTests, ExpandByPoint)
 {
-    geo::BBox box;
+    core::BBox box;
     box.MakeEmpty();
 
     box.ExpandBy({ 1,2,3 });
@@ -345,8 +343,8 @@ TEST(BBoxTests, ExpandByPoint)
 
 TEST(BBoxTests, ExpandByBox)
 {
-    geo::BBox a({ 0,0,0 }, { 1,1,1 });
-    geo::BBox b({ -2,0,0 }, { 0,2,2 });
+    core::BBox a({ 0,0,0 }, { 1,1,1 });
+    core::BBox b({ -2,0,0 }, { 0,2,2 });
 
     a.ExpandBy(b);
 
@@ -356,7 +354,7 @@ TEST(BBoxTests, ExpandByBox)
 
 TEST(BBoxTests, Contains)
 {
-    geo::BBox box({ 0,0,0 }, { 1,1,1 });
+    core::BBox box({ 0,0,0 }, { 1,1,1 });
 
     EXPECT_TRUE(box.Contains({ 0.5f,0.5f,0.5f }));
     EXPECT_TRUE(box.Contains({ 0,0,0 }));
@@ -368,7 +366,7 @@ TEST(BBoxTests, Contains)
 
 TEST(BBoxTests, Corner)
 {
-    geo::BBox box({ 0,0,0 }, { 1,2,3 });
+    core::BBox box({ 0,0,0 }, { 1,2,3 });
 
     EXPECT_EQ(box.Corner(0), glm::vec3(0, 0, 0));
     EXPECT_EQ(box.Corner(1), glm::vec3(1, 0, 0));
@@ -379,13 +377,13 @@ TEST(BBoxTests, Corner)
 
 TEST(BBoxTests, Radius)
 {
-    geo::BBox box({ -1,-1,-1 }, { 1,1,1 });
+    core::BBox box({ -1,-1,-1 }, { 1,1,1 });
     EXPECT_NEAR(box.Radius(), std::sqrt(3.0f), 1e-6f);
 }
 
 TEST(BBoxTests, ExpandByFactor)
 {
-    geo::BBox box(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
+    core::BBox box(glm::vec3(0, 0, 0), glm::vec3(10, 10, 10));
 
     box.ExpandByFactor(0.1f); // 10%
 
@@ -397,7 +395,7 @@ TEST(BBoxTests, ExpandByFactor)
 
 TEST(BBoxTests, ExpandByAbsolute)
 {
-    geo::BBox box(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
+    core::BBox box(glm::vec3(0, 0, 0), glm::vec3(1, 1, 1));
 
     box.ExpandByAbsolute(2.0f);
 
@@ -407,7 +405,7 @@ TEST(BBoxTests, ExpandByAbsolute)
 
 TEST(BBoxTests, ExpandInvalidDoesNothing)
 {
-    geo::BBox box;
+    core::BBox box;
     box.MakeEmpty();
 
     box.ExpandByFactor(0.1f);
@@ -422,7 +420,7 @@ TEST(RMSETests, PointToPointRMSEReturnsF32MaxForEmptyInput)
     const std::vector<glm::vec3> source;
     const std::vector<glm::vec3> target;
 
-    EXPECT_EQ(geo::PointToPointRMSE(source, target), geo::F32_MAX);
+    EXPECT_EQ(geo::PointToPointRMSE(source, target), F32_MAX);
 }
 
 TEST(RMSETests, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
@@ -431,7 +429,7 @@ TEST(RMSETests, PointToPlaneRMSEReturnsF32MaxForEmptyInput)
     const std::vector<glm::vec3> target;
     const std::vector<glm::vec3> normals;
 
-    EXPECT_EQ(geo::PointToPlaneRMSE(source, target, normals), geo::F32_MAX);
+    EXPECT_EQ(geo::PointToPlaneRMSE(source, target, normals), F32_MAX);
 }
 
 TEST(RMSETests, PointToPointRMSEIsZeroForIdenticalInputs)
@@ -601,7 +599,7 @@ TEST(RMSETests, EmptyInputReturnsMax)
 {
     std::vector<glm::vec3> a, b, n;
 
-    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
+    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), F32_MAX);
 }
 
 TEST(RMSETests, MismatchedSizesReturnMax)
@@ -610,14 +608,14 @@ TEST(RMSETests, MismatchedSizesReturnMax)
     std::vector<glm::vec3> b = { {1,2,3}, {4,5,6} };
     std::vector<glm::vec3> n = { {0,0,1} };
 
-    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), geo::F32_MAX);
+    EXPECT_EQ(geo::PointToPlaneRMSE(a, b, n), F32_MAX);
 }
 
 // RigidTransformTests
 
 static inline bool RigidTransformNearlyEqual(
-    const RigidTransform& A,
-    const RigidTransform& B,
+    const core::RigidTransform& A,
+    const core::RigidTransform& B,
     f32 eps = 1e-5f)
 {
     for (int c = 0; c < 3; ++c)
@@ -668,7 +666,7 @@ glm::mat3 RotationX(float radians)
 
 TEST(RigidTransformTests, IdentityTransformPointReturnsSamePoint)
 {
-    const geo::RigidTransform T = geo::RigidTransform::Identity();
+    const core::RigidTransform T = core::RigidTransform::Identity();
     const glm::vec3 p(1.5f, -2.0f, 3.25f);
 
     const glm::vec3 result = T.TransformPoint(p);
@@ -678,7 +676,7 @@ TEST(RigidTransformTests, IdentityTransformPointReturnsSamePoint)
 
 TEST(RigidTransformTests, IdentityTransformNormalReturnsSameNormal)
 {
-    const geo::RigidTransform T = geo::RigidTransform::Identity();
+    const core::RigidTransform T = core::RigidTransform::Identity();
     const glm::vec3 n(0.0f, 1.0f, 0.0f);
 
     const glm::vec3 result = T.TransformNormal(n);
@@ -688,7 +686,7 @@ TEST(RigidTransformTests, IdentityTransformNormalReturnsSameNormal)
 
 TEST(RigidTransformTests, TransformPointAppliesRotationAndTranslation)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = RotationZ(glm::half_pi<float>());
     T.translation = glm::vec3(10.0f, 0.0f, 5.0f);
 
@@ -702,7 +700,7 @@ TEST(RigidTransformTests, TransformPointAppliesRotationAndTranslation)
 
 TEST(RigidTransformTests, TransformNormalAppliesRotationOnly)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = RotationZ(glm::half_pi<float>());
     T.translation = glm::vec3(100.0f, 200.0f, 300.0f);
 
@@ -716,7 +714,7 @@ TEST(RigidTransformTests, TransformNormalAppliesRotationOnly)
 
 TEST(RigidTransformTests, InverseUndoesPointTransform)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = RotationZ(0.7f);
     T.translation = glm::vec3(3.0f, -2.0f, 4.0f);
 
@@ -730,7 +728,7 @@ TEST(RigidTransformTests, InverseUndoesPointTransform)
 
 TEST(RigidTransformTests, InverseUndoesNormalTransform)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = RotationX(0.35f);
     T.translation = glm::vec3(7.0f, 8.0f, 9.0f);
 
@@ -744,15 +742,15 @@ TEST(RigidTransformTests, InverseUndoesNormalTransform)
 
 TEST(RigidTransformTests, ComposeMatchesSequentialApplication)
 {
-    geo::RigidTransform A;
+    core::RigidTransform A;
     A.rotation = RotationZ(0.5f);
     A.translation = glm::vec3(1.0f, 2.0f, 3.0f);
 
-    geo::RigidTransform B;
+    core::RigidTransform B;
     B.rotation = RotationX(-0.25f);
     B.translation = glm::vec3(-4.0f, 0.5f, 2.0f);
 
-    const geo::RigidTransform C = geo::RigidTransform::Compose(A, B);
+    const core::RigidTransform C = core::RigidTransform::Compose(A, B);
 
     const glm::vec3 p(2.0f, -1.0f, 0.25f);
 
@@ -764,8 +762,8 @@ TEST(RigidTransformTests, ComposeMatchesSequentialApplication)
 
 TEST(RigidTransformTests, InverseOfIdentityIsIdentity)
 {
-    const geo::RigidTransform I = geo::RigidTransform::Identity();
-    const geo::RigidTransform inv = I.ComputeInverse();
+    const core::RigidTransform I = core::RigidTransform::Identity();
+    const core::RigidTransform inv = I.ComputeInverse();
 
     ExpectMat3Near(inv.rotation, glm::mat3(1.0f));
     ExpectVec3Near(inv.translation, glm::vec3(0.0f));
@@ -773,7 +771,7 @@ TEST(RigidTransformTests, InverseOfIdentityIsIdentity)
 
 TEST(RigidTransformTests, ToMat4MatchesPointTransform)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = RotationZ(glm::half_pi<float>());
     T.translation = glm::vec3(2.0f, 3.0f, 4.0f);
 
@@ -790,7 +788,7 @@ TEST(RigidTransformTests, ToMat4MatchesPointTransform)
 
 TEST(RigidTransformTests, IdentityDoesNotChangePoint)
 {
-    geo::RigidTransform I = geo::RigidTransform::Identity();
+    core::RigidTransform I = core::RigidTransform::Identity();
 
     glm::vec3 p(1.0f, 2.0f, 3.0f);
     EXPECT_EQ(I.TransformPoint(p), p);
@@ -798,7 +796,7 @@ TEST(RigidTransformTests, IdentityDoesNotChangePoint)
 
 TEST(RigidTransformTests, InverseCancelsTransform)
 {
-    geo::RigidTransform T;
+    core::RigidTransform T;
     T.rotation = glm::mat3(1.0f);
     T.translation = glm::vec3(1.0f, 2.0f, 3.0f);
 
@@ -809,19 +807,19 @@ TEST(RigidTransformTests, InverseCancelsTransform)
     glm::vec3 p2 = inv.TransformPoint(q);
 
     EXPECT_TRUE(RigidTransformNearlyEqual(
-        geo::RigidTransform{ glm::mat3(1.0f), p },
-        geo::RigidTransform{ glm::mat3(1.0f), p2 }
+        core::RigidTransform{ glm::mat3(1.0f), p },
+        core::RigidTransform{ glm::mat3(1.0f), p2 }
     ));
 }
 
 TEST(RigidTransformTests, CompositionIsConsistent)
 {
-    geo::RigidTransform A, B;
+    core::RigidTransform A, B;
 
     A.translation = glm::vec3(1, 0, 0);
     B.translation = glm::vec3(0, 1, 0);
 
-    auto C = geo::RigidTransform::Compose(A, B);
+    auto C = core::RigidTransform::Compose(A, B);
 
     glm::vec3 p(1, 1, 1);
     glm::vec3 direct = A.TransformPoint(B.TransformPoint(p));
@@ -1072,7 +1070,7 @@ TEST(SolveRigidPointToPlaneShiftedTest, ZeroOffsetsMatchesOriginal)
         {0,0,1}, {0,0,1}, {0,0,1}
     };
 
-    std::vector<geo::f32> offsets(src.size(), 0.0f);
+    std::vector<f32> offsets(src.size(), 0.0f);
 
     auto T1 = geo::SolveRigidPointToPlane(src, trg, normals);
     auto T2 = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
@@ -1095,7 +1093,7 @@ TEST(SolveRigidPointToPlaneShiftedTest, OffsetMovesAlongNormal)
         {0,0,1}, {0,0,1}, {0,0,1}
     };
 
-    std::vector<geo::f32> offsets(src.size(), 1.0f);
+    std::vector<f32> offsets(src.size(), 1.0f);
 
     auto T = geo::SolveRigidPointToPlaneShifted(src, trg, normals, offsets);
 
@@ -1113,7 +1111,7 @@ TEST(SolveRigidPointToPlaneShiftedTest, ZeroSystem)
         {0,0,1}, {0,0,1}, {0,0,1}
     };
 
-    std::vector<geo::f32> offsets(pts.size(), 0.0f);
+    std::vector<f32> offsets(pts.size(), 0.0f);
 
     auto T = geo::SolveRigidPointToPlaneShifted(pts, pts, normals, offsets);
 
@@ -1211,7 +1209,7 @@ TEST(PointCloudTest, ComputeBoundingBox_Simple)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.BoundingBox();
+    core::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(-1, 0, 0));
     ExpectVec3Near(box.Max(), glm::vec3(1, 5, 3));
@@ -1224,7 +1222,7 @@ TEST(PointCloudTest, ComputeBoundingBox_SinglePoint)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.BoundingBox();
+    core::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(2, 3, 4));
     ExpectVec3Near(box.Max(), glm::vec3(2, 3, 4));
@@ -1240,7 +1238,7 @@ TEST(PointCloudTest, ComputeBoundingBox_NegativeCoordinates)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.BoundingBox();
+    core::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Min(), glm::vec3(-5, -3, -6));
     ExpectVec3Near(box.Max(), glm::vec3(-1, -1, -1));
@@ -1259,8 +1257,8 @@ TEST(PointCloudTest, ComputeBoundingBox_OrderIndependence)
     geo::PointCloud3D pc1(pts1);
     geo::PointCloud3D pc2(pts2);
 
-    geo::BBox b1 = pc1.BoundingBox();
-    geo::BBox b2 = pc2.BoundingBox();
+    core::BBox b1 = pc1.BoundingBox();
+    core::BBox b2 = pc2.BoundingBox();
 
     ExpectVec3Near(b1.Min(), b2.Min());
     ExpectVec3Near(b1.Max(), b2.Max());
@@ -1274,7 +1272,7 @@ TEST(PointCloudTest, ComputeBoundingBox_CenterAndSize)
     };
 
     geo::PointCloud3D pc(pts);
-    geo::BBox box = pc.BoundingBox();
+    core::BBox box = pc.BoundingBox();
 
     ExpectVec3Near(box.Center(), glm::vec3(0, 0, 0));
     ExpectVec3Near(box.Size(), glm::vec3(2, 2, 2));
@@ -1372,7 +1370,7 @@ TEST(MeshTest, SurfaceAreaConsistency)
 
     geo::Mesh mesh("area", points, triangles, {});
 
-    geo::f64 area = mesh.SurfaceArea();
+    f64 area = mesh.SurfaceArea();
 
     EXPECT_NEAR(area, 0.5f, 1e-6f);
 }
@@ -1410,7 +1408,7 @@ TEST(MeshTest, SamplePointsStayOnSurface)
 
     geo::Mesh mesh("sample", points, triangles, {});
 
-    Random rng(123);
+    core::Random rng(123);
     auto cloud = mesh.SamplePointsUniform(1000, rng, false);
 
     for (const auto& p : cloud.GetPoints())
@@ -1431,8 +1429,8 @@ TEST(MeshTest, SamplingDeterministic)
 
     geo::Mesh mesh("det", points, triangles, {});
 
-    Random rng1(42);
-    Random rng2(42);
+    core::Random rng1(42);
+    core::Random rng2(42);
 
     auto c1 = mesh.SamplePointsUniform(100, rng1, false);
     auto c2 = mesh.SamplePointsUniform(100, rng2, false);
@@ -1466,7 +1464,7 @@ protected:
     std::vector<glm::vec3> points;
     std::vector<glm::vec3> rng_points;
     std::vector<glm::vec3> rng_points_large;
-    geo::Random rng{ 8888 };
+    core::Random rng{ 8888 };
 
     void SetUp() override
     {
@@ -1513,8 +1511,8 @@ TEST_F(KDTreeTest, QueryMatchesLinearNN)
 
     for (const auto& q : queries)
     {
-        geo::index_t kdIdx = kd.Query(q);
-        geo::index_t linearIdx = linear.Query(q);
+        index_t kdIdx = kd.Query(q);
+        index_t linearIdx = linear.Query(q);
 
         EXPECT_EQ(kdIdx, linearIdx);
     }
@@ -1533,8 +1531,8 @@ TEST_F(KDTreeTest, BatchQueryMatchesLinear)
         {0.0f,0.9f,0.0f}
     };
 
-    std::vector<geo::index_t> kdResults;
-    std::vector<geo::index_t> linearResults;
+    std::vector<index_t> kdResults;
+    std::vector<index_t> linearResults;
 
     kd.QueryBatch(queries, kdResults);
     linear.QueryBatch(queries, linearResults);
@@ -1553,7 +1551,7 @@ TEST_F(KDTreeTest, ExactPointQuery)
 
     for (size_t i = 0; i < points.size(); i++)
     {
-        geo::index_t idx = kd.Query(points[i]);
+        index_t idx = kd.Query(points[i]);
         EXPECT_EQ(idx, i);
     }
 }
@@ -1567,8 +1565,8 @@ TEST_F(KDTreeTest, RandomPointsMatchLinearNN)
     {
         glm::vec3 q(rng.Float3(-10.0f, 10.0f));
 
-        geo::index_t kdIdx = kd.Query(q);
-        geo::index_t linearIdx = linear.Query(q);
+        index_t kdIdx = kd.Query(q);
+        index_t linearIdx = linear.Query(q);
 
         EXPECT_EQ(kdIdx, linearIdx);
     }
@@ -1580,14 +1578,14 @@ TEST_F(KDTreeTest, PerformanceTest)
 
     for (int i = 0; i < rng_points_large.size(); i++)
     {
-        geo::index_t kdIdx = kd.Query(rng_points_large[i]);
+        index_t kdIdx = kd.Query(rng_points_large[i]);
     }
 }
 
 TEST_F(KDTreeTest, PerformanceQueryBatchTest)
 {
     geo::KDTree kd(rng_points);
-    std::vector<geo::index_t> indexes(rng_points_large.size(), 0);
+    std::vector<index_t> indexes(rng_points_large.size(), 0);
 
     kd.QueryBatch(rng_points_large, indexes);
 }
@@ -1610,7 +1608,7 @@ static std::vector<glm::vec3> MakeRandomPoints(std::size_t count, unsigned seed)
 
 static double MeasureBatchQueryMs(const geo::INearestNeighbor& nn, const std::vector<glm::vec3>& queries)
 {
-    std::vector<geo::index_t> results;
+    std::vector<index_t> results;
     const auto t0 = std::chrono::steady_clock::now();
     nn.QueryBatch(queries, results);
     const auto t1 = std::chrono::steady_clock::now();
@@ -1773,7 +1771,7 @@ TEST(LeastSquaresICPTest, RMSIsReduced)
 
 TEST(LeastSquaresICPTest, PointToPlaneRandomRect)
 {
-    geo::Random rng(8888); // reproducible seed
+    core::Random rng(8888); // reproducible seed
 
     // Generate a random "cube like" point cloud (points on the faces of a box)
     geo::PointCloud3D target = geo::GenerateRandomPointCloudRect(

@@ -1,8 +1,8 @@
 #pragma once
 #include <string_view>
-#include <geo/GeoTypes.h>
+#include "Types.h"
 
-namespace geo
+namespace core
 {
     // Log severity levels used to filter and categorize runtime messages.
     // Higher numeric value = more verbose output.

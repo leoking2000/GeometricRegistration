@@ -3,10 +3,10 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_map>
-#include <geo/GeoTypes.h>
-#include <geo/math/BBox.h>
+#include "Types.h"
+#include "math/BBox.h"
 
-namespace geo::io
+namespace core::io
 {
 	// Supported geometry file formats for import/export operations.
 	enum class FileType : u8
@@ -50,9 +50,9 @@ namespace geo::io
 	{
 		std::string   name = "default";
 		glm::vec3     base_color = { 0.95f, 0.93f, 0.89f };
-		geo::f32      reflectance = 0.05f;
-		geo::f32      metallic = 0.0f;
-		geo::f32      roughness = 0.8f;
+		f32           reflectance = 0.05f;
+		f32           metallic = 0.0f;
+		f32           roughness = 0.8f;
 		std::string   texture_file_color = "";
 		std::string   texture_file_normal = "";
 		std::string   texture_file_mask = "";

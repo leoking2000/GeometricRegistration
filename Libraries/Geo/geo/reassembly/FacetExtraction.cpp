@@ -6,7 +6,7 @@
 #include <queue>
 #include <unordered_map>
 #include <vector>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
 #include "FacetExtraction.h"
 
 #pragma warning( disable : 6993)

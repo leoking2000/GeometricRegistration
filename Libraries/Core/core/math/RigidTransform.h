@@ -1,9 +1,9 @@
 #pragma once
 #include <cmath>
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include "Types.h"
 
-namespace geo
+namespace core
 {
 	// Represents a 3D rigid body transform (SE(3)):
 	// - rotation: 3x3 orthonormal matrix

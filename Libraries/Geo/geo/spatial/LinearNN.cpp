@@ -1,6 +1,6 @@
 #include <cassert>
-#include <geo/logging/LogMacros.h>
-#include <geo/utils/GeoTime.h>
+#include <core/logging/Log.h>
+#include <core/utils/Time.h>
 #include "LinearNN.h"
 
 namespace geo
@@ -11,7 +11,7 @@ namespace geo
 	{
 		assert(!m_points.empty());
 
-		GEOLOGINFO("LinearNN initialized | points: " << m_points.size());
+		LOGINFO("LinearNN initialized | points: " << m_points.size());
 	}
 
 	index_t LinearNN::Query(const glm::vec3& point) const
@@ -39,14 +39,14 @@ namespace geo
 
 	void LinearNN::QueryBatch(const std::vector<glm::vec3>& points, std::vector<index_t>& results) const
 	{
-		TimePoint start = Clock::now();
+		core::TimePoint start = core::Clock::now();
 
 		if (results.size() != points.size())
 		{
 			results.resize(points.size(), 0);
 		}
 
-		GEOLOGVERBOSE("LinearNN batch query | input points: " << points.size());
+		LOGVERBOSE("LinearNN batch query | input points: " << points.size());
 
 		// This is slow but is only for testing, no point to have multithreading here
 		for (size_t i = 0; i < points.size(); i++)
@@ -54,7 +54,7 @@ namespace geo
 			results[i] = Query(points[i]);
 		}
 
-		GEOLOGVERBOSE("LinearNN batch query done in " << TimeDifferenceMs(Clock::now(), start) << "ms");
+		LOGVERBOSE("LinearNN batch query done in " << core::TimeDifferenceMs(core::Clock::now(), start) << "ms");
 	}
 
 	index_t LinearNN::Size() const

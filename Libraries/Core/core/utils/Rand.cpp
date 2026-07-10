@@ -1,8 +1,8 @@
 #include <cassert>
 #include <glm/gtc/constants.hpp>
-#include "GeoRand.h"
+#include "Rand.h"
 
-namespace geo
+namespace core
 {
     Random::Random()
         : m_Rng(std::random_device{}())
