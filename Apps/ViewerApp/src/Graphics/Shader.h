@@ -1,9 +1,9 @@
 #pragma once
 #include <unordered_map>
+#include <string>
 #include <glm/glm.hpp>
 #include <glm/ext.hpp>
-#include <string>
-#include <geo/GeoTypes.h>
+#include <core/Types.h>
 
 namespace gl
 {
@@ -47,13 +47,13 @@ namespace gl
 		bool SetUniform(const std::string& name, const glm::mat4& mat) const;
 		bool SetUniform(const std::string& name, const glm::mat3& mat) const;
 	public:
-		bool SetUniform(const std::string& name, const std::vector<glm::vec2>& vec_arr, geo::u32 size);
-		bool SetUniform(const std::string& name, const std::vector<glm::vec3>& vec_arr, geo::u32 size);
+		bool SetUniform(const std::string& name, const std::vector<glm::vec2>& vec_arr, u32 size);
+		bool SetUniform(const std::string& name, const std::vector<glm::vec3>& vec_arr, u32 size);
 	private:
-		geo::i32 GetLocation(const std::string& name) const;
+		i32 GetLocation(const std::string& name) const;
 		bool IsValid() const;
 	private:
-		geo::u32 m_program_id = 0;
-		mutable std::unordered_map<std::string, geo::i32> m_uniforms; // storing uniforms locations
+		u32 m_program_id = 0;
+		mutable std::unordered_map<std::string, i32> m_uniforms; // storing uniforms locations
 	};
 }

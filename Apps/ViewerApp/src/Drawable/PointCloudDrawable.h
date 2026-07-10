@@ -1,6 +1,6 @@
 #pragma once
 #include <filesystem>
-#include <geo/math/RigidTransform.h>
+#include <core/math/RigidTransform.h>
 #include <Graphics/BufferObjects.h>
 #include <Graphics/Shader.h>
 
@@ -32,16 +32,16 @@ namespace gl
         void Draw(const gl::ShaderProgram& shader,
             const glm::mat4& view_projection,
             const glm::vec3& color,
-            geo::f32 pointSize = 3.0f) const;
+            f32 pointSize = 3.0f) const;
     public:
         // Applies an additional rigid transform to the drawable.
         // The supplied transform is composed with the existing model transform.
-        void ApplyTransform(const geo::RigidTransform& transform);
-        inline void SetTransform(const geo::RigidTransform& transform) { m_transform = transform; }
-        inline const geo::RigidTransform& GetTransform() const { return m_transform; }
+        void ApplyTransform(const core::RigidTransform& transform);
+        inline void SetTransform(const core::RigidTransform& transform) { m_transform = transform; }
+        inline const core::RigidTransform& GetTransform() const { return m_transform; }
     private:
-        geo::u32 m_pointCount = 0;
-        geo::RigidTransform m_transform = geo::RigidTransform::Identity();
+        u32 m_pointCount = 0;
+        core::RigidTransform m_transform = core::RigidTransform::Identity();
         gl::VertexArray m_vao;
     };
 }

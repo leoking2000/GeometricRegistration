@@ -1,7 +1,7 @@
 #include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <assert.h>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
 #include "LeoGraphics.h"
 
 namespace gl
@@ -29,7 +29,7 @@ namespace gl
         // ignore non-significant error/warning codes
         if (id == 131169 || id == 131185 || id == 131218 || id == 131204) return;
 
-		GEOLOGDEBUG(GenarateOpenGLErrorMessage(source, type, id, severity, length, message, userParam));
+		LOGDEBUG(GenarateOpenGLErrorMessage(source, type, id, severity, length, message, userParam));
 	}
 
 	void GraphicsInitialization()
@@ -47,7 +47,7 @@ namespace gl
 
         if (!(flags & GL_CONTEXT_FLAG_DEBUG_BIT))
         {
-            GEOLOGERROR("OpenGL Debug output is not enable on debug.");
+            LOGERROR("OpenGL Debug output is not enable on debug.");
         }
 
         glEnable(GL_DEBUG_OUTPUT);
@@ -57,7 +57,7 @@ namespace gl
 #endif
 
 		// print OpenGL version
-		GEOLOGINFO("Using OpenGL " << (const char*)glGetString(GL_VERSION));
+		LOGINFO("Using OpenGL " << (const char*)glGetString(GL_VERSION));
 		g_innitglad = true;
 	}
 

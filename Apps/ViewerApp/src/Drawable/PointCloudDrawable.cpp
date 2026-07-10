@@ -1,6 +1,6 @@
 #include <Graphics/LeoGraphics.h>
-#include <geo/io/IOGeometry.h>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
+#include <core/io/IOGeometry.h>
 #include "PointCloudDrawable.h"
 
 static_assert(sizeof(glm::vec3) == 3 * sizeof(float));
@@ -22,16 +22,16 @@ namespace gl
         // hudle empty case
         if (points.empty())
         {
-            m_transform = geo::RigidTransform::Identity();
-            GEOLOGWARN("Can not upload cloud with zero data.");
+            m_transform = core::RigidTransform::Identity();
+            LOGWARN("Can not upload cloud with zero data.");
             return;
         }
 
         // Create VertexBuffer
-        m_pointCount = (geo::u32)points.size();
+        m_pointCount = (u32)points.size();
         gl::VertexBuffer vbo(
             (const void*)points.data(), 
-            (geo::u32)(points.size() * sizeof(glm::vec3)),
+            (u32)(points.size() * sizeof(glm::vec3)),
             gl::BufferUsage::Static
         );
 
@@ -42,13 +42,13 @@ namespace gl
         // add VertexBuffer to VertexArray
         m_vao.AddBuffer(std::move(vbo), layout);
 
-        m_transform = geo::RigidTransform::Identity(); // reset transform
+        m_transform = core::RigidTransform::Identity(); // reset transform
 
-        GEOLOGINFO("Uploaded PointCloudDrawable | " << m_pointCount << " points");
+        LOGINFO("Uploaded PointCloudDrawable | " << m_pointCount << " points");
     }
 
     void PointCloudDrawable::Draw(const gl::ShaderProgram& shader,
-        const glm::mat4& view_projection, const glm::vec3& color, geo::f32 pointSize) const
+        const glm::mat4& view_projection, const glm::vec3& color, f32 pointSize) const
 	{
         if (m_pointCount == 0) {
             return;
@@ -69,8 +69,8 @@ namespace gl
         shader.UnBind();
 	}
 
-    void PointCloudDrawable::ApplyTransform(const geo::RigidTransform& transform)
+    void PointCloudDrawable::ApplyTransform(const core::RigidTransform& transform)
     {
-        m_transform = geo::RigidTransform::Compose(transform, m_transform);
+        m_transform = core::RigidTransform::Compose(transform, m_transform);
     }
 }

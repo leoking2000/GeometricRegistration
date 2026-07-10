@@ -32,10 +32,10 @@ namespace gl
         // Constructors
         Mesh() = default;
         Mesh(DefaultMesh shape);
-        Mesh(DefaultMesh shape, const glm::mat4* model_arr, geo::u32 count);
+        Mesh(DefaultMesh shape, const glm::mat4* model_arr, u32 count);
 
-        Mesh(VertexArray& va, IndexBuffer& ib, geo::u32 layout_size);
-        Mesh(VertexArray& va, IndexBuffer& ib, geo::u32 layout_size, const glm::mat4* model_arr, geo::u32 count);
+        Mesh(VertexArray& va, IndexBuffer& ib, u32 layout_size);
+        Mesh(VertexArray& va, IndexBuffer& ib, u32 layout_size, const glm::mat4* model_arr, u32 count);
 
         Mesh(const Mesh&) = delete;
         Mesh& operator=(const Mesh&) = delete;
@@ -51,16 +51,16 @@ namespace gl
         // Factory functions
         static Mesh GenerateMesh(DefaultMesh shape);
         static Mesh GenerateCube();
-        static Mesh GenerateSphere(geo::u32 precision = 48);
-        static Mesh GenerateQuad(geo::u32 repeat = 1);
+        static Mesh GenerateSphere(u32 precision = 48);
+        static Mesh GenerateQuad(u32 repeat = 1);
         static Mesh GenerateScreenFilledQuad();
     public:
         // Instancing
         bool HasInstanceArray() const;
-        void MakeInstancedArray(const glm::mat4* model_arr, geo::u32 count);
+        void MakeInstancedArray(const glm::mat4* model_arr, u32 count);
     private:
-        geo::u32 m_count = 0;
-        geo::u32 m_layout_size = 0;
+        u32 m_count = 0;
+        u32 m_layout_size = 0;
         VertexArray m_vertexArray;
         IndexBuffer m_indexBuffer;
     };

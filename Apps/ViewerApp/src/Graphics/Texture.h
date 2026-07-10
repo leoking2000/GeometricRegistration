@@ -2,11 +2,11 @@
 #include <filesystem>
 #include <memory>
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include <core/Types.h>
 
 namespace gl
 {
-    enum TextureDimensions : geo::u8
+    enum TextureDimensions : u8
     {
         DIM_1D       = 0,
         DIM_2D       = 1,
@@ -14,7 +14,7 @@ namespace gl
         DIM_2D_ARRAY = 3
     };
 
-    enum class TextureFormat : geo::u8
+    enum class TextureFormat : u8
     {
         RGBA8UB,
         RGBA16F,
@@ -25,7 +25,7 @@ namespace gl
         DEPTH_COMPONENT32F
     };
 
-    enum class TextureWrapping : geo::u8
+    enum class TextureWrapping : u8
     {
         REPEAT,
         MIRRORED_REPEAT,
@@ -33,7 +33,7 @@ namespace gl
         CLAMP_TO_BORDER
     };
 
-    enum class TextureMinFiltering : geo::u8
+    enum class TextureMinFiltering : u8
     {
         MIN_NEAREST,
         MIN_LINEAR,
@@ -43,7 +43,7 @@ namespace gl
         MIN_LINEAR_MIPMAP_LINEAR
     };
 
-    enum class TextureMagFiltering : geo::u8
+    enum class TextureMagFiltering : u8
     {
         MAG_NEAREST,
         MAG_LINEAR
@@ -52,14 +52,14 @@ namespace gl
     class Texture
     {
     public:
-        using TexSize = glm::vec<3, geo::u32>;
+        using TexSize = glm::vec<3, u32>;
     public:
         Texture() = default;
-        Texture(geo::u32 width, geo::u32 height, TextureFormat format = TextureFormat::RGBA8UB, geo::u8* data = nullptr);
+        Texture(u32 width, u32 height, TextureFormat format = TextureFormat::RGBA8UB, u8* data = nullptr);
 
         Texture(TextureDimensions dimensions, TexSize size, TextureFormat format,
             TextureMinFiltering min_filter, TextureMagFiltering mag_filter,
-            TextureWrapping S, TextureWrapping T, geo::u8* data
+            TextureWrapping S, TextureWrapping T, u8* data
         );
 
         Texture(const Texture& other) = delete;
@@ -72,16 +72,16 @@ namespace gl
     public:
         static Texture Load(const std::filesystem::path filepath, TextureFormat format = TextureFormat::RGBA8UB);
     public:
-        inline geo::u32 GetID() const { return m_id; };
+        inline u32 GetID() const { return m_id; };
         inline TextureDimensions Dimensions() const { return m_params.dimensions; }
         inline TexSize Size() const { return m_params.size; }
     public:
-        void Bind(geo::u32 slot = 0) const;
+        void Bind(u32 slot = 0) const;
         void UnBind() const;
     public:
         void SetFiltering(TextureMinFiltering min_filter, TextureMagFiltering mag_filter);
         void SetWrapping(TextureWrapping S, TextureWrapping T);
-        void SetImageData(geo::u8* data, TextureFormat format);
+        void SetImageData(u8* data, TextureFormat format);
         void Resize(const TexSize& new_size);
     private:
         bool IsTexSizeValid(const TexSize& new_size) const;
@@ -113,17 +113,17 @@ namespace gl
             TextureWrapping wrapping_t;
         };
     private:
-        geo::u32 m_id = 0;
+        u32 m_id = 0;
         bool m_minimap = false;
         TextureParameters m_params = {};
     private:
         friend class FrameBuffer;
-        static geo::u32 TYPE[4];
+        static u32 TYPE[4];
     };
 
     struct ImageDataDeleter
     {
-        void operator()(geo::u8* ptr) const;
+        void operator()(u8* ptr) const;
     };
 
     class ImageData
@@ -137,10 +137,10 @@ namespace gl
         ImageData(const ImageData&) = delete;
         ImageData& operator=(const ImageData&) = delete;
     public:
-        geo::i32 width = 0;
-        geo::i32 height = 0;
-        geo::i32 bpp = 0;
-        std::unique_ptr<geo::u8, ImageDataDeleter> data;
+        i32 width = 0;
+        i32 height = 0;
+        i32 bpp = 0;
+        std::unique_ptr<u8, ImageDataDeleter> data;
     };
 
     ImageData ReadImageData(const std::string& filepath);

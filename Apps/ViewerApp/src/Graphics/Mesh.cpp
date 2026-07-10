@@ -10,7 +10,7 @@ namespace gl
 		Mesh(GenerateMesh(shape))
 	{}
 
-	Mesh::Mesh(DefaultMesh shape, const glm::mat4* model_arr, geo::u32 count)
+	Mesh::Mesh(DefaultMesh shape, const glm::mat4* model_arr, u32 count)
 		:
 		Mesh(GenerateMesh(shape))
 	{
@@ -20,7 +20,7 @@ namespace gl
 		MakeInstancedArray(model_arr, count);
 	}
 
-	Mesh::Mesh(VertexArray& va, IndexBuffer& ib, geo::u32 layout_size)
+	Mesh::Mesh(VertexArray& va, IndexBuffer& ib, u32 layout_size)
 		:
 		m_vertexArray(std::move(va)),
 		m_indexBuffer(std::move(ib)),
@@ -28,7 +28,7 @@ namespace gl
 		m_count(0)
 	{}
 
-	Mesh::Mesh(VertexArray& va, IndexBuffer& ib, geo::u32 layout_size, const glm::mat4* model_arr, geo::u32 count)
+	Mesh::Mesh(VertexArray& va, IndexBuffer& ib, u32 layout_size, const glm::mat4* model_arr, u32 count)
 		:
 		m_vertexArray(std::move(va)),
 		m_indexBuffer(std::move(ib)),
@@ -86,7 +86,7 @@ namespace gl
 		return m_count != 0;
 	}
 
-	void Mesh::MakeInstancedArray(const glm::mat4* model_arr, geo::u32 count)
+	void Mesh::MakeInstancedArray(const glm::mat4* model_arr, u32 count)
 	{
 		assert(model_arr != nullptr && "model array is null");
 		assert(count != 0 && "count can not be zero");
@@ -182,7 +182,7 @@ namespace gl
 		return mesh;
 	}
 
-	Mesh Mesh::GenerateSphere(geo::u32 prec)
+	Mesh Mesh::GenerateSphere(u32 prec)
 	{
 		const uint32_t numVertices = (prec + 1) * (prec + 1);
 		const uint32_t numIndices = prec * prec * 6;
@@ -190,9 +190,9 @@ namespace gl
 		std::vector<Vertex> vertices(numVertices);
 
 		// calculate triangle vertices
-		for (geo::u32 i = 0; i <= prec; i++)
+		for (u32 i = 0; i <= prec; i++)
 		{
-			for (geo::u32 j = 0; j <= prec; j++)
+			for (u32 j = 0; j <= prec; j++)
 			{
 				float y = (float)glm::cos(glm::radians(180.0f - i * 180.0f / prec));
 				float x = -(float)glm::cos(glm::radians(j * 360.0f / prec)) * (float)abs(cos(asin(y)));
@@ -211,9 +211,9 @@ namespace gl
 		std::vector<uint32_t> indices(numIndices);
 
 		// calculate triangle indices
-		for (geo::u32 i = 0; i < prec; i++)
+		for (u32 i = 0; i < prec; i++)
 		{
-			for (geo::u32 j = 0; j < prec; j++)
+			for (u32 j = 0; j < prec; j++)
 			{
 				indices[6 * (i * prec + j) + 0] = i * (prec + 1) + j;
 				indices[6 * (i * prec + j) + 1] = i * (prec + 1) + j + 1;
@@ -249,7 +249,7 @@ namespace gl
 			//vertex_buffer.emplace_back(v.bitangent.z);
 		}
 
-		VertexBuffer vertexBuffer((const void*)vertex_buffer.data(), (geo::u32)(vertex_buffer.size() * sizeof(float)));
+		VertexBuffer vertexBuffer((const void*)vertex_buffer.data(), (u32)(vertex_buffer.size() * sizeof(float)));
 
 		ElementType arr[3] = { ElementType::FLOAT3, ElementType::FLOAT2, ElementType::FLOAT3_N };
 		Layout<3> layout(arr);
@@ -258,14 +258,14 @@ namespace gl
 		vertexArray.AddBuffer(std::move(vertexBuffer), layout);
 
 
-		IndexBuffer indexBuffer(indices.data(), (geo::u32)indices.size());
+		IndexBuffer indexBuffer(indices.data(), (u32)indices.size());
 
 		Mesh mesh{ vertexArray, indexBuffer, 3 };
 
 		return mesh;
 	}
 
-	Mesh Mesh::GenerateQuad(geo::u32 repet)
+	Mesh Mesh::GenerateQuad(u32 repet)
 	{
 		float vertexs[] = {
 			// pos                 // tex cord                      // normal			// tan				// bi

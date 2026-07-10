@@ -17,13 +17,13 @@ namespace gl
 	{
 	public:
 		// for 2D Texture
-		FrameBuffer(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount = 1,
+		FrameBuffer(u32 width, u32 height, u32 colorAttachmentCount = 1,
 			TextureFormat format = TextureFormat::RGBA32F, FrameBufferMode fbt = FrameBufferMode::ColorAttachment,
 			TextureMinFiltering min_filter = TextureMinFiltering::MIN_NEAREST,
 			TextureMagFiltering mag_filter = TextureMagFiltering::MAG_NEAREST);
 
 		// for 3D Texture
-		FrameBuffer(geo::u32 width, geo::u32 height, geo::u32 depth, geo::u32 colorAttachmentCount = 1,
+		FrameBuffer(u32 width, u32 height, u32 depth, u32 colorAttachmentCount = 1,
 			TextureFormat format = TextureFormat::RGBA32F,
 			TextureMinFiltering min_filter = TextureMinFiltering::MIN_NEAREST,
 			TextureMagFiltering mag_filter = TextureMagFiltering::MAG_NEAREST);
@@ -39,40 +39,40 @@ namespace gl
 		void Bind() const;
 		void UnBind() const;
 
-		void BindColorTexture(geo::u8 index, geo::u32 slot) const;
-		void BindDepthTexture(geo::u32 slot) const;
+		void BindColorTexture(u8 index, u32 slot) const;
+		void BindDepthTexture(u32 slot) const;
 
-		void UnBindColorTexture(geo::u8 index) const;
+		void UnBindColorTexture(u8 index) const;
 		void UnBindDepthTexture() const;
 
-		void Resize(geo::u32 width, geo::u32 height);
+		void Resize(u32 width, u32 height);
 
-		geo::u8 NumberOfColorAttachments() const;
+		u8 NumberOfColorAttachments() const;
 
-		geo::u32 Width() const;
-		geo::u32 Height() const;
-		geo::u32 Depth() const;
+		u32 Width() const;
+		u32 Height() const;
+		u32 Depth() const;
 	private:
-		void InitColorAttachmentMode(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+		void InitColorAttachmentMode(u32 width, u32 height, u32 colorAttachmentCount,
 			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
-		void InitColorAttachmentMode3D(geo::u32 width, geo::u32 height, geo::u32 depth, geo::u32 colorAttachmentCount,
-			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
-
-		void InitLayered(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
-			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
-		void InitTexture3D(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+		void InitColorAttachmentMode3D(u32 width, u32 height, u32 depth, u32 colorAttachmentCount,
 			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
 
-		geo::u32 CheckColorAttachmentNumber(geo::u32 colorAttachmentCount);
+		void InitLayered(u32 width, u32 height, u32 colorAttachmentCount,
+			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
+		void InitTexture3D(u32 width, u32 height, u32 colorAttachmentCount,
+			TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format);
+
+		u32 CheckColorAttachmentNumber(u32 colorAttachmentCount);
 	private:
-		geo::u32 m_id     = 0;
-		geo::u32 m_width  = 0;
-		geo::u32 m_height = 0;
-		geo::u32 m_depth  = 0;
+		u32 m_id     = 0;
+		u32 m_width  = 0;
+		u32 m_height = 0;
+		u32 m_depth  = 0;
 
 		std::optional<Texture> m_depth_texture;
 		std::vector<Texture> m_color_attachments;
 	};
 
-	geo::u32 CheckFramebufferStatus(geo::u32 framebuffer_object);
+	u32 CheckFramebufferStatus(u32 framebuffer_object);
 }

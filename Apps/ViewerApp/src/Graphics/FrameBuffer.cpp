@@ -1,11 +1,11 @@
 #include <glad/glad.h>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
 #include "FrameBuffer.h"
 
 
 namespace gl
 {
-    FrameBuffer::FrameBuffer(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+    FrameBuffer::FrameBuffer(u32 width, u32 height, u32 colorAttachmentCount,
         TextureFormat format, FrameBufferMode fbt, 
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter)
     {
@@ -23,7 +23,7 @@ namespace gl
         }
     }
 
-    FrameBuffer::FrameBuffer(geo::u32 width, geo::u32 height, geo::u32 depth, geo::u32 colorAttachmentCount, TextureFormat format, TextureMinFiltering min_filter, TextureMagFiltering mag_filter)
+    FrameBuffer::FrameBuffer(u32 width, u32 height, u32 depth, u32 colorAttachmentCount, TextureFormat format, TextureMinFiltering min_filter, TextureMagFiltering mag_filter)
     {
         InitColorAttachmentMode3D(width, height, depth, colorAttachmentCount, min_filter, mag_filter, format);
     }
@@ -133,17 +133,17 @@ namespace gl
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
     }
 
-    void FrameBuffer::BindColorTexture(geo::u8 index, geo::u32 slot) const
+    void FrameBuffer::BindColorTexture(u8 index, u32 slot) const
     {
         m_color_attachments[index].Bind(slot);
     }
 
-    void FrameBuffer::BindDepthTexture(geo::u32 slot) const
+    void FrameBuffer::BindDepthTexture(u32 slot) const
     {
         if (m_depth_texture) { m_depth_texture->Bind(slot); }
     }
 
-    void FrameBuffer::UnBindColorTexture(geo::u8 index) const
+    void FrameBuffer::UnBindColorTexture(u8 index) const
     {
         m_color_attachments[index].UnBind();
     }
@@ -153,7 +153,7 @@ namespace gl
         if (m_depth_texture) { m_depth_texture->UnBind(); }
     }
 
-    void FrameBuffer::Resize(geo::u32 width, geo::u32 height)
+    void FrameBuffer::Resize(u32 width, u32 height)
     {
         m_width = width;
         m_height = height;
@@ -171,27 +171,27 @@ namespace gl
         GLenum status = CheckFramebufferStatus(m_id);
     }
 
-    geo::u8 FrameBuffer::NumberOfColorAttachments() const
+    u8 FrameBuffer::NumberOfColorAttachments() const
     {
-        return (geo::u8)m_color_attachments.size();
+        return (u8)m_color_attachments.size();
     }
 
-    geo::u32 FrameBuffer::Width() const
+    u32 FrameBuffer::Width() const
     {
         return m_width;
     }
 
-    geo::u32 FrameBuffer::Height() const
+    u32 FrameBuffer::Height() const
     {
         return m_height;
     }
 
-    geo::u32 FrameBuffer::Depth() const
+    u32 FrameBuffer::Depth() const
     {
         return m_depth;
     }
 
-    void FrameBuffer::InitColorAttachmentMode(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+    void FrameBuffer::InitColorAttachmentMode(u32 width, u32 height, u32 colorAttachmentCount,
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format)
     {
         m_width = width;
@@ -203,11 +203,11 @@ namespace gl
 
         colorAttachmentCount = CheckColorAttachmentNumber(colorAttachmentCount);
 
-        for (geo::u8 i = 0; i < colorAttachmentCount; i++)
+        for (u8 i = 0; i < colorAttachmentCount; i++)
         {
             Texture& tex = m_color_attachments.emplace_back(DIM_2D, Texture::TexSize(m_width, m_height, 0), format,
                 min_filter, mag_filter,
-                TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (geo::u8*)0u
+                TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (u8*)0u
             );
 
             glFramebufferTexture2D(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, Texture::TYPE[tex.m_params.dimensions], tex.m_id, 0);
@@ -221,18 +221,18 @@ namespace gl
         glFramebufferTexture(GL_FRAMEBUFFER, GL_DEPTH_ATTACHMENT, m_depth_texture->m_id, 0);
 
 
-        GEOLOGVERBOSE("FrameBuffer " << m_id <<
+        LOGVERBOSE("FrameBuffer " << m_id <<
             "Created with size " << m_width << "x" << m_height <<
             " with " << colorAttachmentCount << " color attachments"
         );
 
         if (CheckFramebufferStatus(m_id) != GL_FRAMEBUFFER_COMPLETE)
         {
-            GEOLOGERROR("Frame buffer error");
+            LOGERROR("Frame buffer error");
         }
     }
 
-    void FrameBuffer::InitColorAttachmentMode3D(geo::u32 width, geo::u32 height, geo::u32 depth, geo::u32 colorAttachmentCount,
+    void FrameBuffer::InitColorAttachmentMode3D(u32 width, u32 height, u32 depth, u32 colorAttachmentCount,
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format)
     {
         m_width = width;
@@ -244,28 +244,28 @@ namespace gl
 
         colorAttachmentCount = CheckColorAttachmentNumber(colorAttachmentCount);
 
-        for (geo::u8 i = 0; i < colorAttachmentCount; i++)
+        for (u8 i = 0; i < colorAttachmentCount; i++)
         {
             Texture& tex = m_color_attachments.emplace_back(DIM_3D, Texture::TexSize(m_width, m_height, m_depth), format,
                 min_filter, mag_filter,
-                TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (geo::u8*)0u
+                TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (u8*)0u
             );
 
             glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0 + i, tex.m_id, 0);
         }
 
-        GEOLOGVERBOSE("FrameBuffer " << m_id <<
+        LOGVERBOSE("FrameBuffer " << m_id <<
             "Created with size " << m_width << "x" << m_height << "x" << m_depth <<
             " with " << colorAttachmentCount << " color attachments"
         );
 
         if (CheckFramebufferStatus(m_id) != GL_FRAMEBUFFER_COMPLETE)
         {
-            GEOLOGERROR("Frame buffer error");
+            LOGERROR("Frame buffer error");
         }
     }
 
-    void FrameBuffer::InitLayered(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+    void FrameBuffer::InitLayered(u32 width, u32 height, u32 colorAttachmentCount,
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format)
     {
         m_width = width;
@@ -279,23 +279,23 @@ namespace gl
 
         Texture& tex = m_color_attachments.emplace_back(DIM_2D_ARRAY, Texture::TexSize(m_width, m_height, colorAttachmentCount), format,
             min_filter, mag_filter,
-            TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (geo::u8*)0u
+            TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (u8*)0u
         );
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex.m_id, 0);
 
-        GEOLOGVERBOSE("FrameBuffer " << m_id <<
+        LOGVERBOSE("FrameBuffer " << m_id <<
             "Created with size " << m_width << "x" << m_height <<
             " and " << colorAttachmentCount << " color attachments Layered"
         );
 
         if (CheckFramebufferStatus(m_id) != GL_FRAMEBUFFER_COMPLETE)
         {
-            GEOLOGERROR("Frame buffer error");
+            LOGERROR("Frame buffer error");
         }
     }
 
-    void FrameBuffer::InitTexture3D(geo::u32 width, geo::u32 height, geo::u32 colorAttachmentCount,
+    void FrameBuffer::InitTexture3D(u32 width, u32 height, u32 colorAttachmentCount,
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter, TextureFormat format)
     {
         m_width = width;
@@ -307,23 +307,23 @@ namespace gl
 
         Texture& tex = m_color_attachments.emplace_back(DIM_3D, Texture::TexSize(m_width, m_height, m_depth), format,
             min_filter, mag_filter,
-            TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (geo::u8*)0u
+            TextureWrapping::CLAMP_TO_EDGE, TextureWrapping::CLAMP_TO_EDGE, (u8*)0u
         );
 
         glFramebufferTexture(GL_FRAMEBUFFER, GL_COLOR_ATTACHMENT0, tex.m_id, 0);
 
         //LOGDEBUG("FrameBuffer({}): Created with size ({},{},{})", m_id, m_width, m_height, m_depth);
-        GEOLOGVERBOSE("FrameBuffer " << m_id <<
+        LOGVERBOSE("FrameBuffer " << m_id <<
             "Created with size " << m_width << "x" << m_height << "x" << m_width
         );
 
         if (CheckFramebufferStatus(m_id) != GL_FRAMEBUFFER_COMPLETE)
         {
-            GEOLOGERROR("Frame buffer error");
+            LOGERROR("Frame buffer error");
         }
     }
 
-    geo::u32 FrameBuffer::CheckColorAttachmentNumber(geo::u32 colorAttachmentCount)
+    u32 FrameBuffer::CheckColorAttachmentNumber(u32 colorAttachmentCount)
     {
         GLint maxDrawBuf = 0;
         glGetIntegerv(GL_MAX_DRAW_BUFFERS, &maxDrawBuf);
@@ -335,7 +335,7 @@ namespace gl
         }
         else if ((GLint)colorAttachmentCount > maxDrawBuf)
         {
-            GEOLOGWARN("FrameBuffer " << m_id << " Attempted to create with " << colorAttachmentCount <<
+            LOGWARN("FrameBuffer " << m_id << " Attempted to create with " << colorAttachmentCount <<
                 " color attachments, " << maxDrawBuf << " will be created insted.");
 
             colorAttachmentCount = maxDrawBuf;
@@ -344,33 +344,33 @@ namespace gl
         return colorAttachmentCount;
     }
 
-    geo::u32 CheckFramebufferStatus(geo::u32 framebuffer_object)
+    u32 CheckFramebufferStatus(u32 framebuffer_object)
     {
         glBindFramebuffer(GL_FRAMEBUFFER, framebuffer_object);
-        geo::u32 status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
+        u32 status = glCheckFramebufferStatus(GL_FRAMEBUFFER);
 
         if (status != GL_FRAMEBUFFER_COMPLETE)
         {
-            GEOLOGERROR("FrameBuffer " << framebuffer_object << " : glCheckFramebufferStatus: error " << status);
+            LOGERROR("FrameBuffer " << framebuffer_object << " : glCheckFramebufferStatus: error " << status);
             switch (status)
             {
             case GL_FRAMEBUFFER_INCOMPLETE_ATTACHMENT:
-                GEOLOGERROR("Incomplete attatchement");
+                LOGERROR("Incomplete attatchement");
                 break;
             case GL_FRAMEBUFFER_INCOMPLETE_MISSING_ATTACHMENT:
-                GEOLOGERROR("Incomplete missing attachment");
+                LOGERROR("Incomplete missing attachment");
                 break;
             case GL_FRAMEBUFFER_INCOMPLETE_DRAW_BUFFER:
-                GEOLOGERROR("Incomplete draw buffer");
+                LOGERROR("Incomplete draw buffer");
                 break;
             case GL_FRAMEBUFFER_UNSUPPORTED:
-                GEOLOGERROR("Unsupported");
+                LOGERROR("Unsupported");
                 break;
             case GL_FRAMEBUFFER_INCOMPLETE_LAYER_TARGETS:
-                GEOLOGERROR("Incomplete layer targets");
+                LOGERROR("Incomplete layer targets");
                 break;
             default:
-                GEOLOGERROR("Default error");
+                LOGERROR("Default error");
                 break;
             }
         }
@@ -378,7 +378,4 @@ namespace gl
         glBindFramebuffer(GL_FRAMEBUFFER, 0);
         return status;
     }
-
 }
-
-

@@ -4,14 +4,14 @@
 
 namespace gl
 {
-    void ViewerCamera::Orbit(geo::f32 deltaYaw, geo::f32 deltaPitch)
+    void ViewerCamera::Orbit(f32 deltaYaw, f32 deltaPitch)
     {
         m_yaw += deltaYaw;
-        const geo::f32 limit = glm::radians(89.0f);
+        const f32 limit = glm::radians(89.0f);
         m_pitch = glm::clamp(m_pitch + deltaPitch, -limit, limit);
     }
 
-    void ViewerCamera::Zoom(geo::f32 deltaDistance)
+    void ViewerCamera::Zoom(f32 deltaDistance)
     {
         m_distance += deltaDistance;
         m_distance = glm::max(0.01f, m_distance);
@@ -22,7 +22,7 @@ namespace gl
         m_target += delta;
     }
 
-    void ViewerCamera::Pan(geo::f32 dx, geo::f32 dy)
+    void ViewerCamera::Pan(f32 dx, f32 dy)
     {
         m_target += Right() * dx;
         m_target += Up() * dy;
@@ -30,8 +30,8 @@ namespace gl
 
     glm::vec3 ViewerCamera::Position() const
     {
-        const geo::f32 cp = glm::cos(m_pitch); const geo::f32 cy = glm::cos(m_yaw);
-        const geo::f32 sp = glm::sin(m_pitch); const geo::f32 sy = glm::sin(m_yaw);
+        const f32 cp = glm::cos(m_pitch); const f32 cy = glm::cos(m_yaw);
+        const f32 sp = glm::sin(m_pitch); const f32 sy = glm::sin(m_yaw);
 
         glm::vec3 offset = {};
 
@@ -47,7 +47,7 @@ namespace gl
         return glm::lookAt(Position(), m_target, glm::vec3(0.0f, 1.0f, 0.0f));
     }
 
-    glm::mat4 ViewerCamera::ProjectionMatrix(geo::f32 aspectRatio) const
+    glm::mat4 ViewerCamera::ProjectionMatrix(f32 aspectRatio) const
     {
         return glm::perspective(m_fov, aspectRatio, m_nearPlane, m_farPlane);
     }

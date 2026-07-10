@@ -1,36 +1,36 @@
 #include <glad/glad.h>
-#include <geo/logging/LogMacros.h>
-#include <geo/io/IOUtils.h>
+#include <core/logging/Log.h>
+#include <core/io/IOUtils.h>
 #include "Shader.h"
 
 
 namespace gl
 {
-	geo::u32 CompileShader(const char* source, geo::u32 type);
-	geo::u32 CreateShaderProgramFromSource(const char* vertSrc, const char* geoSrc, const char* fragSrc);
+	u32 CompileShader(const char* source, u32 type);
+	u32 CreateShaderProgramFromSource(const char* vertSrc, const char* geoSrc, const char* fragSrc);
 
 	ShaderProgram::ShaderProgram(const std::string& filepath)
 		:
 		m_program_id(0)
 	{
-		std::string vert_source = geo::io::ReadFile(filepath + ".vert");
-		std::string frag_source = geo::io::ReadFile(filepath + ".frag");
+		std::string vert_source = core::io::ReadFile(filepath + ".vert");
+		std::string frag_source = core::io::ReadFile(filepath + ".frag");
 
 		std::string geom_source = "";
-		if (geo::io::FileExists(filepath + ".geom"))
+		if (core::io::FileExists(filepath + ".geom"))
 		{
-			geom_source = geo::io::ReadFile(filepath + ".geom");
+			geom_source = core::io::ReadFile(filepath + ".geom");
 		}
 
 		if (vert_source == "")
 		{
-			GEOLOGFATAL("Vertex shader missing!");
+			LOGFATAL("Vertex shader missing!");
 			std::exit(-1);
 		}
 
 		if (frag_source == "")
 		{
-			GEOLOGFATAL("Fragment shader missing!");
+			LOGFATAL("Fragment shader missing!");
 			std::exit(-1);
 		}
 
@@ -77,7 +77,7 @@ namespace gl
 
 	bool ShaderProgram::Reload(const char* vertexSrc, const char* geoSrc, const char* fragSrc)
 	{
-		geo::u32 new_program = CreateShaderProgramFromSource(vertexSrc, geoSrc, fragSrc);
+		u32 new_program = CreateShaderProgramFromSource(vertexSrc, geoSrc, fragSrc);
 
 		if (new_program == 0) // if new program failed to Compiled
 		{
@@ -111,7 +111,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, float num) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -124,7 +124,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, glm::vec2 a) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -137,7 +137,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, glm::vec3 a) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -150,7 +150,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, glm::vec4 a) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -163,7 +163,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, int i) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -176,7 +176,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, glm::ivec3 a) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -189,7 +189,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, glm::uvec3 a) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -202,7 +202,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, unsigned int i) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -215,7 +215,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, const glm::mat4& mat) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -228,7 +228,7 @@ namespace gl
 
 	bool ShaderProgram::SetUniform(const std::string& name, const glm::mat3& mat) const
 	{
-		geo::i32 location = GetLocation(name);
+		i32 location = GetLocation(name);
 
 		if (location != -1)
 		{
@@ -239,11 +239,11 @@ namespace gl
 		return false;
 	}
 
-	bool ShaderProgram::SetUniform(const std::string& name, const std::vector<glm::vec2>& vec_arr, geo::u32 size)
+	bool ShaderProgram::SetUniform(const std::string& name, const std::vector<glm::vec2>& vec_arr, u32 size)
 	{
-		for (geo::u32 i = 0; i < size; i++)
+		for (u32 i = 0; i < size; i++)
 		{
-			geo::i32 location = GetLocation(name + "[" + std::to_string(i) + "]");
+			i32 location = GetLocation(name + "[" + std::to_string(i) + "]");
 
 			if (location == -1) {
 				return false;
@@ -255,11 +255,11 @@ namespace gl
 		return true;
 	}
 
-	bool ShaderProgram::SetUniform(const std::string& name, const std::vector<glm::vec3>& vec_arr, geo::u32 size)
+	bool ShaderProgram::SetUniform(const std::string& name, const std::vector<glm::vec3>& vec_arr, u32 size)
 	{
-		for (geo::u32 i = 0; i < size; i++)
+		for (u32 i = 0; i < size; i++)
 		{
-			geo::i32 location = GetLocation(name + "[" + std::to_string(i) + "]");
+			i32 location = GetLocation(name + "[" + std::to_string(i) + "]");
 
 			if (location == -1) {
 				return false;
@@ -271,14 +271,14 @@ namespace gl
 		return true;
 	}
 
-	geo::i32 ShaderProgram::GetLocation(const std::string& name) const
+	i32 ShaderProgram::GetLocation(const std::string& name) const
 	{
 		if (m_uniforms.find(name) != m_uniforms.end())
 		{
 			return m_uniforms[name];
 		}
 
-		geo::i32 loc;
+		i32 loc;
 		loc = glGetUniformLocation(m_program_id, name.c_str());
 
 		if (loc != -1)
@@ -295,11 +295,11 @@ namespace gl
 	}
 
 
-	geo::u32 CompileShader(const char* source, geo::u32 type)
+	u32 CompileShader(const char* source, u32 type)
 	{
 		if (source == nullptr) return 0;
 
-		geo::u32 id = glCreateShader(type);
+		u32 id = glCreateShader(type);
 
 		glShaderSource(id, 1, &source, nullptr);
 		glCompileShader(id);
@@ -332,13 +332,13 @@ namespace gl
 		return id;
 	}
 
-	geo::u32 CreateShaderProgramFromSource(const char* vertSrc, const char* geoSrc, const char* fragSrc)
+	u32 CreateShaderProgramFromSource(const char* vertSrc, const char* geoSrc, const char* fragSrc)
 	{
-		geo::u32 vs = CompileShader(vertSrc, GL_VERTEX_SHADER);
-		geo::u32 gs = CompileShader(geoSrc, GL_GEOMETRY_SHADER);
-		geo::u32 fs = CompileShader(fragSrc, GL_FRAGMENT_SHADER);
+		u32 vs = CompileShader(vertSrc, GL_VERTEX_SHADER);
+		u32 gs = CompileShader(geoSrc, GL_GEOMETRY_SHADER);
+		u32 fs = CompileShader(fragSrc, GL_FRAGMENT_SHADER);
 
-		geo::u32 programid = glCreateProgram();
+		u32 programid = glCreateProgram();
 
 		if (vs == 0 || fs == 0) return 0;
 		if (geoSrc != nullptr && gs == 0) return 0;

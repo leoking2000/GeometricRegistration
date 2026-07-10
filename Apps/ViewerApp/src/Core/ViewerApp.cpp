@@ -9,7 +9,7 @@
 
 static glm::mat4 AlignScans(const geo::Mesh& target, const geo::Mesh& source)
 {
-    geo::Random rng{ 8888 };
+    core::Random rng{ 8888 };
 
     geo::DistanceField df;
     geo::DistanceFieldParameters df_parmas;
@@ -62,7 +62,7 @@ ViewerApp::~ViewerApp()
 
 void ViewerApp::Run()
 {
-    geo::SetLogLevel(geo::LogLevel::LOG_INFO);
+    core::SetLogLevel(core::LogLevel::LOG_INFO);
 
     //std::cout << "Loading Models\n";
     
@@ -94,7 +94,7 @@ void ViewerApp::Run()
     gl::MeshDrawable mesh_target;
     std::vector<glm::uvec3> indeces;
     indeces.reserve(target.TriangleCount());
-    for (geo::index_t i = 0; i < target.TriangleCount(); i++)
+    for (index_t i = 0; i < target.TriangleCount(); i++)
     {
         indeces.emplace_back(target.Triangle(i).vertexIndices);
     }
@@ -105,7 +105,7 @@ void ViewerApp::Run()
     // mesh_source.Upload(source);
 
     gl::ViewerCamera camera;
-    geo::BBox box = target.BoundingBox();
+    core::BBox box = target.BoundingBox();
     camera.m_target = box.Center();
     camera.m_distance = 0.5f * box.MaxSize();
 
@@ -115,7 +115,7 @@ void ViewerApp::Run()
     gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/MeshPhong");
     //gl::ShaderProgram shader(RESOURCES_PATH"shaders/viewer/PointShader");
 
-    glm::mat4 proj = camera.ProjectionMatrix((geo::f32)m_window.Size().x / (geo::f32)m_window.Size().y);
+    glm::mat4 proj = camera.ProjectionMatrix((f32)m_window.Size().x / (f32)m_window.Size().y);
 
     glEnable(GL_DEPTH_TEST);
     glDepthFunc(GL_LESS);
@@ -156,7 +156,7 @@ void ViewerApp::Stop()
     m_window.Close();
 }
 
-void ViewerApp::Update(geo::f32 dt)
+void ViewerApp::Update(f32 dt)
 {
 
 }

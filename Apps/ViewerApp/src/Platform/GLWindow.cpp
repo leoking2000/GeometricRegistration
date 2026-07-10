@@ -116,7 +116,7 @@ namespace gl
 		}
 	}
 
-	Window::Window(geo::u32 width, geo::u32 height, const std::string& title, geo::u32 flags, bool create)
+	Window::Window(u32 width, u32 height, const std::string& title, u32 flags, bool create)
 		:
 		Window(gl::WindowParameters{ title.c_str(), width, height, flags }, create)
 	{
@@ -251,7 +251,7 @@ namespace gl
 		glfwSetInputMode(m_window, GLFW_CURSOR, visible ? GLFW_CURSOR_NORMAL : GLFW_CURSOR_DISABLED);
 	}
 
-	geo::f64 Window::GetTime()
+	f64 Window::GetTime()
 	{
 		return glfwGetTime();
 	}

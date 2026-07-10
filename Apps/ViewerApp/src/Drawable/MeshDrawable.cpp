@@ -20,7 +20,7 @@ namespace gl
 		std::vector<float> vertex_buffer;
 		vertex_buffer.reserve(points.size() * 6);
 
-		for (geo::index_t i = 0; i < points.size(); i++)
+		for (index_t i = 0; i < points.size(); i++)
 		{
 			glm::vec3 pos    = points[i];
 			glm::vec3 normal = normals[i];
@@ -34,7 +34,7 @@ namespace gl
 			vertex_buffer.emplace_back(normal.z);
 		}
 
-		VertexBuffer vertexBuffer((const void*)vertex_buffer.data(), (geo::u32)(vertex_buffer.size() * sizeof(float)));
+		VertexBuffer vertexBuffer((const void*)vertex_buffer.data(), (u32)(vertex_buffer.size() * sizeof(float)));
 
 		ElementType arr[2] = { ElementType::FLOAT3, ElementType::FLOAT3_N };
 		Layout<2> layout(arr);
@@ -42,10 +42,10 @@ namespace gl
 		VertexArray vertexArray;
 		vertexArray.AddBuffer(std::move(vertexBuffer), layout);
 
-		std::vector<geo::u32> indices;
+		std::vector<u32> indices;
 		indices.reserve(triangles.size() * 3);
 
-		for (geo::index_t i = 0; i < triangles.size(); i++)
+		for (index_t i = 0; i < triangles.size(); i++)
 		{
 			const glm::uvec3& tri = triangles[i];
 
@@ -54,7 +54,7 @@ namespace gl
 			indices.emplace_back(tri[2]);
 		}
 
-		IndexBuffer indexBuffer(indices.data(), (geo::u32)indices.size());
+		IndexBuffer indexBuffer(indices.data(), (u32)indices.size());
 		m_gpuMesh = gl::Mesh(vertexArray, indexBuffer, 2);
 	}
 
@@ -82,8 +82,8 @@ namespace gl
 		shader.UnBind();
 	}
 
-	void MeshDrawable::ApplyTransform(const geo::RigidTransform& transform)
+	void MeshDrawable::ApplyTransform(const core::RigidTransform& transform)
 	{
-		m_transform = geo::RigidTransform::Compose(transform, m_transform);
+		m_transform = core::RigidTransform::Compose(transform, m_transform);
 	}
 }

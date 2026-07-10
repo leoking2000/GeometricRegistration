@@ -1,19 +1,19 @@
 #include <cassert>
 #include <stb/stb_image.h>
 #include <glad/glad.h>
-#include <geo/logging/LogMacros.h>
+#include <core/logging/Log.h>
 #include "Texture.h"
 
 namespace gl
 {
-    geo::u32 Texture::TYPE[4] = {
+    u32 Texture::TYPE[4] = {
         GL_TEXTURE_1D,
         GL_TEXTURE_2D,
         GL_TEXTURE_3D,
         GL_TEXTURE_2D_ARRAY
     };
 
-    Texture::Texture(geo::u32 width, geo::u32 height, TextureFormat format, geo::u8* data)
+    Texture::Texture(u32 width, u32 height, TextureFormat format, u8* data)
         :
         Texture(DIM_2D, { width, height, 0 }, format,
             TextureMinFiltering::MIN_NEAREST, TextureMagFiltering::MAG_NEAREST,
@@ -25,7 +25,7 @@ namespace gl
         TextureDimensions dimensions, TexSize size,
         TextureFormat format,
         TextureMinFiltering min_filter, TextureMagFiltering mag_filter,
-        TextureWrapping S, TextureWrapping T, geo::u8* data
+        TextureWrapping S, TextureWrapping T, u8* data
     )
         :
         m_params(dimensions, size, format, min_filter, mag_filter, S, T)
@@ -69,7 +69,7 @@ namespace gl
         return Texture(image.width, image.height, format, image.data.get());
     }
 
-    void Texture::Bind(geo::u32 slot) const
+    void Texture::Bind(u32 slot) const
     {
         glActiveTexture(GL_TEXTURE0 + slot);
         glBindTexture(TYPE[m_params.dimensions], m_id);
@@ -169,7 +169,7 @@ namespace gl
         glBindTexture(TYPE[m_params.dimensions], 0);
     }
 
-    void Texture::SetImageData(geo::u8* data, TextureFormat format)
+    void Texture::SetImageData(u8* data, TextureFormat format)
     {
         m_params.format = format;
 
@@ -281,7 +281,7 @@ namespace gl
         }
 
         if (!isValid) {
-            GEOLOGERROR("Texture size is invalid | size {" << new_size.x << ", " << new_size.y << ", " << new_size.z
+            LOGERROR("Texture size is invalid | size {" << new_size.x << ", " << new_size.y << ", " << new_size.z
             << "dimensions: " << m_params.dimensions + 1);
         }
 
@@ -295,22 +295,22 @@ namespace gl
         stbi_set_flip_vertically_on_load(1);
 
         int width, height, bpp;
-        geo::u8* raw = stbi_load(filepath.c_str(), &width, &height, &bpp, 4);
+        u8* raw = stbi_load(filepath.c_str(), &width, &height, &bpp, 4);
 
         if (raw == nullptr)
         {
-            GEOLOGERROR("Failed to read image data From: " << filepath);
+            LOGERROR("Failed to read image data From: " << filepath);
 
             // Fallback 2x2 magenta checker
-            const geo::u8 fallback[16] = {
+            const u8 fallback[16] = {
                 255,   0, 255, 255,   0,   0,   0, 255,
                   0,   0,   0, 255, 255,   0, 255, 255
             };
 
-            geo::u8* fallbackHeap = static_cast<geo::u8*>(std::malloc(16));
+            u8* fallbackHeap = static_cast<u8*>(std::malloc(16));
             if (!fallbackHeap)
             {
-                GEOLOGERROR("Fallback allocation failed for image: " << filepath);
+                LOGERROR("Fallback allocation failed for image: " << filepath);
                 return image_data; // empty image
             }
 
@@ -333,7 +333,7 @@ namespace gl
         return image_data;
     }
 
-    void ImageDataDeleter::operator()(geo::u8* ptr) const
+    void ImageDataDeleter::operator()(u8* ptr) const
     {
         if (ptr != nullptr) {
             stbi_image_free(ptr);

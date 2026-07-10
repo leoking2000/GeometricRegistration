@@ -45,7 +45,7 @@ namespace gl
 
 	// ---------------- VertexBuffer ----------------
 
-	VertexBuffer::VertexBuffer(const void* data, geo::u32 size, BufferUsage usage)
+	VertexBuffer::VertexBuffer(const void* data, u32 size, BufferUsage usage)
 	{
 		glGenBuffers(1, &m_id);
 		glBindBuffer(GL_ARRAY_BUFFER, m_id);
@@ -87,13 +87,13 @@ namespace gl
 
 	// ---------------- IndexBuffer ----------------
 
-	IndexBuffer::IndexBuffer(const geo::u32* data, geo::u32 count, BufferUsage usage)
+	IndexBuffer::IndexBuffer(const u32* data, u32 count, BufferUsage usage)
 		:
 		m_count(count)
 	{
 		glGenBuffers(1, &m_id);
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, m_id);
-		glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(geo::u32), (const void*)data, BufferUsageToOpenGLFlag(usage));
+		glBufferData(GL_ELEMENT_ARRAY_BUFFER, count * sizeof(u32), (const void*)data, BufferUsageToOpenGLFlag(usage));
 
 		glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, 0);
 	}
@@ -175,13 +175,13 @@ namespace gl
 		glBindVertexArray(0);
 	}
 
-	void VertexArray::AddAttrib(geo::u32 i, ElementType element_type, geo::u32 stride, geo::u32& offset, bool per_instance)
+	void VertexArray::AddAttrib(u32 i, ElementType element_type, u32 stride, u32& offset, bool per_instance)
 	{
 		VertexAttributeDesc desc = GetAttributeDesc(element_type);
 
 		if (element_type == ElementType::MAT4)
 		{
-			for (geo::u32 j = 0; j < 4; j++)
+			for (u32 j = 0; j < 4; j++)
 			{
 				glEnableVertexAttribArray(i + j);
 				glVertexAttribPointer(i + j, desc.count, desc.type, desc.normalized,
@@ -193,9 +193,8 @@ namespace gl
 		}
 
 		glEnableVertexAttribArray(i);
-		glVertexAttribPointer(i, desc.count, desc.type, desc.normalized, stride, reinterpret_cast<void*>((geo::u64)offset));
+		glVertexAttribPointer(i, desc.count, desc.type, desc.normalized, stride, reinterpret_cast<void*>((u64)offset));
 		glVertexAttribDivisor(i, per_instance ? 1 : 0);
 		offset += desc.size_bytes;
 	}
-
 }

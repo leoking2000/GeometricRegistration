@@ -3,13 +3,13 @@
 #include <string>
 #include <filesystem>
 #include <glm/glm.hpp>
-#include <geo/GeoTypes.h>
+#include <core/Types.h>
 #include "Keys.h"
 
 namespace gl
 {
 	// Configuration flags used during window creation.
-	enum ConfigFlags : geo::u32
+	enum ConfigFlags : u32
 	{
 		WIN_FLAG_DEFAULT   = 0,
 		WIN_FLAG_RESIZABLE = (1 << 0),
@@ -21,9 +21,9 @@ namespace gl
 	struct WindowParameters
 	{
 		std::string        title       = "Leonidas Engine";
-		geo::u32           width       = 1600;
-		geo::u32           height      = 900;
-		geo::u32           init_flags  = WIN_FLAG_DEFAULT;
+		u32                width       = 1600;
+		u32                height      = 900;
+		u32                init_flags  = WIN_FLAG_DEFAULT;
 	};
 
 	// Initializes the underlying windowing system (GLFW).
@@ -40,8 +40,8 @@ namespace gl
 		// Constructs a window using the supplied parameters.
 		// If create is true, Create() is called automatically.
 		Window(WindowParameters win_params, bool create = true);
-		Window(geo::u32 width, geo::u32 height, const std::string& title, 
-			geo::u32 flags = WIN_FLAG_DEFAULT, bool create = true);
+		Window(u32 width, u32 height, const std::string& title, 
+			u32 flags = WIN_FLAG_DEFAULT, bool create = true);
 
 		Window(const Window&) = delete;
 		Window& operator=(const Window&) = delete;
@@ -79,7 +79,7 @@ namespace gl
 		// mouse cursur visibility.
 		void SetMouseVisibility(bool visible);
 		// time elapsed since GLFW was initialized(WINInitialization) in seconds
-		static geo::f64 GetTime();
+		static f64 GetTime();
 	public:
 		using WindowResizeCallback = std::function<void(int, int)>;
 		using ButtonEventCallback  = std::function<void(int, int)>;

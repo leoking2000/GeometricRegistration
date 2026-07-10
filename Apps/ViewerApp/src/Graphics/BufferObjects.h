@@ -1,18 +1,18 @@
 #pragma once
-#include <geo/GeoTypes.h>
+#include <core/Types.h>
 #include <vector>
 #include <glm/glm.hpp>
 
 namespace gl
 {
-	enum class BufferUsage : geo::u8
+	enum class BufferUsage : u8
 	{
 		Static,
 		Dynamic,
 		Stream
 	};
 
-	enum class ElementType : geo::u8
+	enum class ElementType : u8
 	{
 		FLOAT1, FLOAT1_N,
 		FLOAT2, FLOAT2_N,
@@ -25,10 +25,10 @@ namespace gl
 
 	struct VertexAttributeDesc
 	{
-		geo::u32 type;
-		geo::u32 count;
+		u32 type;
+		u32 count;
 		bool normalized;
-		geo::u32 size_bytes;
+		u32 size_bytes;
 	};
 
 	VertexAttributeDesc GetAttributeDesc(ElementType t);
@@ -37,7 +37,7 @@ namespace gl
 	{
 	public:
 		VertexBuffer() = default;
-		VertexBuffer(const void* data, geo::u32 size, BufferUsage usage = BufferUsage::Static);
+		VertexBuffer(const void* data, u32 size, BufferUsage usage = BufferUsage::Static);
 
 		VertexBuffer(const VertexBuffer& other) = delete;
 		VertexBuffer& operator=(const VertexBuffer&) = delete;
@@ -50,14 +50,14 @@ namespace gl
 		void Bind() const;
 		void UnBind() const;
 	private:
-		geo::u32 m_id = 0;
+		u32 m_id = 0;
 	};
 
 	class IndexBuffer
 	{
 	public:
 		IndexBuffer() = default;
-		IndexBuffer(const geo::u32* data, geo::u32 count, BufferUsage usage = BufferUsage::Static);
+		IndexBuffer(const u32* data, u32 count, BufferUsage usage = BufferUsage::Static);
 
 		IndexBuffer(const IndexBuffer& other) = delete;
 		IndexBuffer& operator=(const IndexBuffer& other) = delete;
@@ -70,16 +70,16 @@ namespace gl
 		void Bind() const;
 		void UnBind() const;
 
-		inline geo::u32 GetCount() const { return m_count; }
+		inline u32 GetCount() const { return m_count; }
 	private:
-		geo::u32 m_id    = 0;
-		geo::u32 m_count = 0;
+		u32 m_id    = 0;
+		u32 m_count = 0;
 	};
 
 	/*
 	* Represents the attribute layout of a VBO
 	*/
-	template<geo::u32 ELEMENTS_COUNT>
+	template<u32 ELEMENTS_COUNT>
 	class Layout
 	{
 	public:
@@ -87,7 +87,7 @@ namespace gl
 		{
 			assert(element_arr != nullptr && "Element type array is null");
 			m_stride = 0;
-			for (geo::u32 i = 0; i < ELEMENTS_COUNT; i++)
+			for (u32 i = 0; i < ELEMENTS_COUNT; i++)
 			{
 				if (element_arr != nullptr)
 				{
@@ -98,11 +98,11 @@ namespace gl
 		}
 
 		inline ElementType operator[](int i) const { return m_arr[i]; }
-		inline geo::u32 GetStride() const { return m_stride; }
-		inline geo::u32 GetCount() const { return ELEMENTS_COUNT; }
+		inline u32 GetStride() const { return m_stride; }
+		inline u32 GetCount() const { return ELEMENTS_COUNT; }
 	private:
 		ElementType m_arr[ELEMENTS_COUNT] = {};
-		geo::u32 m_stride = 0;
+		u32 m_stride = 0;
 	};
 
 	class VertexArray
@@ -120,15 +120,15 @@ namespace gl
 	public:
 		void Bind() const;
 		void UnBind() const;
-		inline geo::u32 ID() const { return m_id; }
+		inline u32 ID() const { return m_id; }
 	public:
-		template<geo::u32 ELEMENTS_COUNT>
-		void AddBuffer(VertexBuffer&& vb, const Layout<ELEMENTS_COUNT>& layout, geo::u32 start = 0, bool per_instance = false)
+		template<u32 ELEMENTS_COUNT>
+		void AddBuffer(VertexBuffer&& vb, const Layout<ELEMENTS_COUNT>& layout, u32 start = 0, bool per_instance = false)
 		{
 			Bind();
 			vb.Bind();
-			geo::u32 offset = 0;
-			for (geo::u32 i = start; i < start + ELEMENTS_COUNT; i++)
+			u32 offset = 0;
+			for (u32 i = start; i < start + ELEMENTS_COUNT; i++)
 			{
 				AddAttrib(i, layout[i - start], layout.GetStride(), offset, per_instance);
 			}
@@ -145,9 +145,9 @@ namespace gl
 			UnBind();
 		}
 	private:
-		void AddAttrib(geo::u32 i, ElementType element_type, geo::u32 stride, geo::u32& offset, bool per_instance);
+		void AddAttrib(u32 i, ElementType element_type, u32 stride, u32& offset, bool per_instance);
 
-		geo::u32 m_id;
+		u32 m_id;
 		std::vector<VertexBuffer> m_buffers;
 		IndexBuffer m_indexBuffer; // default empty
 	};

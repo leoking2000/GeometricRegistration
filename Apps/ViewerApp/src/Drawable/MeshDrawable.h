@@ -1,6 +1,6 @@
 #pragma once
 #include <glm/glm.hpp>
-#include <geo/math/RigidTransform.h>
+#include <core/math/RigidTransform.h>
 #include <Graphics/Mesh.h>
 #include <Graphics/Shader.h>
 #include <Graphics/Texture.h>
@@ -32,11 +32,11 @@ namespace gl
 	public:
 		// Applies an additional rigid transform to the drawable.
 		// The supplied transform is composed with the existing model transform.
-		void ApplyTransform(const geo::RigidTransform& transform);
-		inline void SetTransform(const geo::RigidTransform& transform) { m_transform = transform; }
-		inline const geo::RigidTransform& GetTransform() const { return m_transform; }
+		void ApplyTransform(const core::RigidTransform& transform);
+		inline void SetTransform(const core::RigidTransform& transform) { m_transform = transform; }
+		inline const core::RigidTransform& GetTransform() const { return m_transform; }
 	private:
-		geo::RigidTransform m_transform = geo::RigidTransform::Identity();
+		core::RigidTransform m_transform = core::RigidTransform::Identity();
 		gl::Mesh m_gpuMesh;
 	};
 }

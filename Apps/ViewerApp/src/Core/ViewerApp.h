@@ -4,8 +4,8 @@
 
 struct ViewerAppConfig
 {
-    geo::u32 width    = 1600;
-    geo::u32 height   = 900;
+    u32 width         = 1600;
+    u32 height        = 900;
     std::string title = "Geo Viewer";
 };
 
@@ -25,7 +25,7 @@ public:
     // Request shutdown.
     void Stop();
 private:
-    void Update(geo::f32 dt);
+    void Update(f32 dt);
     void Render();
     void RenderUI();
 private:

@@ -26,7 +26,7 @@ namespace gl
 		);
 	}
 
-	void ViewerController::OnMouseMove(geo::f32 x, geo::f32 y)
+	void ViewerController::OnMouseMove(f32 x, f32 y)
 	{
 		if (!m_camera) return;
 
@@ -49,7 +49,7 @@ namespace gl
 		}
 	}
 
-	void ViewerController::OnMouseButton(geo::i32 button, geo::i32 action)
+	void ViewerController::OnMouseButton(i32 button, i32 action)
 	{
 		if (button == MOUSE_BUTTON_LEFT)
 			m_leftDown = (action == KEY_PRESS);
@@ -58,7 +58,7 @@ namespace gl
 			m_midDown = (action == KEY_PRESS);
 	}
 
-	void ViewerController::OnScroll(geo::f32 yOffset)
+	void ViewerController::OnScroll(f32 yOffset)
 	{
 		if (!m_camera) return;
 
