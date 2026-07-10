@@ -1,10 +1,10 @@
-#include <geo/GeometricRegistration.h>
-#include <Graphics/LeoGraphics.h>
-#include <Platform/GLWindow.h>
-#include <Camera/ViewerController.h>
-#include <Drawable/MeshDrawable.h>
-#include <Drawable/PointCloudDrawable.h>
 #include <glm/gtc/matrix_transform.hpp>
+#include <geo/GeometricRegistration.h>
+#include <gl/Graphics/LeoGraphics.h>
+#include <gl/Platform/GLWindow.h>
+#include <gl/Drawable/MeshDrawable.h>
+#include <gl/Drawable/PointCloudDrawable.h>
+#include <Camera/ViewerController.h>
 #include "ViewerApp.h"
 
 static glm::mat4 AlignScans(const geo::Mesh& target, const geo::Mesh& source)

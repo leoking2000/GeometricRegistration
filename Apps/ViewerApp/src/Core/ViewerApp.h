@@ -1,5 +1,5 @@
 #include <string>
-#include <Platform/GLWindow.h>
+#include <gl/Platform/GLWindow.h>
 
 
 struct ViewerAppConfig

@@ -29,6 +29,7 @@ add_subdirectory(thirdparty/glfw-3.3.2)      # window management
 ####################################################################
 
 add_subdirectory(Libraries/Core)             # The Core utilities static library
+add_subdirectory(Libraries/GL)               # The Graphics utilities static library
 add_subdirectory(Libraries/Geo)              # The Geometric Prossesing static library
 
 add_subdirectory(Apps/Testing)               # runs tests

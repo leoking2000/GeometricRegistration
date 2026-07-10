@@ -48,6 +48,6 @@ endif()
 
 ############ link libraries ############
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE Core GeometricRegistration glad glfw glm stb)
+target_link_libraries("${PROJECT_NAME}" PRIVATE Core Geo GL glm glad)
 
 ########################################
