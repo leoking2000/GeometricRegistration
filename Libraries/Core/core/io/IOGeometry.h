@@ -13,7 +13,9 @@ namespace core::io
 	{
 		UNKNOWN,
 		OBJ,
-		PLY
+		PLY,
+		GLTF,
+		GLB
 	};
 
 	// Infers file type (OBJ, PLY, etc.) from file extension.

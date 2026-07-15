@@ -9,6 +9,12 @@
 #define TINYOBJLOADER_IMPLEMENTATION
 #include <tiny_obj_loader.h>
 
+#define TINYGLTF_IMPLEMENTATION
+#define TINYGLTF_NOEXCEPTION
+#include <tiny_gltf.h>
+
+using namespace tinygltf;
+
 #include "logging/Log.h"
 #include "IOUtils.h"
 #include "IOGeometry.h"
@@ -31,8 +37,10 @@ namespace core::io
                 return static_cast<char>(std::tolower(c));
             });
 
-        if (ext == ".obj") return FileType::OBJ;
-        if (ext == ".ply") return FileType::PLY;
+        if (ext == ".obj")  return FileType::OBJ;
+        if (ext == ".ply")  return FileType::PLY;
+        if (ext == ".gltf") return FileType::GLTF;
+        if (ext == ".glb")  return FileType::GLB;
 
         return FileType::UNKNOWN;
     }

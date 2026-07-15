@@ -35,6 +35,6 @@ endif()
 
 ############ link libraries ############
 
-target_link_libraries("${PROJECT_NAME}" PRIVATE glm tiny_obj_loader stb)
+target_link_libraries("${PROJECT_NAME}" PRIVATE glm tiny_obj_loader tiny_gltf stb)
 
 ########################################

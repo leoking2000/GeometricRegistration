@@ -19,6 +19,7 @@ add_subdirectory(thirdparty/Eigen)           # Eigen linear algebra
 add_subdirectory(thirdparty/nanoflann)       # Nearest Neighbor (NN) search
 
 add_subdirectory(thirdparty/tiny_obj_loader) # obj loader
+add_subdirectory(thirdparty/tiny_gltf)       # gltf loader
 add_subdirectory(thirdparty/stb)             # texture read-write
 
 add_subdirectory(thirdparty/googletest)      # unit tests
