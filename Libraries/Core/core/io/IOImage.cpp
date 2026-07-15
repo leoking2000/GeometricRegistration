@@ -1,5 +1,5 @@
 #include <stb/stb_image.h>
-#include <stb/stb_image_write.h> // there is a stb.cpp file with the #defines
+#include <stb/stb_image_write.h>
 #include "logging/Log.h"
 #include "IOImage.h"
 
@@ -129,5 +129,4 @@ namespace core::io
 
         LOGINFO("Saved image: \"" << path.string() << "\"");
     }
-
 }

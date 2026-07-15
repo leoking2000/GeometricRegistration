@@ -58,4 +58,3 @@ namespace core::io
     // @param image Image data to write.
     void SaveImage(const std::filesystem::path& path, const ImageData& image);
 }
-
