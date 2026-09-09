@@ -3,8 +3,8 @@
 #include <vector>
 #include <filesystem>
 #include <unordered_map>
-#include "Types.h"
-#include "math/BBox.h"
+#include <core/logging/Log.h>
+#include <core/math/BBox.h>
 
 namespace core::io
 {

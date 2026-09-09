@@ -3,7 +3,7 @@
 #include <glm/gtc/constants.hpp>
 #include <glm/gtx/quaternion.hpp>
 #include <core/logging/Log.h>
-#include <core/utils/Time.h>
+#include <core/Time.h>
 #include <geo/math/solvers.h>
 #include "ESA.h"
 #include "EfficientICP.h"

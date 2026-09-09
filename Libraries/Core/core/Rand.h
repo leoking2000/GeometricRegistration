@@ -1,7 +1,7 @@
 #pragma once
 #include <random>
 #include <glm/glm.hpp>
-#include "Types.h"
+#include <core/Types.h>
 
 namespace core
 {

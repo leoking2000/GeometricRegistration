@@ -2,7 +2,7 @@
 #include <glm/glm.hpp>
 #define GLM_ENABLE_EXPERIMENTAL
 #include <glm/gtx/compatibility.hpp>
-#include "Types.h"
+#include <core/Types.h>
 
 namespace core
 {

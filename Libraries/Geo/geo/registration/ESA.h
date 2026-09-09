@@ -1,8 +1,8 @@
 #pragma once
 #include <array>
 #include <functional>
-#include <core/utils/Rand.h>
-#include <core/utils/Time.h>
+#include <core/Rand.h>
+#include <core/Time.h>
 #include <core/math/RigidTransform.h>
 #include <core/math/BBox.h>
 

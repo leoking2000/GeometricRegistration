@@ -4,7 +4,7 @@
 #include <nanoflann.hpp>
 #include <glm/common.hpp>
 #include <core/logging/Log.h>
-#include <core/utils/Time.h>
+#include <core/Time.h>
 #include "KDTree.h"
 
 

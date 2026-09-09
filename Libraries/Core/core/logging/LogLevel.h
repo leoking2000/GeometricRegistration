@@ -1,11 +1,11 @@
 #pragma once
 #include <string_view>
-#include "Types.h"
+#include <core/Types.h>
 
 namespace core
 {
     // Log severity levels used to filter and categorize runtime messages.
-    // Higher numeric value = more verbose output.
+    // Higher numeric value enables more detailed logging.
     enum class LogLevel : u8
     {
         LOG_NONE    = 0u,  // No logging output

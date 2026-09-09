@@ -1,8 +1,8 @@
 #pragma once
 #include <chrono>
 #include <string>
-#include "Types.h"
-#include "logging/Log.h"
+#include <core/Types.h>
+#include <core/logging/Log.h>
 
 namespace core
 {

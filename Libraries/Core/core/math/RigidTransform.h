@@ -1,7 +1,7 @@
 #pragma once
 #include <cmath>
 #include <glm/glm.hpp>
-#include "Types.h"
+#include <core/Types.h>
 
 namespace core
 {

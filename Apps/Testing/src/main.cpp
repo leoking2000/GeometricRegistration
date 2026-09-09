@@ -7,7 +7,7 @@ static constexpr u32 SEED = 2026;
 
 //#define RUN_PartialScans
 #define RUN_UnitTests
-//#define RUN_DFTEST
+#define RUN_DFTEST
 
 #define RUN_SparseICP
 #define RUN_EfficientICP
@@ -93,9 +93,7 @@ static void TestDF()
     // 1. Create input data
     std::cout << "Loading Mesh...\n";
 
-    //geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/bunny/bunny.obj");
-    //geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/fox_skull/fox_skull.obj");
-    geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/DoraEmbrasure3_med_final/DoraEmbrasure3_med_final.obj");
+    geo::Mesh mesh = geo::Mesh::Load(RESOURCES_PATH"models/test/bunny/bunny.obj");
 
     //mesh.Flatten();
 
@@ -162,7 +160,7 @@ static void TestDF()
 
 int main(int argc, char** argv)
 {
-    core::SetLogLevel(core::LogLevel::LOG_ERROR);
+    core::SetLogLevel(core::LogLevel::LOG_INFO);
 	int r = 0;
 
 #ifdef RUN_PartialScans

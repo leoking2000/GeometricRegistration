@@ -1,7 +1,7 @@
 #include <cassert>
 #include <fstream>
 #include <core/logging/Log.h>
-#include <core/utils/Time.h>
+#include <core/Time.h>
 #include <core/io/IOUtils.h>
 #include "DistanceField.h"
 

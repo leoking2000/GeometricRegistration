@@ -1,8 +1,5 @@
 #pragma once
-#include <ostream>
 #include <sstream>
-#include <cstring>
-#include <iostream>
 #include "LogLevel.h"
 
 namespace core
@@ -30,7 +27,7 @@ namespace core
     // @param sourceFile  File from which the log was emitted
     // @param sourceLine  Line number in the source file
     // @param output      Output stream to write the log message to
-    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine, std::ostream& output);
+    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine);
 }
 
 // Extracts only the filename portion from a full file path.
@@ -49,8 +46,8 @@ namespace core
 // Behavior:
 // - Checks if the log level is enabled
 // - Streams message into an ostringstream (supports operator << chaining)
-// - Sends formatted log entry to geo::Log
-#define LOGLEVEL(level, msg) if(IS_LEVEL_ACTIVE(level)){ std::ostringstream oss; oss << msg; core::Log(level, oss.str(), FILENAME, __LINE__, std::cout); }
+// - Sends formatted log entry to core::Log
+#define LOGLEVEL(level, msg) if(IS_LEVEL_ACTIVE(level)){ std::ostringstream oss; oss << msg; core::Log(level, oss.str(), FILENAME, __LINE__); }
 
 // Convenience macros for each log severity level.
 // These reduce verbosity and standardize usage across the codebase.

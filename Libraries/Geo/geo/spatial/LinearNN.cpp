@@ -1,6 +1,6 @@
 #include <cassert>
 #include <core/logging/Log.h>
-#include <core/utils/Time.h>
+#include <core/Time.h>
 #include "LinearNN.h"
 
 namespace geo

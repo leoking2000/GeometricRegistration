@@ -1,5 +1,5 @@
-#include <cassert>
 #include <glm/gtc/constants.hpp>
+#include <core/Assert.h>
 #include "Rand.h"
 
 namespace core
@@ -21,7 +21,7 @@ namespace core
 
     i32 Random::Int(i32 min, i32 max)
     {
-        assert(min <= max);
+        CORE_ASSERT(min <= max);
 
         std::uniform_int_distribution<i32> dist(min, max);
         return dist(m_Rng);
@@ -29,7 +29,7 @@ namespace core
 
     u32 Random::UInt(u32 min, u32 max)
     {
-        assert(min <= max);
+        CORE_ASSERT(min <= max);
 
         std::uniform_int_distribution<u32> dist(min, max);
         return dist(m_Rng);
@@ -37,7 +37,7 @@ namespace core
 
     f32 Random::Float(f32 min, f32 max)
     {
-        assert(min <= max);
+        CORE_ASSERT(min <= max);
 
         if (min == max)
             return min;
@@ -57,7 +57,7 @@ namespace core
 
     glm::vec2 Random::Dir2D(f32 length)
     {
-        assert(length >= 0.0f);
+        CORE_ASSERT(length >= 0.0f);
 
         f32 angle = Float(0.0f, glm::two_pi<f32>());
         return {
@@ -68,7 +68,7 @@ namespace core
 
     glm::vec3 Random::Dir3D(f32 length)
     {
-        assert(length >= 0.0f);
+        CORE_ASSERT(length >= 0.0f);
 
         // Uniform spherical distribution
         f32 z = Float(-1.0f, 1.0f);

@@ -15,7 +15,7 @@
 
 using namespace tinygltf;
 
-#include "logging/Log.h"
+#include <core/logging/Log.h>
 #include "IOUtils.h"
 #include "IOGeometry.h"
 

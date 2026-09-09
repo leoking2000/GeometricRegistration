@@ -1,6 +1,6 @@
 #pragma once
 #include <string>
-#include <core/utils/Rand.h>
+#include <core/Rand.h>
 #include "PointCloud3D.h"
 
 namespace geo

@@ -1,5 +1,7 @@
 #include <mutex>
 #include <sstream>
+#include <iostream>
+#include <string>
 #include "Log.h"
 
 namespace core
@@ -42,7 +44,7 @@ namespace core
     }
 
     // Core logging function (low-level backend).
-    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine, std::ostream& output)
+    void Log(LogLevel level, std::string_view msg, const char* sourceFile, u32 sourceLine)
     {
         std::lock_guard<std::mutex> lock(g_logMutex);
 
@@ -50,6 +52,6 @@ namespace core
             return;
         }
 
-        output << FormatEntry(level, msg, sourceFile, sourceLine) << '\n';
+        std::cout << FormatEntry(level, msg, sourceFile, sourceLine) << '\n';
     }
 }

@@ -1,5 +1,6 @@
 #pragma once
 #include <cstdint>
+#include <cstddef>
 #include <limits>
 
 // Common fixed-width numeric aliases used across the library for consistency.
@@ -19,6 +20,8 @@ using u64 = std::uint64_t;
 using f32 = float;
 using f64 = double;
 
+using usize = std::size_t;
+
 // index_t is the canonical index type for point, vertex, and correspondence access.
 using index_t = u32;
 
@@ -27,5 +30,10 @@ inline constexpr index_t INVALID_INDEX = std::numeric_limits<index_t>::max();
 
 // Numeric limits exposed for convenience and consistency.
 // Useful in geometry initialization (e.g., bounding boxes, reductions).
-inline constexpr f32 F32_MAX = std::numeric_limits<f32>::max();
-inline constexpr f64 F64_MAX = std::numeric_limits<f64>::max();
+inline constexpr f32 F32_INF    = std::numeric_limits<f32>::infinity();
+inline constexpr f32 F32_MAX    = std::numeric_limits<f32>::max();
+inline constexpr f32 F32_LOWEST = std::numeric_limits<f32>::lowest();
+
+inline constexpr f64 F64_INF    = std::numeric_limits<f64>::infinity();
+inline constexpr f64 F64_MAX    = std::numeric_limits<f64>::max();
+inline constexpr f64 F64_LOWEST = std::numeric_limits<f64>::lowest();

@@ -1,6 +1,6 @@
 #include <stb/stb_image.h>
 #include <stb/stb_image_write.h>
-#include "logging/Log.h"
+#include <core/logging/Log.h>
 #include "IOImage.h"
 
 namespace core::io
