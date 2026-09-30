@@ -1,13 +1,15 @@
 #include "UnitTests/UnitTests.h"
 #include "TestSuite/TestSuitePSA.h"
+#include "TestSuite/ExperimentRunner.h"
 
 using namespace tests;
 
 static constexpr u32 SEED = 2026;
 
 //#define RUN_PartialScans
-#define RUN_UnitTests
-#define RUN_DFTEST
+//#define RUN_UnitTests
+//#define RUN_DFTEST
+#define RUN_Chapter5Experiments
 
 #define RUN_SparseICP
 #define RUN_EfficientICP
@@ -174,6 +176,10 @@ int main(int argc, char** argv)
 #ifdef RUN_UnitTests
 	r = RunUnitTests(argc, argv);
 #endif // RUN_UnitTests
+
+#ifdef RUN_Chapter5Experiments
+    RunChapter5Experiments();
+#endif // RUN_Chapter5Experiments
 
 	return r;
 }

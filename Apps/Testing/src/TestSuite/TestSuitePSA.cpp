@@ -33,8 +33,7 @@ static inline void ApplyPartialOverlap(
     std::vector<f32> sorted = proj;
     std::sort(sorted.begin(), sorted.end());
 
-    const size_t keepCount =
-        std::max(size_t(1), size_t(std::round(pts.size() * overlapRatio)));
+    const size_t keepCount = std::max(size_t(1), size_t(std::round(pts.size() * overlapRatio)));
     const f32 threshold = sorted[keepCount - 1];
 
     std::vector<glm::vec3> front, back, frontN, backN;
@@ -50,12 +49,20 @@ static inline void ApplyPartialOverlap(
         }
     }
 
-    pts.clear(); nrm.clear();
-    pts.insert(pts.end(), front.begin(), front.end());
-    pts.insert(pts.end(), back.begin(), back.end());
+    //pts.clear(); nrm.clear();
+    //pts.insert(pts.end(), front.begin(), front.end());
+    //pts.insert(pts.end(), back.begin(), back.end());
+    //if (hasNormals) {
+    //    nrm.insert(nrm.end(), frontN.begin(), frontN.end());
+    //    nrm.insert(nrm.end(), backN.begin(), backN.end());
+    //}
+
+    pts = std::move(front);
     if (hasNormals) {
-        nrm.insert(nrm.end(), frontN.begin(), frontN.end());
-        nrm.insert(nrm.end(), backN.begin(), backN.end());
+        nrm = std::move(frontN);
+    }
+    else {
+        nrm.clear();
     }
 }
 
